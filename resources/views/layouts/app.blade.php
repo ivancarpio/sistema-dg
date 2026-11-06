@@ -97,6 +97,16 @@
                 </a>
             </li>
             <li class="nav-item">
+                <a class="nav-link {{ request()->is('arqueos*') ? 'active' : '' }}" href="/arqueos">
+                    <i class="bi bi-safe2-fill me-3 fs-5 align-middle"></i> Arqueo de Caja
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link {{ request()->is('reportes*') ? 'active' : '' }}" href="/reportes">
+                    <i class="bi bi-graph-up-arrow me-3 fs-5 align-middle"></i> Reportes
+                </a>
+            </li>
+            <li class="nav-item">
                 <a class="nav-link {{ request()->is('inventario') ? 'active' : '' }}" href="/inventario">
                     <i class="bi bi-diagram-3 me-3 fs-5 align-middle"></i> Inventario
                 </a>

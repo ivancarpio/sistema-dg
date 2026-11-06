@@ -9,6 +9,8 @@ use App\Http\Controllers\HomeController;
 use App\Http\Controllers\ConfiguracionController;
 use App\Http\Controllers\UsuarioController;
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\ArqueoController;
+use App\Http\Controllers\ReporteController;
 
 
 // 1. RUTA TEMPORAL PARA CREAR TU USUARIO MAESTRO (Borra esto después de usarlo)
@@ -73,3 +75,24 @@ Route::put('/usuarios/{id}', [UsuarioController::class, 'update']);
 Route::delete('/usuarios/{id}', [UsuarioController::class, 'destroy']);
 
 Route::post('/ventas/{id}/anular', [App\Http\Controllers\VentaController::class, 'anular']);
+
+// ============================================================
+// RUTAS: ARQUEO DE CAJA
+// ============================================================
+Route::get('/arqueos',         [ArqueoController::class, 'index']);
+Route::get('/arqueos/crear',   [ArqueoController::class, 'create']);
+Route::post('/arqueos',        [ArqueoController::class, 'store']);
+Route::get('/arqueos/{id}',    [ArqueoController::class, 'show']);
+
+// ============================================================
+// RUTAS: MÓDULO DE REPORTES (CATÁLOGO / VENTAS / CIERRE DE MES)
+// ============================================================
+Route::get('/reportes',                    [ReporteController::class, 'hub']);
+Route::get('/reportes/ventas',             [ReporteController::class, 'ventas']);
+Route::get('/reportes/ventas/excel',        [ReporteController::class, 'exportarVentasExcel']);
+Route::get('/reportes/excel',              [ReporteController::class, 'exportarVentasExcel']); // compatibilidad
+
+Route::get('/reportes/cierre-mes',         [ReporteController::class, 'cierreMes']);
+Route::post('/reportes/cierre-mes/toggle-check', [ReporteController::class, 'toggleCheckCierreMes']);
+Route::post('/reportes/cierre-mes/check-all',   [ReporteController::class, 'checkAllCierreMes']);
+Route::get('/reportes/cierre-mes/excel',   [ReporteController::class, 'exportarCierreMesExcel']);
