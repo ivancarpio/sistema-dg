@@ -7,6 +7,7 @@ use App\Models\Venta;
 use App\Models\User;
 use App\Models\Producto;
 use App\Models\CierreMesCheck;
+use App\Models\CierreMes;
 use App\Exports\VentasExport;
 use App\Exports\CierreMesExport;
 use Maatwebsite\Excel\Facades\Excel;
@@ -21,7 +22,6 @@ class ReporteController extends Controller
     // ============================================================
     public function hub()
     {
-        // Estadísticas rápidas para las tarjetas
         $mesActual = Carbon::now()->format('Y-m');
         $inicioMes = Carbon::now()->startOfMonth();
         $finMes    = Carbon::now()->endOfMonth();
@@ -32,7 +32,7 @@ class ReporteController extends Controller
 
         $totalRecaudadoMes = Venta::where('estado', '!=', 'Anulada')
             ->whereBetween('fecha', [$inicioMes, $finMes])
-            ->sum('total');
+            ->sum(DB::raw('COALESCE(monto_pagado, total)'));
 
         $totalProductos = Producto::count();
 
@@ -53,7 +53,7 @@ class ReporteController extends Controller
     }
 
     // ============================================================
-    // 2. REPORTE DE VENTAS DETALLADO (Efectivo / QR / Desglose)
+    // 2. REPORTE DE VENTAS DETALLADO (Efectivo / QR / Por Pagar)
     // ============================================================
     public function ventas(Request $request)
     {
@@ -82,12 +82,37 @@ class ReporteController extends Controller
 
         $ventas = $query->orderBy('fecha', 'desc')->get();
 
+        // Totales discriminados
+        $totalEfectivo = 0;
+        $totalQr = 0;
+        $totalPorPagarPendiente = 0;
+
+        foreach ($ventas as $v) {
+            $cobrado = $v->monto_pagado !== null ? floatval($v->monto_pagado) : floatval($v->total);
+            $pendiente = floatval($v->saldo_pendiente ?? 0);
+
+            if ($v->metodo_pago === 'Efectivo') {
+                $totalEfectivo += $cobrado;
+            } elseif ($v->metodo_pago === 'QR') {
+                $totalQr += $cobrado;
+            } elseif ($v->metodo_pago === 'Por Pagar') {
+                $totalPorPagarPendiente += $pendiente;
+                if ($v->metodo_adelanto === 'QR') {
+                    $totalQr += $cobrado;
+                } else {
+                    $totalEfectivo += $cobrado;
+                }
+            }
+        }
+
         $totales = [
-            'efectivo'  => $ventas->where('metodo_pago', 'Efectivo')->sum('total'),
-            'qr'        => $ventas->where('metodo_pago', 'QR')->sum('total'),
-            'general'   => $ventas->sum('total'),
-            'cantidad'  => $ventas->count(),
-            'productos' => $ventas->flatMap->detalles->sum('cantidad'),
+            'efectivo'   => $totalEfectivo,
+            'qr'         => $totalQr,
+            'por_pagar'  => $totalPorPagarPendiente,
+            'general'    => $ventas->sum('total'),
+            'recaudado'  => $totalEfectivo + $totalQr,
+            'cantidad'   => $ventas->count(),
+            'productos'  => $ventas->flatMap->detalles->sum('cantidad'),
         ];
 
         $usuarios = User::all();
@@ -99,9 +124,7 @@ class ReporteController extends Controller
         ));
     }
 
-    // ============================================================
-    // 3. EXPORTAR REPORTE DE VENTAS A EXCEL
-    // ============================================================
+    // Exportar Ventas a Excel
     public function exportarVentasExcel(Request $request)
     {
         $periodo = $request->input('periodo', 'hoy');
@@ -114,9 +137,11 @@ class ReporteController extends Controller
         if ($request->filled('metodo_pago')) {
             $query->where('metodo_pago', $request->metodo_pago);
         }
+
         if ($request->filled('cajero')) {
             $query->where('id_usuario', $request->cajero);
         }
+
         if ($request->filled('buscar')) {
             $b = $request->buscar;
             $query->where(function ($q) use ($b) {
@@ -127,10 +152,32 @@ class ReporteController extends Controller
 
         $ventas = $query->orderBy('fecha', 'desc')->get();
 
+        // Totales discriminados para el Excel
+        $totalEfectivo = 0;
+        $totalQr = 0;
+        $totalPorPagar = 0;
+
+        foreach ($ventas as $v) {
+            $cobrado = $v->monto_pagado !== null ? floatval($v->monto_pagado) : floatval($v->total);
+            if ($v->metodo_pago === 'Efectivo') {
+                $totalEfectivo += $cobrado;
+            } elseif ($v->metodo_pago === 'QR') {
+                $totalQr += $cobrado;
+            } elseif ($v->metodo_pago === 'Por Pagar') {
+                $totalPorPagar += floatval($v->saldo_pendiente ?? 0);
+                if ($v->metodo_adelanto === 'QR') {
+                    $totalQr += $cobrado;
+                } else {
+                    $totalEfectivo += $cobrado;
+                }
+            }
+        }
+
         $totales = [
-            'efectivo' => $ventas->where('metodo_pago', 'Efectivo')->sum('total'),
-            'qr'       => $ventas->where('metodo_pago', 'QR')->sum('total'),
-            'general'  => $ventas->sum('total'),
+            'efectivo'  => $totalEfectivo,
+            'qr'        => $totalQr,
+            'por_pagar' => $totalPorPagar,
+            'general'   => $ventas->sum('total'),
         ];
 
         $filtros = [
@@ -138,80 +185,135 @@ class ReporteController extends Controller
             'metodo_pago'   => $request->metodo_pago,
         ];
 
-        $nombreArchivo = 'Reporte_Ventas_' . now()->format('d-m-Y') . '.xlsx';
+        $nombreArchivo = 'Reporte_Ventas_' . $fechaDesde->format('Ymd') . '_' . $fechaHasta->format('Ymd') . '.xlsx';
 
-        return Excel::download(
-            new VentasExport($ventas, $filtros, $totales),
-            $nombreArchivo
-        );
+        return Excel::download(new VentasExport($ventas, $filtros, $totales), $nombreArchivo);
     }
 
     // ============================================================
-    // 4. REPORTE DE CIERRE DE MES (CUADRE DE STOCK FÍSICO)
+    // 3. REPORTE DE CIERRE DE MES (Interactivo)
     // ============================================================
     public function cierreMes(Request $request)
     {
-        // Mes seleccionado (por defecto mes actual 'YYYY-MM')
         $mes = $request->input('mes', Carbon::now()->format('Y-m'));
+        $datos = $this->obtenerDatosCierreMes($mes);
 
-        $dataCierre = $this->obtenerDatosCierreMes($mes);
+        $categorias = DB::table('categorias')->orderBy('nombre')->get();
 
-        return view('reportes.cierre_mes', array_merge($dataCierre, [
-            'mesSeleccionado' => $mes,
+        // Buscar si este mes ya tiene un Cierre Oficial registrado
+        $cierreActual = CierreMes::with('usuario')->where('mes', $mes)->first();
+
+        // Obtener historial completo de cierres de mes
+        $historialCierres = CierreMes::with('usuario')->orderBy('mes', 'desc')->get();
+
+        return view('reportes.cierre_mes', array_merge($datos, [
+            'mesSeleccionado'  => $mes,
+            'categorias'       => $categorias,
+            'cierreActual'     => $cierreActual,
+            'historialCierres' => $historialCierres,
         ]));
     }
 
     // ============================================================
-    // 5. TOGGLE CHECK INTERACTIVO (AJAX)
+    // GUARDAR CIERRE OFICIAL DE MES (SNAPSHOT PERMANENTE)
     // ============================================================
+    public function storeCierreMes(Request $request)
+    {
+        $request->validate([
+            'mes'   => 'required|string|regex:/^\d{4}-\d{2}$/',
+            'notas' => 'nullable|string|max:1000',
+        ]);
+
+        $mes = $request->mes;
+        $datos = $this->obtenerDatosCierreMes($mes);
+
+        $snapshot = array_map(function($f) {
+            return [
+                'id'                => $f['id'],
+                'codigo'            => $f['codigo'],
+                'nombre'            => $f['nombre'],
+                'cantidad_anterior' => $f['cantidad_anterior'],
+                'ventas'            => $f['ventas'],
+                'total_tienda'      => $f['total_tienda'],
+                'verificado'        => $f['verificado'],
+            ];
+        }, $datos['items']);
+
+        CierreMes::updateOrCreate(
+            ['mes' => $mes],
+            [
+                'total_productos'   => $datos['totalProductos'],
+                'total_ventas'      => $datos['totalVentas'],
+                'total_stock'       => $datos['totalEnTienda'],
+                'verificados_count' => $datos['verificadosCount'],
+                'porcentaje'        => $datos['porcentaje'],
+                'id_usuario'        => Auth::id() ?? 1,
+                'fecha_cierre'      => now(),
+                'notas'             => $request->notas,
+                'snapshot_items'    => $snapshot,
+                'estado'            => 'Cerrado',
+            ]
+        );
+
+        $nombreMes = Carbon::parse($mes . '-01')->translatedFormat('F Y');
+        return redirect('/reportes/cierre-mes?mes=' . $mes)
+            ->with('success', "¡El mes {$nombreMes} ha sido cerrado oficialmente con éxito! El cuadre y las cifras han quedado archivados.");
+    }
+
+    // ============================================================
+    // REABRIR MES CERRADO (SOLO ADMINISTRADOR)
+    // ============================================================
+    public function reabrirCierreMes(Request $request)
+    {
+        $request->validate([
+            'mes' => 'required|string|regex:/^\d{4}-\d{2}$/',
+        ]);
+
+        if (Auth::user() && Auth::user()->rol !== 'admin') {
+            return back()->with('error', 'Solo los administradores tienen permiso para reabrir un mes cerrado.');
+        }
+
+        $cierre = CierreMes::where('mes', $request->mes)->first();
+        if ($cierre) {
+            $cierre->delete();
+        }
+
+        $nombreMes = Carbon::parse($request->mes . '-01')->translatedFormat('F Y');
+        return redirect('/reportes/cierre-mes?mes=' . $request->mes)
+            ->with('info', "El mes {$nombreMes} ha sido reabierto para edición y nuevos cuadres de stock.");
+    }
+
     public function toggleCheckCierreMes(Request $request)
     {
         $request->validate([
-            'id_producto' => 'required|integer|exists:productos,id',
+            'id_producto' => 'required|integer',
             'mes'         => 'required|string',
         ]);
 
-        $idProducto = $request->id_producto;
-        $mes        = $request->mes;
+        $check = CierreMesCheck::firstOrNew([
+            'id_producto' => $request->id_producto,
+            'mes'         => $request->mes,
+        ]);
 
-        $check = CierreMesCheck::where('mes', $mes)
-            ->where('id_producto', $idProducto)
-            ->first();
+        $check->verificado   = !$check->verificado;
+        $check->id_usuario   = Auth::id();
+        $check->save();
 
-        if ($check) {
-            $check->verificado = !$check->verificado;
-            $check->fecha_verificacion = $check->verificado ? now() : null;
-            $check->id_usuario = Auth::id();
-            $check->save();
-            $estado = $check->verificado;
-        } else {
-            CierreMesCheck::create([
-                'mes'                => $mes,
-                'id_producto'        => $idProducto,
-                'verificado'         => true,
-                'id_usuario'         => Auth::id(),
-                'fecha_verificacion' => now(),
-            ]);
-            $estado = true;
-        }
-
-        // Totales actualizados
         $totalProductos = Producto::count();
-        $totalChecks    = CierreMesCheck::where('mes', $mes)->where('verificado', true)->count();
-        $porcentaje     = $totalProductos > 0 ? round(($totalChecks / $totalProductos) * 100) : 0;
+        $verificados    = CierreMesCheck::where('mes', $request->mes)->where('verificado', true)->count();
+        $porcentaje     = $totalProductos > 0 ? round(($verificados / $totalProductos) * 100) : 0;
 
         return response()->json([
             'success'     => true,
-            'verificado'  => $estado,
-            'totalChecks' => $totalChecks,
-            'pendientes'  => max(0, $totalProductos - $totalChecks),
+            'verificado'  => $check->verificado,
+            'verificados' => $verificados,
+            'totalChecks' => $verificados,
+            'pendientes'  => max(0, $totalProductos - $verificados),
+            'total'       => $totalProductos,
             'porcentaje'  => $porcentaje,
         ]);
     }
 
-    // ============================================================
-    // 6. MARCAR / DESMARCAR TODOS (AJAX)
-    // ============================================================
     public function checkAllCierreMes(Request $request)
     {
         $request->validate([
@@ -220,177 +322,147 @@ class ReporteController extends Controller
         ]);
 
         $mes    = $request->mes;
-        $accion = $request->accion;
+        $marcar = $request->accion === 'marcar';
 
-        $productos = Producto::pluck('id');
-
-        if ($accion === 'marcar') {
-            foreach ($productos as $idProd) {
-                CierreMesCheck::updateOrCreate(
-                    ['mes' => $mes, 'id_producto' => $idProd],
-                    [
-                        'verificado'         => true,
-                        'id_usuario'         => Auth::id(),
-                        'fecha_verificacion' => now(),
-                    ]
-                );
-            }
-        } else {
-            CierreMesCheck::where('mes', $mes)->update([
-                'verificado' => false,
-                'fecha_verificacion' => null,
-            ]);
+        $productos = Producto::all();
+        foreach ($productos as $p) {
+            CierreMesCheck::updateOrCreate(
+                ['id_producto' => $p->id, 'mes' => $mes],
+                ['verificado' => $marcar, 'id_usuario' => Auth::id()]
+            );
         }
 
-        $totalProductos = $productos->count();
-        $totalChecks    = CierreMesCheck::where('mes', $mes)->where('verificado', true)->count();
-        $porcentaje     = $totalProductos > 0 ? round(($totalChecks / $totalProductos) * 100) : 0;
+        $verificados = $marcar ? $productos->count() : 0;
+        $total       = $productos->count();
+        $porcentaje  = $marcar ? 100 : 0;
 
         return response()->json([
             'success'     => true,
-            'totalChecks' => $totalChecks,
-            'pendientes'  => max(0, $totalProductos - $totalChecks),
+            'verificados' => $verificados,
+            'totalChecks' => $verificados,
+            'pendientes'  => max(0, $total - $verificados),
+            'total'       => $total,
             'porcentaje'  => $porcentaje,
         ]);
     }
 
-    // ============================================================
-    // 7. EXPORTAR CIERRE DE MES A EXCEL
-    // ============================================================
     public function exportarCierreMesExcel(Request $request)
     {
         $mes = $request->input('mes', Carbon::now()->format('Y-m'));
-        $dataCierre = $this->obtenerDatosCierreMes($mes);
-
-        $carbonFecha = Carbon::parse($mes . '-01');
-        $anio        = $carbonFecha->format('Y');
-        $nombreMes   = $carbonFecha->translatedFormat('F');
+        $datos = $this->obtenerDatosCierreMes($mes);
 
         $meta = [
-            'empresa'       => $request->input('empresa', 'KRONA DISTRIBUIDORA GUADALUPE'),
-            'anio'          => $anio,
-            'gerente'       => $request->input('gerente', 'LUIS ANTENOR CALDERON RODRIGUEZ'),
-            'encargado'     => $request->input('encargado', 'AJAEL'),
-            'encargada_inv' => $request->input('encargada_inv', 'CIELO MADELEN CALDERON POMA'),
+            'mes'           => $mes,
+            'anio'          => Carbon::parse($mes . '-01')->format('Y'),
+            'periodo_label' => Carbon::parse($mes . '-01')->translatedFormat('F Y'),
+            'empresa'       => 'DISTRIBUIDORA GUADALUPE',
         ];
 
-        $nombreArchivo = 'Cierre_Mes_' . ucfirst($nombreMes) . '_' . $anio . '.xlsx';
-
-        return Excel::download(
-            new CierreMesExport($dataCierre['items'], $meta),
-            $nombreArchivo
-        );
+        $nombreArchivo = 'Cierre_Mes_' . str_replace('-', '_', $mes) . '.xlsx';
+        return Excel::download(new CierreMesExport($datos['filas'], $meta), $nombreArchivo);
     }
 
-    // ============================================================
-    // HELPER: Cálculo centralizado de datos de Cierre de Mes
-    // ============================================================
-    private function obtenerDatosCierreMes(string $mes): array
-    {
-        $inicioMes = Carbon::parse($mes . '-01')->startOfMonth();
-        $finMes    = Carbon::parse($mes . '-01')->endOfMonth();
-
-        // 1. Obtener suma de ventas por producto en ese mes
-        $ventasPorProducto = DB::table('detalle_ventas')
-            ->join('ventas', 'detalle_ventas.id_venta', '=', 'ventas.id')
-            ->where('ventas.estado', '!=', 'Anulada')
-            ->whereBetween('ventas.fecha', [$inicioMes, $finMes])
-            ->groupBy('detalle_ventas.id_producto')
-            ->select('detalle_ventas.id_producto', DB::raw('SUM(detalle_ventas.cantidad) as total_vendido'))
-            ->pluck('total_vendido', 'id_producto');
-
-        // 2. Obtener checks de verificación guardados para este mes
-        $checks = CierreMesCheck::where('mes', $mes)
-            ->where('verificado', true)
-            ->pluck('verificado', 'id_producto');
-
-        // 3. Obtener todos los productos
-        $productos = Producto::orderBy('id', 'asc')->get();
-
-        $items = [];
-        $totalVendidos = 0;
-        $totalStockTienda = 0;
-        $totalStockAnterior = 0;
-        $verificadosCount = 0;
-
-        foreach ($productos as $prod) {
-            $venta = (int) ($ventasPorProducto[$prod->id] ?? 0);
-            $totalTienda = (int) $prod->stock;
-            // La fórmula solicitada: CANTIDAD (anterior) - VENTA = TOTAL EN TIENDA
-            // Por tanto: CANTIDAD = TOTAL EN TIENDA + VENTA
-            $cantidadAnterior = $totalTienda + $venta;
-            $estaVerificado = isset($checks[$prod->id]);
-
-            if ($estaVerificado) {
-                $verificadosCount++;
-            }
-
-            $totalVendidos      += $venta;
-            $totalStockTienda   += $totalTienda;
-            $totalStockAnterior += $cantidadAnterior;
-
-            $items[] = [
-                'id'                => $prod->id,
-                'codigo'            => $prod->codigo ?? (string)$prod->id,
-                'nombre'            => $prod->nombre,
-                'cantidad_anterior' => $cantidadAnterior,
-                'venta'             => $venta,
-                'total_tienda'      => $totalTienda,
-                'verificado'        => $estaVerificado,
-            ];
-        }
-
-        $totalProductos = count($items);
-        $pendientesCount = max(0, $totalProductos - $verificadosCount);
-        $porcentajeVerificado = $totalProductos > 0 ? round(($verificadosCount / $totalProductos) * 100) : 0;
-
-        return [
-            'items'                 => $items,
-            'totalProductos'        => $totalProductos,
-            'totalVendidos'         => $totalVendidos,
-            'totalStockTienda'      => $totalStockTienda,
-            'totalStockAnterior'    => $totalStockAnterior,
-            'verificadosCount'      => $verificadosCount,
-            'pendientesCount'       => $pendientesCount,
-            'porcentajeVerificado'  => $porcentajeVerificado,
-            'inicioMes'             => $inicioMes,
-            'finMes'                => $finMes,
-        ];
-    }
-
-    // ============================================================
-    // HELPER: Calcular rango de fechas para reporte de ventas
-    // ============================================================
     private function getRango(Request $request, string $periodo): array
     {
         switch ($periodo) {
             case 'semana':
-                $desde = Carbon::now()->startOfWeek();
-                $hasta = Carbon::now()->endOfWeek();
-                $label = 'Esta Semana (' . $desde->format('d/m') . ' - ' . $hasta->format('d/m/Y') . ')';
-                break;
+                return [
+                    Carbon::now()->startOfWeek(),
+                    Carbon::now()->endOfWeek(),
+                    'Esta Semana (' . Carbon::now()->startOfWeek()->format('d/m') . ' al ' . Carbon::now()->endOfWeek()->format('d/m/Y') . ')'
+                ];
             case 'mes':
-                $desde = Carbon::now()->startOfMonth();
-                $hasta = Carbon::now()->endOfMonth();
-                $label = 'Este Mes (' . $desde->translatedFormat('F Y') . ')';
-                break;
+                return [
+                    Carbon::now()->startOfMonth(),
+                    Carbon::now()->endOfMonth(),
+                    'Este Mes (' . Carbon::now()->translatedFormat('F Y') . ')'
+                ];
             case 'personalizado':
-                $desde = $request->filled('fecha_desde')
-                    ? Carbon::parse($request->fecha_desde)
-                    : Carbon::now()->startOfMonth();
-                $hasta = $request->filled('fecha_hasta')
-                    ? Carbon::parse($request->fecha_hasta)
-                    : Carbon::now();
-                $label = $desde->format('d/m/Y') . ' al ' . $hasta->format('d/m/Y');
-                break;
+                $desde = $request->filled('fecha_desde') ? Carbon::parse($request->fecha_desde) : Carbon::today();
+                $hasta = $request->filled('fecha_hasta') ? Carbon::parse($request->fecha_hasta) : Carbon::today();
+                return [
+                    $desde,
+                    $hasta,
+                    'Del ' . $desde->format('d/m/Y') . ' al ' . $hasta->format('d/m/Y')
+                ];
             case 'hoy':
             default:
-                $desde = Carbon::today();
-                $hasta = Carbon::today();
-                $label = 'Hoy (' . Carbon::today()->format('d/m/Y') . ')';
-                break;
+                return [
+                    Carbon::today(),
+                    Carbon::today(),
+                    'Hoy (' . Carbon::today()->format('d/m/Y') . ')'
+                ];
+        }
+    }
+
+    private function obtenerDatosCierreMes(string $mes): array
+    {
+        $fechaInicio = Carbon::createFromFormat('Y-m', $mes)->startOfMonth();
+        $fechaFin    = Carbon::createFromFormat('Y-m', $mes)->endOfMonth();
+
+        $productos = Producto::with(['categoria', 'marca', 'unidad'])->orderBy('id')->get();
+
+        $ventasPorProducto = DB::table('detalle_ventas')
+            ->join('ventas', 'detalle_ventas.id_venta', '=', 'ventas.id')
+            ->where('ventas.estado', '!=', 'Anulada')
+            ->whereBetween('ventas.fecha', [$fechaInicio, $fechaFin])
+            ->groupBy('detalle_ventas.id_producto')
+            ->select('detalle_ventas.id_producto', DB::raw('SUM(detalle_ventas.cantidad) as total_vendido'))
+            ->pluck('total_vendido', 'detalle_ventas.id_producto');
+
+        $checks = CierreMesCheck::where('mes', $mes)->pluck('verificado', 'id_producto');
+
+        $filas = [];
+        $totalCantidadAnterior = 0;
+        $totalVentas = 0;
+        $totalEnTienda = 0;
+        $verificadosCount = 0;
+
+        foreach ($productos as $p) {
+            $ventasMes = (int) ($ventasPorProducto[$p->id] ?? 0);
+            $totalTienda = (int) $p->stock;
+            $cantidadAnterior = $totalTienda + $ventasMes;
+
+            $verificado = (bool) ($checks[$p->id] ?? false);
+            if ($verificado) $verificadosCount++;
+
+            $totalCantidadAnterior += $cantidadAnterior;
+            $totalVentas += $ventasMes;
+            $totalEnTienda += $totalTienda;
+
+            $filas[] = [
+                'producto'          => $p,
+                'id'                => $p->id,
+                'codigo'            => $p->codigo,
+                'nombre'            => $p->nombre,
+                'cantidad_anterior' => $cantidadAnterior,
+                'ventas'            => $ventasMes,
+                'venta'             => $ventasMes,
+                'total_tienda'      => $totalTienda,
+                'verificado'        => $verificado,
+            ];
         }
 
-        return [$desde, $hasta, $label];
+        $totalProductos = count($productos);
+        $porcentaje = $totalProductos > 0 ? round(($verificadosCount / $totalProductos) * 100) : 0;
+        $pendientesCount = max(0, $totalProductos - $verificadosCount);
+
+        return [
+            'items'                 => $filas,
+            'filas'                 => $filas,
+            'totalProductos'        => $totalProductos,
+            'verificadosCount'      => $verificadosCount,
+            'pendientesCount'       => $pendientesCount,
+            'porcentaje'            => $porcentaje,
+            'porcentajeVerificado'  => $porcentaje,
+            'totalCantidadAnterior' => $totalCantidadAnterior,
+            'totalStockAnterior'    => $totalCantidadAnterior,
+            'totalVentas'           => $totalVentas,
+            'totalVendidos'         => $totalVentas,
+            'totalEnTienda'         => $totalEnTienda,
+            'totalStockTienda'      => $totalEnTienda,
+            'inicioMes'             => $fechaInicio,
+            'finMes'                => $fechaFin,
+        ];
     }
 }

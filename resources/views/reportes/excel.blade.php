@@ -77,10 +77,23 @@
         @endif
     @endforeach
     {{-- FILA DE TOTALES --}}
+    @php
+        $totEfectivo = is_array($totales) ? ($totales['efectivo'] ?? 0) : 0;
+        $totQr       = is_array($totales) ? ($totales['qr'] ?? 0) : 0;
+        $totPendiente= is_array($totales) ? ($totales['por_pagar'] ?? 0) : 0;
+        $totGeneral  = is_array($totales) ? ($totales['general'] ?? 0) : 0;
+    @endphp
     <tr>
         <td colspan="7"><strong>TOTALES</strong></td>
-        <td><strong>Efectivo: Bs. {{ number_format($totales['efectivo'] ?? 0, 2) }} | QR: Bs. {{ number_format($totales['qr'] ?? 0, 2) }}</strong></td>
-        <td><strong>Bs. {{ number_format($totales['general'] ?? 0, 2) }}</strong></td>
+        <td>
+            <strong>
+                Efectivo: Bs. {{ number_format($totEfectivo, 2) }} | QR: Bs. {{ number_format($totQr, 2) }}
+                @if($totPendiente > 0)
+                    | Por Cobrar: Bs. {{ number_format($totPendiente, 2) }}
+                @endif
+            </strong>
+        </td>
+        <td><strong>Bs. {{ number_format($totGeneral, 2) }}</strong></td>
         <td colspan="2"></td>
     </tr>
 </table>

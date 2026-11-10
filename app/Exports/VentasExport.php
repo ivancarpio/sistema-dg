@@ -18,9 +18,35 @@ class VentasExport implements FromView, WithTitle, WithStyles, ShouldAutoSize
 
     public function __construct($ventas, $filtros = [], $totales = [])
     {
-        $this->ventas  = $ventas;
-        $this->filtros = $filtros;
-        $this->totales = $totales;
+        $this->ventas = $ventas;
+
+        if ($filtros instanceof \Carbon\Carbon || is_string($filtros)) {
+            $this->filtros = ['periodo_label' => (string)$filtros];
+        } else {
+            $this->filtros = is_array($filtros) ? $filtros : [];
+        }
+
+        if (is_array($totales) && !empty($totales)) {
+            $this->totales = $totales;
+        } else {
+            $totEf = 0; $totQr = 0; $totPorPagar = 0;
+            foreach ($this->ventas as $v) {
+                $cobrado = $v->monto_pagado !== null ? floatval($v->monto_pagado) : floatval($v->total);
+                if ($v->metodo_pago === 'Efectivo') $totEf += $cobrado;
+                elseif ($v->metodo_pago === 'QR') $totQr += $cobrado;
+                elseif ($v->metodo_pago === 'Por Pagar') {
+                    $totPorPagar += floatval($v->saldo_pendiente ?? 0);
+                    if ($v->metodo_adelanto === 'QR') $totQr += $cobrado;
+                    else $totEf += $cobrado;
+                }
+            }
+            $this->totales = [
+                'efectivo'  => $totEf,
+                'qr'        => $totQr,
+                'por_pagar' => $totPorPagar,
+                'general'   => $this->ventas->sum('total'),
+            ];
+        }
     }
 
     public function view(): View

@@ -6,6 +6,8 @@ use Illuminate\Http\Request;
 use App\Models\Arqueo;
 use App\Models\Venta;
 use App\Models\User;
+use App\Exports\ArqueoExport;
+use Maatwebsite\Excel\Facades\Excel;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
@@ -17,23 +19,22 @@ class ArqueoController extends Controller
     // ============================================================
     public function index(Request $request)
     {
-        // --- Panel de control: estadísticas del mes actual ---
         $inicioMes = Carbon::now()->startOfMonth();
         $finMes    = Carbon::now()->endOfMonth();
 
         $arqueosEsteMes = Arqueo::whereBetween('created_at', [$inicioMes, $finMes])->count();
         $totalArqueadoMes = Arqueo::whereBetween('created_at', [$inicioMes, $finMes])->sum('total_general');
 
-        // Ventas completadas que aún NO han sido incluidas en ningún arqueo
+        // Ventas no arqueadas y no anuladas
         $ventasSinArquear = Venta::whereNull('arqueo_id')
             ->where('estado', '!=', 'Anulada')
             ->count();
 
+        // El monto sin arquear es el dinero real cobrado (monto_pagado)
         $montoSinArquear = Venta::whereNull('arqueo_id')
             ->where('estado', '!=', 'Anulada')
-            ->sum('total');
+            ->sum(DB::raw('COALESCE(monto_pagado, total)'));
 
-        // --- Listado de arqueos con filtros opcionales ---
         $query = Arqueo::with('usuario')->latest();
 
         if ($request->filled('buscar')) {
@@ -51,8 +52,6 @@ class ArqueoController extends Controller
         }
 
         $arqueos = $query->paginate(20)->withQueryString();
-
-        // Usuarios para el detalle
         $usuarios = User::all();
 
         return view('arqueos.index', compact(
@@ -70,12 +69,10 @@ class ArqueoController extends Controller
     // ============================================================
     public function create(Request $request)
     {
-        // Ventas NO arqueadas y NO anuladas
-        $query = Venta::with('usuario')
+        $query = Venta::with(['usuario', 'detalles.producto'])
             ->whereNull('arqueo_id')
             ->where('estado', '!=', 'Anulada');
 
-        // Filtro rápido por período
         $periodo = $request->input('periodo', 'hoy');
         switch ($periodo) {
             case 'semana':
@@ -90,23 +87,40 @@ class ArqueoController extends Controller
                 break;
         }
 
-        // Filtro por método de pago
         if ($request->filled('metodo_pago')) {
             $query->where('metodo_pago', $request->metodo_pago);
         }
 
-        // Filtro por cajero
         if ($request->filled('cajero')) {
             $query->where('id_usuario', $request->cajero);
         }
 
         $ventasPendientes = $query->orderBy('fecha', 'desc')->get();
 
-        // Pre-calcular resumen para la barra lateral
+        // Calcular dinero real cobrado por canal
+        $totalEfectivo = 0;
+        $totalQr = 0;
+
+        foreach ($ventasPendientes as $v) {
+            $montoCobrado = $v->monto_pagado !== null ? floatval($v->monto_pagado) : floatval($v->total);
+            
+            if ($v->metodo_pago === 'Efectivo') {
+                $totalEfectivo += $montoCobrado;
+            } elseif ($v->metodo_pago === 'QR') {
+                $totalQr += $montoCobrado;
+            } elseif ($v->metodo_pago === 'Por Pagar') {
+                if ($v->metodo_adelanto === 'QR') {
+                    $totalQr += $montoCobrado;
+                } else {
+                    $totalEfectivo += $montoCobrado;
+                }
+            }
+        }
+
         $resumen = [
-            'efectivo' => $ventasPendientes->where('metodo_pago', 'Efectivo')->sum('total'),
-            'qr'       => $ventasPendientes->where('metodo_pago', 'QR')->sum('total'),
-            'total'    => $ventasPendientes->sum('total'),
+            'efectivo' => $totalEfectivo,
+            'qr'       => $totalQr,
+            'total'    => $totalEfectivo + $totalQr,
             'cantidad' => $ventasPendientes->count(),
         ];
 
@@ -132,7 +146,6 @@ class ArqueoController extends Controller
         try {
             $ids = $request->ventas_seleccionadas;
 
-            // Traemos las ventas seleccionadas
             $ventas = Venta::whereIn('id', $ids)
                 ->whereNull('arqueo_id')
                 ->where('estado', '!=', 'Anulada')
@@ -142,14 +155,29 @@ class ArqueoController extends Controller
                 return back()->with('error', 'Las ventas seleccionadas no son válidas o ya fueron arqueadas.');
             }
 
-            // Calcular totales
-            $totalEfectivo = $ventas->where('metodo_pago', 'Efectivo')->sum('total');
-            $totalQr       = $ventas->where('metodo_pago', 'QR')->sum('total');
-            $totalGeneral  = $ventas->sum('total');
+            $totalEfectivo = 0;
+            $totalQr = 0;
 
-            // Crear el arqueo
+            foreach ($ventas as $v) {
+                $montoCobrado = $v->monto_pagado !== null ? floatval($v->monto_pagado) : floatval($v->total);
+                
+                if ($v->metodo_pago === 'Efectivo') {
+                    $totalEfectivo += $montoCobrado;
+                } elseif ($v->metodo_pago === 'QR') {
+                    $totalQr += $montoCobrado;
+                } elseif ($v->metodo_pago === 'Por Pagar') {
+                    if ($v->metodo_adelanto === 'QR') {
+                        $totalQr += $montoCobrado;
+                    } else {
+                        $totalEfectivo += $montoCobrado;
+                    }
+                }
+            }
+
+            $totalGeneral = $totalEfectivo + $totalQr;
+
             $arqueo = Arqueo::create([
-                'id_usuario'     => Auth::id(),
+                'id_usuario'     => Auth::id() ?? 1,
                 'total_efectivo' => $totalEfectivo,
                 'total_qr'       => $totalQr,
                 'total_general'  => $totalGeneral,
@@ -157,11 +185,10 @@ class ArqueoController extends Controller
                 'observaciones'  => $request->observaciones,
             ]);
 
-            // Marcar cada venta como arqueada
             foreach ($ventas as $venta) {
                 $venta->arqueo_id = $arqueo->id;
                 $venta->save();
-                // Tabla pivote (referencia histórica)
+
                 DB::table('arqueo_venta')->insert([
                     'arqueo_id' => $arqueo->id,
                     'venta_id'  => $venta->id,
@@ -183,7 +210,17 @@ class ArqueoController extends Controller
     // ============================================================
     public function show($id)
     {
-        $arqueo = Arqueo::with(['usuario', 'ventas.usuario'])->findOrFail($id);
+        $arqueo = Arqueo::with(['usuario', 'ventas.usuario', 'ventas.detalles.producto'])->findOrFail($id);
         return view('arqueos.show', compact('arqueo'));
+    }
+
+    // ============================================================
+    // 5. EXPORTAR ARQUEO A EXCEL
+    // ============================================================
+    public function exportarExcel($id)
+    {
+        $arqueo = Arqueo::with(['usuario', 'ventas.usuario', 'ventas.detalles.producto'])->findOrFail($id);
+        $nombreArchivo = 'Arqueo_Caja_#' . $arqueo->id . '_' . $arqueo->created_at->format('Ymd_His') . '.xlsx';
+        return Excel::download(new ArqueoExport($arqueo), $nombreArchivo);
     }
 }

@@ -64,6 +64,7 @@
 /* Badges de método de pago */
 .badge-efectivo { background: #dcfce7; color: #16a34a; font-weight: 700; border-radius: 20px; padding: 4px 12px; font-size: 0.78rem; }
 .badge-qr       { background: #dbeafe; color: #2563eb; font-weight: 700; border-radius: 20px; padding: 4px 12px; font-size: 0.78rem; }
+.badge-por-pagar{ background: #fef3c7; color: #b45309; font-weight: 700; border-radius: 20px; padding: 4px 12px; font-size: 0.78rem; border: 1px solid #fde68a; }
 
 /* Tabs de período */
 .periodo-btn { border-radius: 8px !important; font-size: 0.82rem; font-weight: 600; border: 1px solid #e2e8f0; }
@@ -188,6 +189,7 @@
                         <option value="">Todos</option>
                         <option value="Efectivo" {{ request('metodo_pago') == 'Efectivo' ? 'selected' : '' }}>💵 Efectivo</option>
                         <option value="QR"       {{ request('metodo_pago') == 'QR'       ? 'selected' : '' }}>📱 QR</option>
+                        <option value="Por Pagar" {{ request('metodo_pago') == 'Por Pagar' ? 'selected' : '' }}>⏳ Por Pagar</option>
                     </select>
                 </div>
 
@@ -263,15 +265,32 @@
             </div>
         </div>
     </div>
-    {{-- Total --}}
+    {{-- Por Pagar (Saldo Pendiente) --}}
+    <div class="col-6 col-md-3">
+        <div class="metric-card card h-100" style="background:#fffbeb; border:1px solid #fde68a;">
+            <div class="d-flex align-items-center gap-3">
+                <div class="metric-icon" style="background:rgba(245,158,11,0.15); color:#d97706;">
+                    <i class="bi bi-clock-history"></i>
+                </div>
+                <div>
+                    <div class="metric-label" style="color:#b45309;">Por Cobrar (Pendiente)</div>
+                    <div class="metric-value" style="color:#b45309;">Bs. {{ number_format($totales['por_pagar'] ?? 0, 2) }}</div>
+                    <div class="metric-sub text-muted">
+                        {{ $ventas->where('metodo_pago', 'Por Pagar')->where('saldo_pendiente', '>', 0)->count() }} ventas con saldo
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {{-- Total Facturado --}}
     <div class="col-6 col-md-3">
         <div class="metric-card metric-total card h-100">
             <div class="d-flex align-items-center gap-3">
                 <div class="metric-icon"><i class="bi bi-wallet2"></i></div>
                 <div>
-                    <div class="metric-label">Total Recaudado</div>
+                    <div class="metric-label">Total Facturado</div>
                     <div class="metric-value">Bs. {{ number_format($totales['general'], 2) }}</div>
-                    <div class="metric-sub">{{ $totales['cantidad'] }} ventas en total</div>
+                    <div class="metric-sub">{{ $totales['cantidad'] }} ventas · {{ number_format($totales['productos'], 0) }} arts.</div>
                 </div>
             </div>
         </div>
@@ -358,10 +377,17 @@
                                 <span class="badge-efectivo">
                                     <i class="bi bi-cash me-1"></i>Efectivo
                                 </span>
-                            @else
+                            @elseif(strtolower($venta->metodo_pago) == 'qr')
                                 <span class="badge-qr">
                                     <i class="bi bi-qr-code me-1"></i>QR
                                 </span>
+                            @else
+                                <span class="badge-por-pagar">
+                                    <i class="bi bi-clock-history me-1"></i>Por Pagar
+                                </span>
+                                @if(($venta->saldo_pendiente ?? 0) > 0)
+                                    <small class="text-danger fw-bold d-block" style="font-size:0.75rem;">Debe: Bs. {{ number_format($venta->saldo_pendiente, 2) }}</small>
+                                @endif
                             @endif
                         </td>
                         <td>

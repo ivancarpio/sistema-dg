@@ -40,9 +40,27 @@
 
     @media print {
         .no-print { display: none !important; }
-        .card { box-shadow: none !important; border: 1px solid #e2e8f0 !important; }
+        .card { box-shadow: none !important; border: 1px solid #cbd5e1 !important; margin-bottom: 12px !important; }
+        .total-card { border: 1px solid #cbd5e1 !important; padding: 10px 14px !important; }
+        .fila-detalle { display: table-row !important; }
+        .detalle-productos { background: #f8fafc !important; border-left: 2px solid #0284c7 !important; padding: 8px !important; }
+        body { font-size: 11pt !important; color: #000 !important; }
     }
 </style>
+
+{{-- ENCABEZADO EXCLUSIVO PARA IMPRESIÓN (OCULTO EN PANTALLA) --}}
+<div class="d-none d-print-block mb-3 border-bottom pb-2">
+    <div class="d-flex justify-content-between align-items-center">
+        <div>
+            <h4 class="fw-bold m-0 text-dark">DISTRIBUIDORA GUADALUPE</h4>
+            <div class="small text-muted">Comprobante Oficial de Arqueo y Cierre de Caja</div>
+        </div>
+        <div class="text-end">
+            <h5 class="fw-bold text-dark m-0">ARQUEO #{{ $arqueo->id }}</h5>
+            <small class="text-muted">Fecha: {{ $arqueo->created_at->format('d/m/Y H:i') }}</small>
+        </div>
+    </div>
+</div>
 
 {{-- Alertas --}}
 @if(session('success'))
@@ -52,7 +70,7 @@
     </div>
 @endif
 
-{{-- ===== ENCABEZADO ===== --}}
+{{-- ===== ENCABEZADO DE PANTALLA ===== --}}
 <div class="d-flex justify-content-between align-items-center mb-4 no-print">
     <div class="d-flex align-items-center">
         <div class="bg-primary bg-opacity-10 p-2 rounded me-3 text-primary">
@@ -69,11 +87,14 @@
         </div>
     </div>
     <div class="d-flex gap-2">
-        <button onclick="window.print()" class="btn btn-outline-secondary fw-bold">
-            <i class="bi bi-printer me-2"></i>Imprimir
+        <a href="/arqueos/{{ $arqueo->id }}/excel" class="btn btn-success fw-bold shadow-sm">
+            <i class="bi bi-file-earmark-excel-fill me-1"></i> Exportar a Excel
+        </a>
+        <button onclick="window.print()" class="btn btn-primary fw-bold shadow-sm">
+            <i class="bi bi-printer-fill me-1"></i> Imprimir Arqueo
         </button>
         <a href="/arqueos" class="btn btn-outline-secondary fw-bold">
-            <i class="bi bi-arrow-left me-2"></i>Volver
+            <i class="bi bi-arrow-left me-1"></i> Volver
         </a>
     </div>
 </div>
@@ -247,8 +268,13 @@
                                 <td>
                                     @if(strtolower($venta->metodo_pago) == 'efectivo')
                                         <span class="badge-efectivo"><i class="bi bi-cash me-1"></i>Efectivo</span>
-                                    @else
+                                    @elseif(strtolower($venta->metodo_pago) == 'qr')
                                         <span class="badge-qr"><i class="bi bi-qr-code me-1"></i>QR</span>
+                                    @else
+                                        <span class="badge bg-warning text-dark border"><i class="bi bi-clock-history me-1"></i>Por Pagar</span>
+                                        @if(($venta->saldo_pendiente ?? 0) > 0)
+                                            <small class="text-danger fw-bold d-block" style="font-size:0.75rem;">Debe: Bs. {{ number_format($venta->saldo_pendiente, 2) }}</small>
+                                        @endif
                                     @endif
                                 </td>
                                 <td><span class="badge-verificado"><i class="bi bi-patch-check-fill me-1"></i>Verificada</span></td>
@@ -434,6 +460,24 @@
     </div>
 
 </div>{{-- fin tab-content --}}
+
+{{-- SECCIÓN DE FIRMAS EXCLUSIVA PARA IMPRESIÓN --}}
+<div class="d-none d-print-block mt-5 pt-4">
+    <div class="row text-center">
+        <div class="col-6">
+            <div style="border-top: 1px solid #334155; width: 75%; margin: 0 auto; padding-top: 6px;">
+                <div class="fw-bold text-dark">{{ optional($arqueo->usuario)->name ?? 'Cajero Responsable' }}</div>
+                <small class="text-muted">Firma y Aclaración (Cajero)</small>
+            </div>
+        </div>
+        <div class="col-6">
+            <div style="border-top: 1px solid #334155; width: 75%; margin: 0 auto; padding-top: 6px;">
+                <div class="fw-bold text-dark">Administración / Supervisor</div>
+                <small class="text-muted">Firma y Sello Recibido Conforme</small>
+            </div>
+        </div>
+    </div>
+</div>
 
 <script>
 function toggleDetalle(id, btn) {

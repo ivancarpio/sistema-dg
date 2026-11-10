@@ -22,25 +22,39 @@ class InventarioController extends Controller
             'id_producto' => 'required',
             'tipo'        => 'required',
             'cantidad'    => 'required|numeric|min:1',
+            'motivo'      => 'required|min:3',
+        ], [
+            'motivo.required' => 'El motivo es obligatorio. Describí brevemente el motivo del ajuste.',
+            'motivo.min'      => 'El motivo debe tener al menos 3 caracteres.',
         ]);
 
-        // 1. Guardar en el historial
-        $movimiento = new Movimiento();
-        $movimiento->id_producto = $request->id_producto;
-        $movimiento->tipo        = $request->tipo;
-        $movimiento->cantidad    = $request->cantidad;
-        $movimiento->motivo      = $request->motivo ?? 'Ajuste manual de inventario';
-        $movimiento->id_usuario = Auth::id() ?? 1; // Asigna el usuario logueado (o usuario 1 por defecto)
-        $movimiento->save();
+        $producto = Producto::findOrFail($request->id_producto);
+        $stockAnterior = intval($producto->stock ?? 0);
+        $cantidad = intval($request->cantidad);
+        $esEntrada = in_array(strtoupper(trim($request->tipo)), ['ENTRADA', 'AGREGAR']);
 
-        // 2. Sumar o restar el stock al Producto
-        $producto = Producto::find($request->id_producto);
-        if ($request->tipo == 'ENTRADA') {
-            $producto->stock += $request->cantidad;
+        if ($esEntrada) {
+            $tipoNormalizado = 'Entrada';
+            $stockNuevo = $stockAnterior + $cantidad;
         } else {
-            $producto->stock -= $request->cantidad;
+            $tipoNormalizado = 'Salida';
+            $stockNuevo = max(0, $stockAnterior - $cantidad);
         }
+
+        $producto->stock = $stockNuevo;
         $producto->save();
+
+        // 1. Guardar en el historial con trazabilidad completa (Kardex)
+        $movimiento = new Movimiento();
+        $movimiento->id_producto    = $producto->id;
+        $movimiento->tipo           = $tipoNormalizado;
+        $movimiento->cantidad       = $cantidad;
+        $movimiento->stock_anterior = $stockAnterior;
+        $movimiento->stock_nuevo    = $stockNuevo;
+        $movimiento->motivo         = $request->motivo;
+        $movimiento->fecha          = now();
+        $movimiento->id_usuario     = Auth::id() ?? 1;
+        $movimiento->save();
 
         return redirect('/inventario')->with('success', 'Ajuste de inventario registrado y stock actualizado con éxito.');
     }

@@ -149,6 +149,9 @@
                                 <option value="QR" {{ request('metodo_pago') == 'QR' ? 'selected' : '' }}>
                                     📱 QR
                                 </option>
+                                <option value="Por Pagar" {{ request('metodo_pago') == 'Por Pagar' ? 'selected' : '' }}>
+                                    ⏳ Por Pagar
+                                </option>
                             </select>
                         </div>
                     </div>
@@ -192,10 +195,14 @@
                             </thead>
                             <tbody>
                                 @forelse($ventasPendientes as $venta)
-                                <tr class="fila-venta"
+                                @php
+    $montoEnCaja = $venta->monto_pagado !== null ? floatval($venta->monto_pagado) : floatval($venta->total);
+    $canalDinero = $venta->metodo_pago === 'Por Pagar' ? ($venta->metodo_adelanto ?? 'Efectivo') : $venta->metodo_pago;
+@endphp
+<tr class="fila-venta"
                                     data-id="{{ $venta->id }}"
-                                    data-total="{{ $venta->total }}"
-                                    data-metodo="{{ $venta->metodo_pago }}"
+                                    data-total="{{ $montoEnCaja }}"
+                                    data-metodo="{{ $canalDinero }}"
                                     data-cliente="{{ strtolower($venta->cliente) }}"
                                     data-nota="{{ strtolower($venta->numero_nota ?? '') }}">
 
@@ -222,10 +229,17 @@
                                             <span class="badge-efectivo">
                                                 <i class="bi bi-cash me-1"></i>Efectivo
                                             </span>
-                                        @else
+                                        @elseif(strtolower($venta->metodo_pago) == 'qr')
                                             <span class="badge-qr">
                                                 <i class="bi bi-qr-code me-1"></i>QR
                                             </span>
+                                        @else
+                                            <span class="badge bg-warning text-dark border">
+                                                <i class="bi bi-clock-history me-1"></i>Por Pagar
+                                            </span>
+                                            @if(($venta->saldo_pendiente ?? 0) > 0)
+                                                <small class="text-danger fw-bold d-block" style="font-size:0.75rem;">Debe: Bs. {{ number_format($venta->saldo_pendiente, 2) }}</small>
+                                            @endif
                                         @endif
                                     </td>
                                     <td>

@@ -23,12 +23,10 @@ class CierreMesExport implements FromView, WithTitle, WithStyles, ShouldAutoSize
     public function view(): View
     {
         return view('reportes.cierre_mes_excel', [
-            'items'          => $this->items,
-            'empresa'        => $this->meta['empresa'] ?? 'KRONA DISTRIBUIDORA GUADALUPE',
-            'anio'           => $this->meta['anio'] ?? date('Y'),
-            'gerente'        => $this->meta['gerente'] ?? 'LUIS ANTENOR CALDERON RODRIGUEZ',
-            'encargado'      => $this->meta['encargado'] ?? 'AJAEL',
-            'encargada_inv'  => $this->meta['encargada_inv'] ?? 'CIELO MADELEN CALDERON POMA',
+            'items'         => $this->items,
+            'empresa'       => $this->meta['empresa'] ?? 'DISTRIBUIDORA GUADALUPE',
+            'periodo_label' => $this->meta['periodo_label'] ?? ($this->meta['mes'] ?? date('Y-m')),
+            'anio'          => $this->meta['anio'] ?? date('Y'),
         ]);
     }
 

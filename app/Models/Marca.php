@@ -9,8 +9,13 @@ class Marca extends Model
 {
     use HasFactory;
 
-    // Le decimos a Laravel el nombre exacto de la tabla
     protected $table = 'marcas';
     protected $primaryKey = 'id';
     public $timestamps = false;
+    protected $fillable = ['nombre'];
+
+    public function productos()
+    {
+        return $this->hasMany(Producto::class, 'id_marca');
+    }
 }

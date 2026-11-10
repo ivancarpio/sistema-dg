@@ -18,7 +18,7 @@ class AuthController extends Controller
     // Procesa el inicio de sesión
     public function login(Request $request) {
         $credentials = $request->validate([
-            'email' => ['required', 'email'],
+            'email' => ['required', 'string'],
             'password' => ['required'],
         ]);
 
@@ -28,7 +28,7 @@ class AuthController extends Controller
         }
 
         return back()->withErrors([
-            'email' => 'El correo o la contraseña son incorrectos.',
+            'email' => 'El usuario o la contraseña son incorrectos.',
         ])->onlyInput('email');
     }
 
