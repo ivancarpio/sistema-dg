@@ -12,7 +12,13 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
-        //
+        $middleware->alias([
+            'permiso'     => \App\Http\Middleware\CheckPermission::class,
+            'inactividad' => \App\Http\Middleware\CheckInactivity::class,
+        ]);
+        $middleware->appendToGroup('web', [
+            \App\Http\Middleware\CheckInactivity::class,
+        ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         $exceptions->shouldRenderJsonWhen(

@@ -268,7 +268,29 @@
                     <p class="text-muted small m-0">Ingresa tus credenciales para acceder al sistema comercial</p>
                 </div>
 
-                {{-- Alertas de error --}}
+                {{-- Alertas de advertencia / inactividad / sesión --}}
+                @if(session('warning'))
+                    <div class="alert alert-warning py-2.5 px-3 small fw-bold d-flex align-items-center gap-2 mb-3 border-warning border-opacity-25" style="border-radius: 12px; background-color: #fffbeb; color: #92400e;">
+                        <i class="bi bi-clock-history fs-5 text-warning flex-shrink-0"></i>
+                        <div>{{ session('warning') }}</div>
+                    </div>
+                @endif
+
+                @if(session('error'))
+                    <div class="alert alert-danger py-2.5 px-3 small fw-bold d-flex align-items-center gap-2 mb-3" style="border-radius: 12px;">
+                        <i class="bi bi-shield-x fs-5 text-danger flex-shrink-0"></i>
+                        <div>{{ session('error') }}</div>
+                    </div>
+                @endif
+
+                @if(session('info'))
+                    <div class="alert alert-info py-2.5 px-3 small fw-bold d-flex align-items-center gap-2 mb-3" style="border-radius: 12px;">
+                        <i class="bi bi-info-circle fs-5 text-primary flex-shrink-0"></i>
+                        <div>{{ session('info') }}</div>
+                    </div>
+                @endif
+
+                {{-- Alertas de error de validación --}}
                 @if(isset($errors) && $errors->any())
                     <div class="alert alert-danger py-2 px-3 small fw-bold d-flex align-items-center gap-2 mb-3" style="border-radius: 10px;">
                         <i class="bi bi-exclamation-triangle-fill fs-5 text-danger flex-shrink-0"></i>

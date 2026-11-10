@@ -227,7 +227,7 @@
 @endif
 
 <!-- ENCABEZADO PRINCIPAL (ESTILO UNIFICADO DEL SISTEMA) -->
-<div class="d-flex justify-content-between align-items-center mb-4">
+<div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4">
     <div class="d-flex align-items-center">
         <div class="bg-primary bg-opacity-10 p-3 rounded-3 me-3 text-primary">
             <i class="bi bi-cart4 fs-2"></i>
