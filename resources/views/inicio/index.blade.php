@@ -136,12 +136,22 @@
     }
     .dropdown-periodo-menu {
         width: 320px;
+        max-width: calc(100vw - 28px);
         border-radius: 18px;
         border: 1px solid #e2e8f0;
         box-shadow: 0 20px 45px rgba(15, 23, 42, 0.22);
         padding: 16px;
         background: #ffffff;
         z-index: 1090 !important;
+    }
+    @media (max-width: 575.98px) {
+        .btn-periodo-toolbar {
+            width: 100%;
+            justify-content: space-between;
+        }
+        #dropdownPeriodoContainer {
+            width: 100%;
+        }
     }
     .btn-mes-grid {
         border: 1px solid #e2e8f0;
@@ -193,12 +203,23 @@
         box-shadow: 0 16px 36px -4px rgba(14, 165, 233, 0.3);
         border-color: rgba(56, 189, 248, 0.45);
     }
+    .card-kpi-ems .card-body {
+        padding: 16px 18px;
+    }
+    .kpi-ems-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 6px;
+        margin-bottom: 4px;
+    }
     .kpi-ems-code {
         color: #38bdf8;
         font-size: 0.72rem;
         font-weight: 800;
-        letter-spacing: 1px;
+        letter-spacing: 0.8px;
         text-transform: uppercase;
+        white-space: nowrap;
     }
     .kpi-ems-badge {
         background: rgba(56, 189, 248, 0.12);
@@ -210,23 +231,35 @@
         padding: 2px 9px;
         display: inline-flex;
         align-items: center;
+        white-space: nowrap;
+        flex-shrink: 0;
     }
     .kpi-ems-amount {
-        font-size: 1.82rem;
+        font-size: clamp(1.25rem, 2.2vw, 1.82rem);
         font-weight: 800;
         color: #ffffff;
         letter-spacing: -0.5px;
-        line-height: 1.1;
+        line-height: 1.15;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
     }
     .kpi-ems-footer {
         border-top: 1px solid rgba(255, 255, 255, 0.08);
-        padding-top: 10px;
+        padding-top: 8px;
         margin-top: 4px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 6px;
     }
     .kpi-ems-sub {
         color: #94a3b8;
         font-size: 0.74rem;
         font-weight: 500;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
     }
     .kpi-ems-trend {
         color: #e2e8f0;
@@ -235,12 +268,56 @@
         display: inline-flex;
         align-items: center;
         gap: 3px;
+        white-space: nowrap;
+        flex-shrink: 0;
     }
     .text-cyan-accent {
         color: #38bdf8 !important;
     }
     .text-danger-accent {
         color: #f87171 !important;
+    }
+
+    /* OPTIMIZACIONES RESPONSIVE MÓVIL (< 576px) */
+    @media (max-width: 575.98px) {
+        .card-kpi-ems {
+            border-radius: 16px;
+        }
+        .card-kpi-ems .card-body {
+            padding: 12px 10px !important;
+        }
+        .kpi-ems-header {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 4px;
+            min-height: 44px;
+            margin-bottom: 4px;
+        }
+        .kpi-ems-code {
+            font-size: 0.67rem;
+            letter-spacing: 0.5px;
+            line-height: 1.1;
+        }
+        .kpi-ems-badge {
+            font-size: 0.65rem;
+            padding: 2px 7px;
+            line-height: 1.1;
+        }
+        .kpi-ems-amount {
+            font-size: 1.25rem !important;
+            letter-spacing: -0.3px;
+        }
+        .kpi-ems-footer {
+            padding-top: 6px;
+            margin-top: 2px;
+            gap: 4px;
+        }
+        .kpi-ems-sub {
+            font-size: 0.67rem;
+        }
+        .kpi-ems-trend {
+            font-size: 0.67rem;
+        }
     }
 
     /* ============================================================ */
@@ -453,12 +530,12 @@
 {{-- ======================================================== --}}
 {{-- 2. 4 TARJETAS KPI (ESTILO EMS HIGH CONTRAST LUXURY)       --}}
 {{-- ======================================================== --}}
-<div class="row g-3 mb-4 ems-animate-in">
+<div class="row g-2 g-sm-3 mb-4 ems-animate-in">
     <!-- KPI 1: Ventas del Mes -->
     <div class="col-6 col-xl-3">
         <div class="card card-kpi-ems h-100">
-            <div class="card-body p-3.5 d-flex flex-column justify-content-between">
-                <div class="d-flex justify-content-between align-items-center mb-1">
+            <div class="card-body d-flex flex-column justify-content-between">
+                <div class="kpi-ems-header">
                     <span class="kpi-ems-code">VENTAS</span>
                     <span class="kpi-ems-badge">
                         <i class="bi bi-cart3 me-1"></i> {{ $esMesActual ? 'Mes Activo' : 'Cerrado' }}
@@ -467,8 +544,8 @@
                 <div class="my-2">
                     <div class="kpi-ems-amount">Bs. {{ number_format($ventasMes, 2) }}</div>
                 </div>
-                <div class="d-flex justify-content-between align-items-center kpi-ems-footer">
-                    <span class="kpi-ems-sub">Ventas del período</span>
+                <div class="kpi-ems-footer">
+                    <span class="kpi-ems-sub" title="Ventas del período">Ventas del período</span>
                     <span class="kpi-ems-trend">
                         {{ $conteoVentasMes }} venta(s)
                         @if($variacionVentas != 0)
@@ -485,8 +562,8 @@
     <!-- KPI 2: Margen Estimado -->
     <div class="col-6 col-xl-3">
         <div class="card card-kpi-ems h-100">
-            <div class="card-body p-3.5 d-flex flex-column justify-content-between">
-                <div class="d-flex justify-content-between align-items-center mb-1">
+            <div class="card-body d-flex flex-column justify-content-between">
+                <div class="kpi-ems-header">
                     <span class="kpi-ems-code">RENTABILIDAD</span>
                     <span class="kpi-ems-badge">
                         <i class="bi bi-cash-stack me-1"></i> Estimado
@@ -495,9 +572,11 @@
                 <div class="my-2">
                     <div class="kpi-ems-amount">Bs. {{ number_format($margenEstimado, 2) }}</div>
                 </div>
-                <div class="d-flex justify-content-between align-items-center kpi-ems-footer">
-                    <span class="kpi-ems-sub">Margen comercial</span>
-                    <span class="kpi-ems-trend">Rentabilidad neta</span>
+                <div class="kpi-ems-footer">
+                    <span class="kpi-ems-sub" title="Margen comercial estimado">Margen comercial</span>
+                    <span class="kpi-ems-trend">
+                        <i class="bi bi-graph-up-arrow text-cyan-accent me-0.5"></i> Rentabilidad
+                    </span>
                 </div>
             </div>
         </div>
@@ -506,8 +585,8 @@
     <!-- KPI 3: Catálogo / Ventas de Hoy o Promedio Diario -->
     <div class="col-6 col-xl-3">
         <div class="card card-kpi-ems h-100">
-            <div class="card-body p-3.5 d-flex flex-column justify-content-between">
-                <div class="d-flex justify-content-between align-items-center mb-1">
+            <div class="card-body d-flex flex-column justify-content-between">
+                <div class="kpi-ems-header">
                     <span class="kpi-ems-code">OPERACIONES</span>
                     <span class="kpi-ems-badge">
                         <i class="bi bi-activity me-1"></i> En Vivo
@@ -516,9 +595,9 @@
                 <div class="my-2">
                     <div class="kpi-ems-amount">Bs. {{ number_format($esMesActual ? $ventasHoy : $promedioDiario, 2) }}</div>
                 </div>
-                <div class="d-flex justify-content-between align-items-center kpi-ems-footer">
-                    <span class="kpi-ems-sub">{{ $esMesActual ? 'Ventas de hoy' : 'Promedio diario' }}</span>
-                    <span class="kpi-ems-trend">{{ $totalProductos }} productos</span>
+                <div class="kpi-ems-footer">
+                    <span class="kpi-ems-sub" title="{{ $esMesActual ? 'Ventas de hoy' : 'Promedio diario' }}">{{ $esMesActual ? 'Ventas de hoy' : 'Promedio diario' }}</span>
+                    <span class="kpi-ems-trend">{{ $totalProductos }} prod(s)</span>
                 </div>
             </div>
         </div>
@@ -527,8 +606,8 @@
     <!-- KPI 4: Cuentas por Cobrar (Créditos Pendientes) -->
     <div class="col-6 col-xl-3">
         <div class="card card-kpi-ems h-100">
-            <div class="card-body p-3.5 d-flex flex-column justify-content-between">
-                <div class="d-flex justify-content-between align-items-center mb-1">
+            <div class="card-body d-flex flex-column justify-content-between">
+                <div class="kpi-ems-header">
                     <span class="kpi-ems-code">POR COBRAR</span>
                     <span class="kpi-ems-badge">
                         <i class="bi bi-wallet2 me-1"></i> Crédito
@@ -537,8 +616,8 @@
                 <div class="my-2">
                     <div class="kpi-ems-amount">Bs. {{ number_format($totalPorCobrar, 2) }}</div>
                 </div>
-                <div class="d-flex justify-content-between align-items-center kpi-ems-footer">
-                    <span class="kpi-ems-sub">Saldo por cobrar</span>
+                <div class="kpi-ems-footer">
+                    <span class="kpi-ems-sub" title="Saldo por cobrar">Saldo por cobrar</span>
                     <span class="kpi-ems-trend">{{ $conteoPorCobrar }} nota(s)</span>
                 </div>
             </div>
@@ -553,7 +632,7 @@
     <!-- Gráfico 1: Ventas Mensuales del Año (Barras en Azul Tonal con Datos Reales) -->
     <div class="col-lg-7">
         <div class="card card-chart-ems h-100">
-            <div class="card-header d-flex justify-content-between align-items-center">
+            <div class="card-header d-flex flex-wrap justify-content-between align-items-center gap-2">
                 <div class="d-flex align-items-center gap-2.5">
                     <div class="header-icon-box">
                         <i class="bi bi-bar-chart-fill"></i>
@@ -580,7 +659,7 @@
     <!-- Gráfico 2: Top Ventas por Producto (PASTEL / DOUGHNUT CON ARCOÍRIS PRESERVADO) -->
     <div class="col-lg-5">
         <div class="card card-chart-ems h-100">
-            <div class="card-header d-flex justify-content-between align-items-center">
+            <div class="card-header d-flex flex-wrap justify-content-between align-items-center gap-2">
                 <div class="d-flex align-items-center gap-2.5">
                     <div class="header-icon-box">
                         <i class="bi bi-pie-chart-fill"></i>
@@ -671,7 +750,7 @@
     <!-- Métrica 4: Top 10 Clientes Más Regulares (Forma de Embudo / Funnel en Azul Degradado) -->
     <div class="col-lg-5">
         <div class="card card-chart-ems h-100">
-            <div class="card-header d-flex justify-content-between align-items-center">
+            <div class="card-header d-flex flex-wrap justify-content-between align-items-center gap-2">
                 <div class="d-flex align-items-center gap-2.5">
                     <div class="header-icon-box">
                         <i class="bi bi-funnel-fill"></i>
@@ -769,7 +848,7 @@
     <!-- Columna 1: Alertas de Stock Crítico / Bajo -->
     <div class="col-lg-6">
         <div class="card card-chart-ems h-100">
-            <div class="card-header d-flex justify-content-between align-items-center">
+            <div class="card-header d-flex flex-wrap justify-content-between align-items-center gap-2">
                 <div class="d-flex align-items-center gap-2.5">
                     <div class="header-icon-box" style="background: #fef3c7; color: #d97706;">
                         <i class="bi bi-exclamation-triangle-fill"></i>
@@ -818,7 +897,7 @@
     <!-- Columna 2: Registro de Últimas Ventas en Tiempo Real -->
     <div class="col-lg-6">
         <div class="card card-chart-ems h-100">
-            <div class="card-header d-flex justify-content-between align-items-center">
+            <div class="card-header d-flex flex-wrap justify-content-between align-items-center gap-2">
                 <div class="d-flex align-items-center gap-2.5">
                     <div class="header-icon-box">
                         <i class="bi bi-receipt-cutoff"></i>
