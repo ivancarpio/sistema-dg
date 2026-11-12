@@ -136,19 +136,19 @@
                         <i class="bi bi-calendar3 me-1"></i>Período
                     </label>
                     <div class="d-flex gap-2 flex-wrap mt-1">
-                        <button type="submit" name="periodo" value="hoy"
-                            class="btn btn-sm periodo-btn {{ $periodo == 'hoy' ? 'activo' : 'btn-light' }}">
+                        <button type="button" onclick="seleccionarPeriodo('hoy')"
+                            class="btn btn-sm periodo-btn {{ $periodo == 'hoy' ? 'activo' : 'btn-light' }}" id="btnPeriodoHoy">
                             <i class="bi bi-sun me-1"></i>Hoy
                         </button>
-                        <button type="submit" name="periodo" value="semana"
-                            class="btn btn-sm periodo-btn {{ $periodo == 'semana' ? 'activo' : 'btn-light' }}">
+                        <button type="button" onclick="seleccionarPeriodo('semana')"
+                            class="btn btn-sm periodo-btn {{ $periodo == 'semana' ? 'activo' : 'btn-light' }}" id="btnPeriodoSemana">
                             <i class="bi bi-calendar-week me-1"></i>Esta Semana
                         </button>
-                        <button type="submit" name="periodo" value="mes"
-                            class="btn btn-sm periodo-btn {{ $periodo == 'mes' ? 'activo' : 'btn-light' }}">
+                        <button type="button" onclick="seleccionarPeriodo('mes')"
+                            class="btn btn-sm periodo-btn {{ $periodo == 'mes' ? 'activo' : 'btn-light' }}" id="btnPeriodoMes">
                             <i class="bi bi-calendar-month me-1"></i>Este Mes
                         </button>
-                        <button type="submit" name="periodo" value="personalizado"
+                        <button type="button" onclick="activarPersonalizado()"
                             class="btn btn-sm periodo-btn {{ $periodo == 'personalizado' ? 'activo' : 'btn-light' }}"
                             id="btnPersonalizado">
                             <i class="bi bi-sliders me-1"></i>Personalizado
@@ -207,7 +207,7 @@
                 </div>
 
                 {{-- Mantener período al filtrar --}}
-                <input type="hidden" name="periodo" value="{{ $periodo }}">
+                <input type="hidden" name="periodo" id="inputPeriodoHidden" value="{{ $periodo }}">
 
                 {{-- Botones --}}
                 <div class="col-md-2 d-flex gap-2 align-items-end">
@@ -541,10 +541,38 @@ function contraerTodas() {
     document.querySelectorAll('.btn-expandir').forEach(b => b.classList.remove('abierto'));
 }
 
-// Mostrar/ocultar rango personalizado
-document.getElementById('btnPersonalizado').addEventListener('click', function() {
-    document.getElementById('rangoPersonalizado').style.display = '';
-});
+// Control de Selección de Períodos Rápidos y Personalizado
+function seleccionarPeriodo(val) {
+    const inputHidden = document.getElementById('inputPeriodoHidden');
+    if (inputHidden) inputHidden.value = val;
+    const rango = document.getElementById('rangoPersonalizado');
+    if (rango) rango.style.display = 'none';
+    const form = document.getElementById('formFiltros');
+    if (form) form.submit();
+}
+
+function activarPersonalizado() {
+    const inputHidden = document.getElementById('inputPeriodoHidden');
+    const rango = document.getElementById('rangoPersonalizado');
+    const btnPers = document.getElementById('btnPersonalizado');
+    
+    // Marcar como activo el botón personalizado y desmarcar los demás
+    document.querySelectorAll('.periodo-btn').forEach(b => {
+        b.classList.remove('activo');
+        if (!b.classList.contains('btn-light')) b.classList.add('btn-light');
+    });
+    if (btnPers) {
+        btnPers.classList.remove('btn-light');
+        btnPers.classList.add('activo');
+    }
+    
+    if (inputHidden) inputHidden.value = 'personalizado';
+    if (rango) {
+        rango.style.display = '';
+        const inputDesde = rango.querySelector('input[name="fecha_desde"]');
+        if (inputDesde) inputDesde.focus();
+    }
+}
 </script>
 
 @endsection
