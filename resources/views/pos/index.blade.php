@@ -113,6 +113,49 @@
         box-shadow: 0 3px 10px rgba(245, 158, 11, 0.2) !important;
     }
 
+    /* Selector de Tarifa de Precios (Ocasional vs Regular / Ferretería) */
+    .btn-tarifa {
+        border-radius: 8px !important;
+        border: 1px solid transparent;
+        color: #64748b;
+        background: transparent;
+        transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        text-align: center;
+        font-size: 0.82rem;
+    }
+    .btn-tarifa:hover {
+        background: #ffffff;
+        color: #0f172a;
+    }
+    .btn-check:checked + label#lblTarifaOcasional {
+        background: #ffffff !important;
+        border-color: #cbd5e1 !important;
+        color: #0f172a !important;
+        box-shadow: 0 2px 8px rgba(15, 23, 42, 0.08) !important;
+    }
+    .btn-check:checked + label#lblTarifaRegular {
+        background: linear-gradient(135deg, #e0f2fe 0%, #dbeafe 100%) !important;
+        border-color: #0284c7 !important;
+        color: #0369a1 !important;
+        box-shadow: 0 3px 10px rgba(2, 132, 199, 0.25) !important;
+    }
+
+    /* Resaltado de precios según tarifa */
+    .box-precio-pos {
+        transition: all 0.2s ease;
+    }
+    .tarifa-modo-regular .linea-precio-cliente {
+        font-size: 0.94rem !important;
+        font-weight: 800 !important;
+    }
+    .tarifa-modo-regular .linea-precio-cliente .val-precio-cliente {
+        font-size: 0.98rem !important;
+        color: #0284c7 !important;
+    }
+    .tarifa-modo-regular .linea-precio-venta {
+        opacity: 0.6;
+    }
+
     /* Badge producto */
     .badge-code {
         font-family: monospace;
@@ -195,6 +238,25 @@
         color: #94a3b8;
         cursor: not-allowed;
     }
+
+    /* Input de cantidad editable en el carrito */
+    .input-cantidad-item {
+        transition: all 0.15s ease-in-out;
+        border-color: #cbd5e1;
+    }
+    .input-cantidad-item:focus {
+        border-color: #0284c7 !important;
+        box-shadow: 0 0 0 2px rgba(2, 132, 199, 0.2) !important;
+        background-color: #ffffff !important;
+    }
+    .input-cantidad-item::-webkit-outer-spin-button,
+    .input-cantidad-item::-webkit-inner-spin-button {
+        -webkit-appearance: none;
+        margin: 0;
+    }
+    .input-cantidad-item {
+        -moz-appearance: textfield;
+    }
 </style>
 
 <!-- ALERTAS DE ÉXITO O ERROR -->
@@ -273,19 +335,26 @@
                 <table class="table table-custom align-middle m-0" id="tablaProductos">
                     <thead class="table-custom-header">
                         <tr>
-                            <th class="ps-4" style="width: 18%;">CÓDIGO</th>
-                            <th style="width: 44%;">PRODUCTO</th>
-                            <th class="text-center" style="width: 14%;">STOCK</th>
-                            <th class="text-end" style="width: 14%;">PRECIO</th>
-                            <th class="text-center pe-4" style="width: 10%;">ACCIÓN</th>
+                            <th class="ps-4" style="width: 17%;">CÓDIGO</th>
+                            <th style="width: 41%;">PRODUCTO</th>
+                            <th class="text-center" style="width: 13%;">STOCK</th>
+                            <th class="text-end" style="width: 17%;">PRECIOS</th>
+                            <th class="text-center pe-4" style="width: 12%;">ACCIÓN</th>
                         </tr>
                     </thead>
                     <tbody>
                         @forelse($productos as $producto)
+                        @php
+                            $pCliente = ($producto->precio_cliente !== null && $producto->precio_cliente > 0) ? floatval($producto->precio_cliente) : floatval($producto->precio_venta);
+                            $tienePCliente = ($producto->precio_cliente !== null && $producto->precio_cliente > 0);
+                        @endphp
                         <tr class="fila-producto" 
                             data-id="{{ $producto->id }}" 
                             data-codigo="{{ $producto->codigo }}"
                             data-nombre="{{ $producto->nombre }}"
+                            data-precio-venta="{{ $producto->precio_venta }}"
+                            data-precio-cliente="{{ $pCliente }}"
+                            data-tiene-precio-cliente="{{ $tienePCliente ? '1' : '0' }}"
                             data-precio="{{ $producto->precio_venta }}"
                             data-stock="{{ $producto->stock }}"
                             data-categoria="{{ $producto->id_categoria }}">
@@ -326,8 +395,30 @@
                                     </span>
                                 @endif
                             </td>
-                            <td class="text-end fw-bold text-dark fs-6">
-                                Bs. {{ number_format($producto->precio_venta, 2) }}
+                            <td class="text-end">
+                                <div class="box-precio-pos">
+                                    <!-- Tarifa Venta Ocasional -->
+                                    <div class="linea-precio-venta d-flex align-items-center justify-content-end gap-1">
+                                        <span class="fw-bold text-dark val-precio-venta" style="font-size: 0.94rem;">
+                                            Bs. {{ number_format($producto->precio_venta, 2) }}
+                                        </span>
+                                        <span class="badge bg-light text-secondary border py-0 px-1" style="font-size: 0.64rem;">Venta</span>
+                                    </div>
+                                    <!-- Tarifa Cliente Regular / Ferretería -->
+                                    @if($tienePCliente)
+                                        <div class="linea-precio-cliente d-flex align-items-center justify-content-end gap-1 mt-0.5" style="color: #0284c7;">
+                                            <i class="bi bi-tag-fill" style="font-size: 0.65rem;"></i>
+                                            <span class="fw-bold val-precio-cliente" style="font-size: 0.88rem;">
+                                                Bs. {{ number_format($pCliente, 2) }}
+                                            </span>
+                                            <span class="badge py-0 px-1" style="font-size: 0.64rem; background: #e0f2fe; color: #0369a1; border: 1px solid #bae6fd;">Cliente</span>
+                                        </div>
+                                    @else
+                                        <div class="linea-precio-cliente text-muted mt-0.5" style="font-size: 0.68rem;" title="Sin precio especial: aplica el mismo precio de venta">
+                                            <span>Cliente: <em>Mismo</em></span>
+                                        </div>
+                                    @endif
+                                </div>
                             </td>
                             <td class="text-center pe-4">
                                 <button type="button" class="btn btn-sm btn-primary fw-bold px-3 py-1.5 rounded-pill btn-agregar-producto shadow-sm">
@@ -437,7 +528,33 @@
                         </small>
                     </div>
 
-                    <!-- CAMPO 2: NOMBRE DEL CLIENTE (CON BUSCADOR DE REGULARES) -->
+                    <!-- CAMPO 2: SELECTOR DE TARIFA (OCASIONAL VS REGULAR / FERRETERÍA) -->
+                    <div class="mb-3 text-start">
+                        <div class="d-flex justify-content-between align-items-center mb-1.5">
+                            <label class="label-pos-destacado m-0 d-flex align-items-center gap-1.5">
+                                <i class="bi bi-tags-fill text-primary fs-5"></i>
+                                <span>Lista de Precios</span>
+                            </label>
+                            <span id="badgeTarifaActiva" class="badge bg-secondary bg-opacity-10 text-secondary border border-secondary-subtle" style="font-size: 0.72rem;">
+                                Tarifa Venta Ocasional
+                            </span>
+                        </div>
+                        <div class="btn-group w-100 p-1 rounded-3 bg-light border shadow-sm" role="group">
+                            <input type="radio" class="btn-check" name="tipo_tarifa" id="tarifa_ocasional" value="Ocasional" checked autocomplete="off">
+                            <label class="btn btn-tarifa py-2 w-50 fw-bold" for="tarifa_ocasional" id="lblTarifaOcasional">
+                                <i class="bi bi-person me-1"></i> Cliente Ocasional
+                                <small class="d-block text-muted fw-normal" style="font-size: 0.70rem;">Precio Venta Normal</small>
+                            </label>
+
+                            <input type="radio" class="btn-check" name="tipo_tarifa" id="tarifa_regular" value="Regular" autocomplete="off">
+                            <label class="btn btn-tarifa py-2 w-50 fw-bold" for="tarifa_regular" id="lblTarifaRegular">
+                                <i class="bi bi-building-check me-1"></i> Cliente Regular
+                                <small class="d-block text-muted fw-normal" style="font-size: 0.70rem;">Precio Ferretería / Mayorista</small>
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- CAMPO 3: NOMBRE DEL CLIENTE (CON BUSCADOR DE REGULARES) -->
                     <div class="mb-3 text-start position-relative">
                         <div class="d-flex justify-content-between align-items-center mb-1">
                             <label class="label-pos-destacado m-0">
@@ -888,6 +1005,57 @@ document.addEventListener('DOMContentLoaded', function() {
         inputMontoAdelanto.addEventListener('input', actualizarSaldoPendiente);
     }
 
+    // Control de Tarifa (Ocasional vs Regular / Ferretería)
+    let tarifaActiva = 'Ocasional';
+    const radiosTarifa = document.querySelectorAll('input[name="tipo_tarifa"]');
+    const badgeTarifa = document.getElementById('badgeTarifaActiva');
+    const tablaProductosCont = document.getElementById('tablaProductos');
+
+    window.cambiarTarifa = function(nuevaTarifa, forzarRecalculo = true) {
+        tarifaActiva = nuevaTarifa;
+        const radioTarget = document.getElementById(nuevaTarifa === 'Regular' ? 'tarifa_regular' : 'tarifa_ocasional');
+        if (radioTarget) radioTarget.checked = true;
+
+        if (badgeTarifa) {
+            if (nuevaTarifa === 'Regular') {
+                badgeTarifa.className = 'badge bg-primary bg-opacity-10 text-primary border border-primary-subtle';
+                badgeTarifa.innerHTML = '<i class="bi bi-tag-fill me-1"></i>Tarifa Cliente Regular Activa';
+            } else {
+                badgeTarifa.className = 'badge bg-secondary bg-opacity-10 text-secondary border border-secondary-subtle';
+                badgeTarifa.innerHTML = 'Tarifa Venta Ocasional';
+            }
+        }
+
+        // Resaltado visual en tabla de productos
+        if (tablaProductosCont) {
+            if (nuevaTarifa === 'Regular') {
+                tablaProductosCont.classList.add('tarifa-modo-regular');
+            } else {
+                tablaProductosCont.classList.remove('tarifa-modo-regular');
+            }
+        }
+
+        // Recalcular carrito si ya tiene productos
+        if (forzarRecalculo && carrito.length > 0) {
+            carrito.forEach(item => {
+                if (nuevaTarifa === 'Regular') {
+                    item.precio = item.precioCliente;
+                    item.esTarifaCliente = true;
+                } else {
+                    item.precio = item.precioVenta;
+                    item.esTarifaCliente = false;
+                }
+            });
+            renderizarCarrito();
+        }
+    };
+
+    radiosTarifa.forEach(r => {
+        r.addEventListener('change', function() {
+            cambiarTarifa(this.value, true);
+        });
+    });
+
     // 3. Agregar productos al carrito
     document.querySelectorAll('.btn-agregar-producto').forEach(boton => {
         boton.addEventListener('click', function() {
@@ -895,8 +1063,13 @@ document.addEventListener('DOMContentLoaded', function() {
             const id = fila.dataset.id;
             const codigo = fila.dataset.codigo;
             const nombre = fila.dataset.nombre;
-            const precio = parseFloat(fila.dataset.precio) || 0;
+            const precioVenta = parseFloat(fila.dataset.precioVenta) || 0;
+            const precioCliente = parseFloat(fila.dataset.precioCliente) || precioVenta;
+            const tienePrecioCliente = fila.dataset.tienePrecioCliente === '1';
             const stockMaximo = parseInt(fila.dataset.stock) || 0;
+
+            const esCliente = (tarifaActiva === 'Regular');
+            const precioAUsar = esCliente ? precioCliente : precioVenta;
 
             const existente = carrito.find(item => item.id === id);
 
@@ -911,7 +1084,11 @@ document.addEventListener('DOMContentLoaded', function() {
                     id: id,
                     codigo: codigo,
                     nombre: nombre,
-                    precio: precio,
+                    precioVenta: precioVenta,
+                    precioCliente: precioCliente,
+                    tienePrecioCliente: tienePrecioCliente,
+                    precio: precioAUsar,
+                    esTarifaCliente: esCliente,
                     cantidad: 1,
                     stockMaximo: stockMaximo
                 });
@@ -956,6 +1133,9 @@ document.addEventListener('DOMContentLoaded', function() {
         if (txtDetReg) txtDetReg.textContent = tel ? `Cliente Regular · Tel: ${tel}` : 'Cliente Regular Registrado';
         if (badgeCliente) badgeCliente.style.setProperty('display', 'flex', 'important');
         
+        // Al seleccionar un cliente regular registrado, se activa automáticamente su tarifa
+        cambiarTarifa('Regular', true);
+
         // Cerrar dropdown y caja de sugerencias
         if (menuDropCli) menuDropCli.classList.remove("show");
         if (btnDropCli) {
@@ -975,6 +1155,10 @@ document.addEventListener('DOMContentLoaded', function() {
             inputCliente.focus();
         }
         if (cajaSugerencias) cajaSugerencias.style.display = "none";
+
+        // Vuelve a tarifa de venta ocasional
+        cambiarTarifa('Ocasional', true);
+
         validarBotonCobrar();
     };
 
@@ -1130,6 +1314,11 @@ document.addEventListener('DOMContentLoaded', function() {
             const subtotalItem = item.precio * item.cantidad;
             total += subtotalItem;
 
+            const esCliente = item.esTarifaCliente;
+            const badgeTarifaItem = esCliente
+                ? `<span class="badge" style="font-size: 0.65rem; background: #e0f2fe; color: #0284c7; border: 1px solid #bae6fd; cursor: pointer;" title="Tarifa Cliente Regular aplicada. Haz clic para alternar a Precio Venta"><i class="bi bi-tag-fill me-0.5"></i>P. Cliente</span>`
+                : `<span class="badge bg-light text-secondary border" style="font-size: 0.65rem; cursor: pointer;" title="Tarifa Venta Ocasional aplicada. Haz clic para alternar a Precio Cliente">P. Venta</span>`;
+
             const li = document.createElement('li');
             li.className = 'list-group-item bg-white rounded-3 shadow-sm mb-2 p-2.5 border-0';
             li.innerHTML = `
@@ -1143,13 +1332,26 @@ document.addEventListener('DOMContentLoaded', function() {
                     </button>
                 </div>
                 <div class="d-flex justify-content-between align-items-center pt-1.5 border-top border-light">
-                    <div class="input-group input-group-sm" style="width: 105px; height: 26px;">
-                        <button class="btn btn-outline-secondary btn-restar fw-bold px-2 py-0" type="button" data-index="${index}" title="Restar 1">−</button>
-                        <input type="text" class="form-control text-center bg-light fw-bold py-0" style="font-size: 0.82rem;" value="${item.cantidad}" readonly>
-                        <button class="btn btn-outline-secondary btn-sumar fw-bold px-2 py-0" type="button" data-index="${index}" title="Sumar 1">+</button>
+                    <div class="input-group input-group-sm" style="width: 112px; height: 28px;">
+                        <button class="btn btn-outline-secondary btn-restar fw-bold px-2 py-0 d-flex align-items-center justify-content-center" type="button" data-index="${index}" title="Restar 1">−</button>
+                        <input type="number" 
+                               class="form-control text-center input-cantidad-item fw-bold py-0 px-1 bg-white" 
+                               style="font-size: 0.85rem;" 
+                               data-index="${index}" 
+                               value="${item.cantidad}" 
+                               min="1" 
+                               max="${item.stockMaximo}" 
+                               step="1"
+                               title="Ingresa la cantidad directamente o usa +/-">
+                        <button class="btn btn-outline-secondary btn-sumar fw-bold px-2 py-0 d-flex align-items-center justify-content-center" type="button" data-index="${index}" title="Sumar 1">+</button>
                     </div>
                     <div class="text-end">
-                        <small class="text-muted me-2" style="font-size: 0.75rem;">U: Bs. ${item.precio.toFixed(2)}</small>
+                        <div class="d-flex align-items-center justify-content-end gap-1 mb-0.5">
+                            <span onclick="togglePrecioItem(${index})" style="cursor: pointer;">
+                                ${badgeTarifaItem}
+                            </span>
+                            <small class="text-muted" style="font-size: 0.75rem;">U: Bs. ${item.precio.toFixed(2)}</small>
+                        </div>
                         <span class="text-success fw-bold" style="font-size: 0.92rem;">Bs. ${subtotalItem.toFixed(2)}</span>
                     </div>
                 </div>
@@ -1173,7 +1375,58 @@ document.addEventListener('DOMContentLoaded', function() {
         asignarEventosCarrito();
     }
 
+    // Alternar individualmente el precio de un ítem en el carrito
+    window.togglePrecioItem = function(index) {
+        const item = carrito[index];
+        if (!item) return;
+        if (item.esTarifaCliente) {
+            item.precio = item.precioVenta;
+            item.esTarifaCliente = false;
+        } else {
+            item.precio = item.precioCliente;
+            item.esTarifaCliente = true;
+        }
+        renderizarCarrito();
+    };
+
     function asignarEventosCarrito() {
+        // Entrada numérica directa
+        document.querySelectorAll('.input-cantidad-item').forEach(input => {
+            // Selecciona todo el texto al recibir foco para escribir inmediatamente sin borrar a mano
+            input.addEventListener('focus', function() {
+                this.select();
+            });
+
+            // Confirmar y aplicar cambio al presionar Enter
+            input.addEventListener('keydown', function(e) {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    this.blur();
+                }
+            });
+
+            // Procesar cantidad ingresada al cambiar o perder foco
+            input.addEventListener('change', function() {
+                const idx = parseInt(this.dataset.index);
+                if (isNaN(idx) || !carrito[idx]) return;
+
+                let nuevaCant = parseInt(this.value, 10);
+                const stockMax = carrito[idx].stockMaximo || 999999;
+
+                if (isNaN(nuevaCant) || nuevaCant < 1) {
+                    nuevaCant = 1;
+                }
+
+                if (nuevaCant > stockMax) {
+                    alert(`¡Atención! Stock máximo disponible: ${stockMax} unidad(es).`);
+                    nuevaCant = stockMax;
+                }
+
+                carrito[idx].cantidad = nuevaCant;
+                renderizarCarrito();
+            });
+        });
+
         // Sumar
         document.querySelectorAll('.btn-sumar').forEach(btn => {
             btn.addEventListener('click', function() {

@@ -98,6 +98,20 @@
         font-weight: 800;
         color: #059669;
     }
+    .prod-precio-cliente {
+        font-size: 1.02rem;
+        font-weight: 800;
+        color: #0284c7;
+    }
+    .badge-precio-cliente {
+        background: #e0f2fe;
+        color: #0369a1;
+        border: 1px solid #bae6fd;
+        font-size: 0.68rem;
+        font-weight: 700;
+        padding: 2px 7px;
+        border-radius: 9999px;
+    }
     .prod-costo {
         font-size: 0.92rem;
         font-weight: 600;
@@ -333,25 +347,28 @@
         <table class="table table-custom align-middle m-0" id="tablaProductos">
             <thead class="table-custom-header">
                 <tr>
-                    <th class="ps-4 sortable text-start" style="width: 30%;" data-col="0">
+                    <th class="ps-4 sortable text-start" style="width: 25%;" data-col="0">
                         PRODUCTO <i class="icono-orden bi bi-arrow-down-up ms-1" style="font-size: 0.8em; opacity: 0.5;"></i>
                     </th>
-                    <th class="sortable text-center" style="width: 14%;" data-col="1">
+                    <th class="sortable text-center" style="width: 12%;" data-col="1">
                         CÓDIGO <i class="icono-orden bi bi-arrow-down-up ms-1" style="font-size: 0.8em; opacity: 0.5;"></i>
                     </th>
-                    <th class="sortable text-center" style="width: 14%;" data-col="2">
+                    <th class="sortable text-center" style="width: 11%;" data-col="2">
                         MARCA <i class="icono-orden bi bi-arrow-down-up ms-1" style="font-size: 0.8em; opacity: 0.5;"></i>
                     </th>
-                    <th class="sortable text-end" style="width: 13%;" data-col="3">
+                    <th class="sortable text-end" style="width: 12%;" data-col="3">
                         PRECIO VENTA <i class="icono-orden bi bi-arrow-down-up ms-1" style="font-size: 0.8em; opacity: 0.5;"></i>
                     </th>
-                    <th class="sortable text-end" style="width: 11%;" data-col="4">
+                    <th class="sortable text-end" style="width: 13%;" data-col="4">
+                        PRECIO CLIENTE <i class="icono-orden bi bi-arrow-down-up ms-1" style="font-size: 0.8em; opacity: 0.5;"></i>
+                    </th>
+                    <th class="sortable text-end" style="width: 10%;" data-col="5">
                         COSTO <i class="icono-orden bi bi-arrow-down-up ms-1" style="font-size: 0.8em; opacity: 0.5;"></i>
                     </th>
-                    <th class="sortable text-center" style="width: 10%;" data-col="5">
+                    <th class="sortable text-center" style="width: 10%;" data-col="6">
                         STOCK <i class="icono-orden bi bi-arrow-down-up ms-1" style="font-size: 0.8em; opacity: 0.5;"></i>
                     </th>
-                    <th class="text-center pe-4" style="width: 8%;">ACCIONES</th>
+                    <th class="text-center pe-4" style="width: 7%;">ACCIONES</th>
                 </tr>
             </thead>
             <tbody>
@@ -411,11 +428,29 @@
                         @endif
                     </td>
                     
-                    <!-- Precio de Venta -->
+                    <!-- Precio de Venta (Ocasional) -->
                     <td class="text-end" data-sort-value="{{ $producto->precio_venta ?? 0 }}">
                         <div class="prod-precio">
                             Bs. {{ number_format($producto->precio_venta ?? 0, 2) }}
                         </div>
+                        <small class="text-muted d-block" style="font-size: 0.70rem;">Ocasional</small>
+                    </td>
+
+                    <!-- Precio Cliente (Regular / Ferretería) -->
+                    <td class="text-end" data-sort-value="{{ $producto->precio_cliente ?? ($producto->precio_venta ?? 0) }}">
+                        @if($producto->precio_cliente !== null && $producto->precio_cliente > 0)
+                            <div class="prod-precio-cliente">
+                                Bs. {{ number_format($producto->precio_cliente, 2) }}
+                            </div>
+                            <span class="badge-precio-cliente d-inline-flex align-items-center gap-1">
+                                <i class="bi bi-tag-fill" style="font-size: 0.62rem;"></i> Regular
+                            </span>
+                        @else
+                            <div class="text-muted small fw-semibold" title="Sin precio especial: aplica precio venta">
+                                <span>—</span>
+                                <small class="d-block text-muted" style="font-size: 0.68rem;">P. Venta</small>
+                            </div>
+                        @endif
                     </td>
 
                     <!-- Costo -->
@@ -478,7 +513,7 @@
                 </tr>
                 @empty
                 <tr>
-                    <td colspan="7" class="text-center py-5 text-muted">
+                    <td colspan="8" class="text-center py-5 text-muted">
                         <i class="bi bi-box-seam fs-1 d-block mb-2 text-muted"></i>
                         <h5>No hay productos registrados en el catálogo.</h5>
                         <p class="small text-muted">Presiona "+ Nuevo Producto" para registrar el primero.</p>
@@ -562,19 +597,32 @@
                     </div>
                     
                     <div class="row g-3 mb-3">
-                        <div class="col-md-6">
-                            <label class="form-label text-dark fw-bold">Precio de Venta (Bs.) *</label>
+                        <div class="col-md-4">
+                            <label class="form-label text-dark fw-bold">Precio Venta (Bs.) *</label>
                             <div class="input-group">
-                                <span class="input-group-text bg-light fw-bold">Bs.</span>
+                                <span class="input-group-text bg-light fw-bold text-success">Bs.</span>
                                 <input type="number" name="precio_venta" step="0.01" class="form-control fw-bold text-success fs-5" placeholder="0.00" required>
                             </div>
+                            <small class="text-muted" style="font-size: 0.74rem;">Clientes ocasionales.</small>
                         </div>
-                        <div class="col-md-6">
+                        <div class="col-md-4">
+                            <label class="form-label text-dark fw-bold">
+                                Precio Cliente (Bs.)
+                                <span class="badge bg-light text-secondary border fw-normal" style="font-size: 0.70rem;">Opcional</span>
+                            </label>
+                            <div class="input-group">
+                                <span class="input-group-text bg-light fw-bold" style="color: #0284c7;">Bs.</span>
+                                <input type="number" name="precio_cliente" step="0.01" class="form-control fw-bold fs-5" style="color: #0284c7;" placeholder="0.00">
+                            </div>
+                            <small class="text-muted" style="font-size: 0.74rem;">Ferreterías / regulares.</small>
+                        </div>
+                        <div class="col-md-4">
                             <label class="form-label text-dark fw-bold">Costo Unitario (Bs.) *</label>
                             <div class="input-group">
                                 <span class="input-group-text bg-light fw-bold">Bs.</span>
                                 <input type="number" name="costo" step="0.01" class="form-control fw-bold fs-5" placeholder="0.00" value="0.00" required>
                             </div>
+                            <small class="text-muted" style="font-size: 0.74rem;">Costo de adquisición.</small>
                         </div>
                     </div>
                     
@@ -661,19 +709,32 @@
                             <textarea name="descripcion" class="form-control" rows="2">{{ $producto->descripcion }}</textarea>
                         </div>
                         <div class="row g-3 mb-3">
-                            <div class="col-md-6">
-                                <label class="form-label text-dark fw-bold">Precio de Venta (Bs.) *</label>
+                            <div class="col-md-4">
+                                <label class="form-label text-dark fw-bold">Precio Venta (Bs.) *</label>
                                 <div class="input-group">
-                                    <span class="input-group-text bg-light fw-bold">Bs.</span>
+                                    <span class="input-group-text bg-light fw-bold text-success">Bs.</span>
                                     <input type="number" name="precio_venta" step="0.01" class="form-control fw-bold text-success fs-5" value="{{ $producto->precio_venta }}" required>
                                 </div>
+                                <small class="text-muted" style="font-size: 0.74rem;">Clientes ocasionales.</small>
                             </div>
-                            <div class="col-md-6">
+                            <div class="col-md-4">
+                                <label class="form-label text-dark fw-bold">
+                                    Precio Cliente (Bs.)
+                                    <span class="badge bg-light text-secondary border fw-normal" style="font-size: 0.70rem;">Opcional</span>
+                                </label>
+                                <div class="input-group">
+                                    <span class="input-group-text bg-light fw-bold" style="color: #0284c7;">Bs.</span>
+                                    <input type="number" name="precio_cliente" step="0.01" class="form-control fw-bold fs-5" style="color: #0284c7;" value="{{ $producto->precio_cliente }}">
+                                </div>
+                                <small class="text-muted" style="font-size: 0.74rem;">Ferreterías / regulares.</small>
+                            </div>
+                            <div class="col-md-4">
                                 <label class="form-label text-dark fw-bold">Costo (Bs.) *</label>
                                 <div class="input-group">
                                     <span class="input-group-text bg-light fw-bold">Bs.</span>
                                     <input type="number" name="costo" step="0.01" class="form-control fw-bold fs-5" value="{{ $producto->costo }}" required>
                                 </div>
+                                <small class="text-muted" style="font-size: 0.74rem;">Costo de adquisición.</small>
                             </div>
                         </div>
                         

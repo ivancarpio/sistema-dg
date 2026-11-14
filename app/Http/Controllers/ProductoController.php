@@ -66,7 +66,9 @@ class ProductoController extends Controller
         $request->validate([
             'codigo' => 'required|unique:productos,codigo',
             'nombre' => 'required',
-            'precio_venta' => 'required|numeric|min:0'
+            'precio_venta' => 'required|numeric|min:0',
+            'precio_cliente' => 'nullable|numeric|min:0',
+            'costo' => 'nullable|numeric|min:0',
         ]);
 
         $producto = new Producto();
@@ -78,6 +80,7 @@ class ProductoController extends Controller
         $producto->id_unidad = $request->id_unidad;
         $producto->costo = $request->costo ?? 0;
         $producto->precio_venta = $request->precio_venta;
+        $producto->precio_cliente = ($request->filled('precio_cliente') && is_numeric($request->precio_cliente)) ? floatval($request->precio_cliente) : null;
         $producto->stock = $request->stock_inicial ?? 0;
         $producto->stock_minimo = $request->stock_minimo ?? 0;
         
@@ -100,7 +103,9 @@ class ProductoController extends Controller
         $request->validate([
             'codigo' => 'required|unique:productos,codigo,' . $id,
             'nombre' => 'required',
-            'precio_venta' => 'required|numeric|min:0'
+            'precio_venta' => 'required|numeric|min:0',
+            'precio_cliente' => 'nullable|numeric|min:0',
+            'costo' => 'nullable|numeric|min:0',
         ]);
 
         $producto = Producto::findOrFail($id);
@@ -113,6 +118,7 @@ class ProductoController extends Controller
         $producto->id_unidad = $request->id_unidad;
         $producto->costo = $request->costo ?? 0;
         $producto->precio_venta = $request->precio_venta;
+        $producto->precio_cliente = ($request->filled('precio_cliente') && is_numeric($request->precio_cliente)) ? floatval($request->precio_cliente) : null;
         $producto->stock_minimo = $request->stock_minimo ?? 0;
 
         $producto->save();

@@ -123,15 +123,13 @@
         $t = strtolower(trim($m->tipo ?? ''));
         return $t === 'salida' && !str_contains(strtolower($m->motivo ?? ''), 'devolución') && !str_contains(strtolower($m->motivo ?? ''), 'anulación');
     })->count();
-    $hoy              = now()->format('Y-m-d');
-    $movHoy           = $movimientos->filter(fn($m) => \Carbon\Carbon::parse($m->fecha)->format('Y-m-d') === $hoy)->count();
 @endphp
 <div class="row g-3 mb-4">
     <div class="col-6 col-md-3">
         <div class="stat-inv h-100">
             <div class="stat-lbl"><i class="bi bi-clock-history me-1 text-primary"></i>Total Movimientos</div>
             <div class="stat-num text-dark">{{ $totalMovimientos }}</div>
-            <small class="text-muted">{{ $movHoy }} movimientos hoy</small>
+            <small class="text-muted">{{ $subtituloPeriodo }}</small>
         </div>
     </div>
     <div class="col-6 col-md-3">
@@ -157,6 +155,62 @@
     </div>
 </div>
 
+{{-- ===== FILTROS Y BÚSQUEDA AVANZADA (ESTILO VENTAS/REPORTES) ===== --}}
+<div class="card p-3 mb-4 shadow-sm border-0 bg-white">
+    <form action="/inventario" method="GET" class="row g-2 align-items-end">
+        <!-- Buscador rápido -->
+        <div class="col-md-4">
+            <label class="form-label small fw-bold text-muted mb-1">Buscar Producto o Motivo</label>
+            <div class="input-group">
+                <span class="input-group-text bg-light text-muted border-end-0"><i class="bi bi-search"></i></span>
+                <input type="text" name="buscar" class="form-control border-start-0 bg-light" 
+                       placeholder="Ej. Tubo, Alambre, Ajuste..." value="{{ request('buscar') }}">
+            </div>
+        </div>
+
+        <!-- Fecha específica (por defecto Hoy) -->
+        <div class="col-md-3">
+            <div class="d-flex justify-content-between align-items-center mb-1">
+                <label class="form-label small fw-bold text-muted mb-0">Fecha de Movimientos</label>
+                @if(!$verTodo && $fechaFiltro === now()->toDateString())
+                    <span class="badge bg-success bg-opacity-10 text-success border border-success-subtle" style="font-size: 0.65rem;">Hoy</span>
+                @elseif($verTodo)
+                    <span class="badge bg-secondary bg-opacity-10 text-secondary border border-secondary-subtle" style="font-size: 0.65rem;">Histórico</span>
+                @endif
+            </div>
+            <div class="input-group">
+                <span class="input-group-text bg-light text-muted border-end-0"><i class="bi bi-calendar-event"></i></span>
+                <input type="date" name="fecha" id="inputFiltroFecha" class="form-control border-start-0 bg-light" 
+                       value="{{ $verTodo ? '' : ($fechaFiltro ?? now()->toDateString()) }}">
+            </div>
+        </div>
+
+        <!-- Tipo de Movimiento -->
+        <div class="col-md-2">
+            <label class="form-label small fw-bold text-muted mb-1">Tipo de Movimiento</label>
+            <select name="tipo" class="form-select bg-light">
+                <option value="">Todos los tipos</option>
+                <option value="Entrada" {{ request('tipo') == 'Entrada' ? 'selected' : '' }}>🟢 Entradas</option>
+                <option value="Salida" {{ request('tipo') == 'Salida' ? 'selected' : '' }}>🔴 Salidas</option>
+                <option value="Devolucion" {{ request('tipo') == 'Devolucion' ? 'selected' : '' }}>🟣 Devoluciones</option>
+            </select>
+        </div>
+
+        <!-- Botones de Acción -->
+        <div class="col-md-3 d-flex gap-1">
+            <button type="submit" class="btn btn-primary text-white flex-grow-1 fw-bold shadow-sm d-flex align-items-center justify-content-center" style="height: 38px;">
+                <i class="bi bi-funnel-fill me-1"></i> Filtrar
+            </button>
+            <a href="/inventario" class="btn btn-outline-success fw-semibold d-flex align-items-center justify-content-center px-2" title="Ver movimientos de Hoy" style="height: 38px; white-space: nowrap; font-size: 0.82rem;">
+                <i class="bi bi-calendar-check me-1"></i> Hoy
+            </a>
+            <a href="/inventario?ver=todos" class="btn btn-outline-secondary fw-semibold d-flex align-items-center justify-content-center px-2" title="Ver todo el historial acumulado" style="height: 38px; white-space: nowrap; font-size: 0.82rem;">
+                Histórico
+            </a>
+        </div>
+    </form>
+</div>
+
 {{-- ===== TARJETA PRINCIPAL CON TABLA ===== --}}
 <div class="card">
 
@@ -168,15 +222,15 @@
                     <i class="bi bi-list-ul me-2 text-primary"></i>Historial de Movimientos
                     <span class="badge bg-primary ms-1" id="badgeTotal">{{ $totalMovimientos }}</span>
                 </h6>
-                <small class="text-muted">Los ajustes manuales y las ventas del Punto de Venta se registran aquí automáticamente</small>
+                <small class="text-muted">Mostrando: <strong class="text-dark">{{ $subtituloPeriodo }}</strong> • Cada día nuevo inicia en 0</small>
             </div>
             <div class="col-md-4">
-                {{-- Buscador --}}
+                {{-- Buscador en tiempo real sobre la tabla --}}
                 <div class="input-group">
                     <span class="input-group-text bg-light border-end-0"><i class="bi bi-search text-muted"></i></span>
                     <input type="text" id="buscadorInventario"
                         class="form-control border-start-0 bg-light"
-                        placeholder="Buscar producto, motivo, usuario...">
+                        placeholder="Filtro rápido en pantalla...">
                 </div>
             </div>
             <div class="col-md-3">
@@ -334,9 +388,25 @@
                     @empty
                     <tr id="filaVacia">
                         <td colspan="8" class="text-center py-5 text-muted">
-                            <i class="bi bi-clipboard-x fs-1 d-block mb-2 opacity-25"></i>
-                            <p class="fw-bold mb-1">No hay movimientos registrados</p>
-                            <small>Los ajustes que registres y las ventas aparecerán aquí automáticamente.</small>
+                            <i class="bi bi-calendar2-check fs-1 d-block mb-2 text-primary opacity-50"></i>
+                            <h6 class="fw-bold mb-1 text-dark">No hay movimientos registrados para este período</h6>
+                            <small class="text-muted d-block mb-3">
+                                @if(!$verTodo && $fechaFiltro === now()->toDateString())
+                                    El día de hoy aún no tiene ingresos ni salidas de mercadería registradas.
+                                @else
+                                    No se encontraron movimientos para los filtros o fecha seleccionada.
+                                @endif
+                            </small>
+                            <div class="d-flex justify-content-center gap-2">
+                                <button type="button" class="btn btn-sm btn-primary shadow-sm" data-bs-toggle="modal" data-bs-target="#modalNuevoAjuste">
+                                    <i class="bi bi-plus-circle me-1"></i> Registrar Ajuste
+                                </button>
+                                @if(!$verTodo)
+                                    <a href="/inventario?ver=todos" class="btn btn-sm btn-outline-secondary">
+                                        <i class="bi bi-clock-history me-1"></i> Ver Historial Completo
+                                    </a>
+                                @endif
+                            </div>
                         </td>
                     </tr>
                     @endforelse

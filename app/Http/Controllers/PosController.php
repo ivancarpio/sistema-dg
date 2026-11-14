@@ -86,6 +86,7 @@ class PosController extends Controller
             $venta = new Venta();
             $venta->id_cliente      = $idCliente;
             $venta->cliente         = $request->cliente;
+            $venta->tipo_tarifa     = $request->input('tipo_tarifa', 'Ocasional');
             $venta->metodo_pago     = $metodoPago;
             $venta->metodo_adelanto = $metodoAdelanto;
             $venta->monto_pagado    = $montoPagado;

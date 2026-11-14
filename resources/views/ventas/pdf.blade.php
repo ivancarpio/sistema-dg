@@ -218,6 +218,9 @@
                 <td style="width: 60%;">
                     <span class="info-label">Cliente:</span><br>
                     <span class="info-value" style="font-size: 14px;">{{ $venta->cliente }}</span>
+                    @if(($venta->tipo_tarifa ?? '') === 'Regular' || $venta->id_cliente)
+                        <span style="font-size: 10px; color: #0284c7; background: #e0f2fe; padding: 1px 6px; border-radius: 4px; font-weight: 700; margin-left: 4px;">Cliente Regular</span>
+                    @endif
                 </td>
                 <td style="width: 40%; text-align: right;">
                     <span class="info-label">Método de Pago:</span><br>

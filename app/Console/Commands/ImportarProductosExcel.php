@@ -15,6 +15,7 @@ class ImportarProductosExcel extends Command
                             {--unidad=4 : ID de unidad a asignar (4=Pieza)}
                             {--marca=2 : ID de marca a asignar (2=KRONA)}
                             {--precio=0 : Precio de venta por defecto}
+                            {--precio-cliente= : Precio cliente / regular por defecto}
                             {--costo=0 : Costo por defecto}
                             {--stock-minimo=5 : Stock mínimo por defecto}
                             {--actualizar : Si el producto ya existe (por nombre), actualiza su stock}';
@@ -94,6 +95,7 @@ class ImportarProductosExcel extends Command
         $unidadId      = (int) $this->option('unidad');
         $marcaId       = (int) $this->option('marca');
         $precio        = (float) $this->option('precio');
+        $precioCliente = $this->option('precio-cliente') !== null ? (float) $this->option('precio-cliente') : null;
         $costo         = (float) $this->option('costo');
         $stockMinimo   = (int) $this->option('stock-minimo');
         $actualizar    = $this->option('actualizar');
@@ -172,8 +174,9 @@ class ImportarProductosExcel extends Command
                     'id_marca'      => $marcaId,
                     'codigo'        => $codigoInterno,
                     'nombre'        => $nombre,
-                    'precio_venta'  => $precio,
-                    'costo'         => $costo,
+                    'precio_venta'   => $precio,
+                    'precio_cliente' => $precioCliente,
+                    'costo'          => $costo,
                     'stock'         => $stock,
                     'stock_minimo'  => $stockMinimo,
                     'descripcion'   => "Importado desde Excel KRONA INV OCT 2026. Código original: $codigoExcel",

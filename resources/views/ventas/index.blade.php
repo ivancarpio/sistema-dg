@@ -296,7 +296,7 @@
                                         <span class="fw-bold {{ $esAnulada ? 'text-muted' : 'text-dark' }}">
                                             {{ $venta->cliente }}
                                         </span>
-                                        @if($venta->id_cliente || isset($clientesRegulares[$venta->cliente]))
+                                        @if(($venta->tipo_tarifa ?? '') === 'Regular' || $venta->id_cliente || isset($clientesRegulares[$venta->cliente]))
                                             <span class="badge bg-primary-subtle text-primary border border-primary-subtle ms-1" style="font-size: 0.65rem;">Regular</span>
                                         @endif
                                     </div>
