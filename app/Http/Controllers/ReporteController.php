@@ -8,8 +8,11 @@ use App\Models\User;
 use App\Models\Producto;
 use App\Models\CierreMesCheck;
 use App\Models\CierreMes;
+use App\Models\Marca;
+use App\Models\Categoria;
 use App\Exports\VentasExport;
 use App\Exports\CierreMesExport;
+use App\Exports\ProductosExport;
 use Maatwebsite\Excel\Facades\Excel;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
@@ -464,5 +467,129 @@ class ReporteController extends Controller
             'inicioMes'             => $fechaInicio,
             'finMes'                => $fechaFin,
         ];
+    }
+
+    // ============================================================
+    // 4. REPORTE GENERAL DE PRODUCTOS Y STOCK FÍSICO
+    // ============================================================
+    public function productos(Request $request)
+    {
+        $query = Producto::with(['marca', 'unidad', 'categoria']);
+
+        if ($request->filled('buscar')) {
+            $buscar = trim($request->buscar);
+            $query->where(function($q) use ($buscar) {
+                $q->where('nombre', 'LIKE', "%{$buscar}%")
+                  ->orWhere('codigo', 'LIKE', "%{$buscar}%")
+                  ->orWhere('descripcion', 'LIKE', "%{$buscar}%");
+            });
+        }
+
+        if ($request->filled('categoria')) {
+            $query->where('id_categoria', $request->categoria);
+        }
+
+        if ($request->filled('marca')) {
+            $query->where('id_marca', $request->marca);
+        }
+
+        if ($request->filled('estado_stock')) {
+            $estado = $request->estado_stock;
+            if ($estado === 'con_stock') {
+                $query->where('stock', '>', 0);
+            } elseif ($estado === 'agotado') {
+                $query->where('stock', '<=', 0);
+            } elseif ($estado === 'critico') {
+                $query->whereRaw('stock <= IF(stock_minimo > 0, stock_minimo, 5)');
+            } elseif ($estado === 'alerta') {
+                $query->whereRaw('stock > IF(stock_minimo > 0, stock_minimo, 5) AND stock <= IF(stock_minimo > 0, stock_minimo * 2, 10)');
+            } elseif ($estado === 'optimo') {
+                $query->whereRaw('stock > IF(stock_minimo > 0, stock_minimo * 2, 10)');
+            }
+        }
+
+        $productos = $query->orderBy('nombre', 'asc')->get();
+
+        $totalProductos = $productos->count();
+        $totalStock     = $productos->sum('stock');
+        $totalValor     = $productos->sum(function($p) { return ($p->stock ?? 0) * ($p->precio_venta ?? 0); });
+        $totalCosto     = $productos->sum(function($p) { return ($p->stock ?? 0) * ($p->costo ?? 0); });
+        $totalCriticos  = $productos->filter(function($p) {
+            $min = is_numeric($p->stock_minimo) && $p->stock_minimo > 0 ? (int)$p->stock_minimo : 5;
+            return ($p->stock ?? 0) <= $min;
+        })->count();
+        $totalAgotados  = $productos->filter(function($p) { return ($p->stock ?? 0) <= 0; })->count();
+
+        $categorias = Categoria::orderBy('nombre')->get();
+        $marcas     = Marca::orderBy('nombre')->get();
+
+        return view('reportes.productos', compact(
+            'productos', 'totalProductos', 'totalStock', 'totalValor', 'totalCosto',
+            'totalCriticos', 'totalAgotados', 'categorias', 'marcas'
+        ));
+    }
+
+    public function exportarProductosExcel(Request $request)
+    {
+        $query = Producto::with(['marca', 'unidad', 'categoria']);
+
+        $filtrosDesc = [];
+        if ($request->filled('buscar')) {
+            $buscar = trim($request->buscar);
+            $query->where(function($q) use ($buscar) {
+                $q->where('nombre', 'LIKE', "%{$buscar}%")
+                  ->orWhere('codigo', 'LIKE', "%{$buscar}%");
+            });
+            $filtrosDesc[] = "Búsqueda: '{$buscar}'";
+        }
+
+        if ($request->filled('categoria')) {
+            $query->where('id_categoria', $request->categoria);
+            $cat = Categoria::find($request->categoria);
+            if ($cat) $filtrosDesc[] = "Categoría: {$cat->nombre}";
+        }
+
+        if ($request->filled('marca')) {
+            $query->where('id_marca', $request->marca);
+            $m = Marca::find($request->marca);
+            if ($m) $filtrosDesc[] = "Marca: {$m->nombre}";
+        }
+
+        if ($request->filled('estado_stock')) {
+            $estado = $request->estado_stock;
+            if ($estado === 'con_stock') {
+                $query->where('stock', '>', 0);
+                $filtrosDesc[] = "Solo con Stock (>0)";
+            } elseif ($estado === 'agotado') {
+                $query->where('stock', '<=', 0);
+                $filtrosDesc[] = "Solo Agotados (0)";
+            } elseif ($estado === 'critico') {
+                $query->whereRaw('stock <= IF(stock_minimo > 0, stock_minimo, 5)');
+                $filtrosDesc[] = "Solo Críticos (≤ Mínimo)";
+            } elseif ($estado === 'alerta') {
+                $query->whereRaw('stock > IF(stock_minimo > 0, stock_minimo, 5) AND stock <= IF(stock_minimo > 0, stock_minimo * 2, 10)');
+                $filtrosDesc[] = "Por Agotarse";
+            } elseif ($estado === 'optimo') {
+                $query->whereRaw('stock > IF(stock_minimo > 0, stock_minimo * 2, 10)');
+                $filtrosDesc[] = "Stock Óptimo";
+            }
+        }
+
+        $productos = $query->orderBy('nombre', 'asc')->get();
+
+        $totales = [
+            'total_productos' => $productos->count(),
+            'total_stock'     => $productos->sum('stock'),
+            'total_valor'     => $productos->sum(function($p) { return ($p->stock ?? 0) * ($p->precio_venta ?? 0); }),
+            'total_costo'     => $productos->sum(function($p) { return ($p->stock ?? 0) * ($p->costo ?? 0); }),
+        ];
+
+        $filtros = [
+            'descripcion' => !empty($filtrosDesc) ? implode(' | ', $filtrosDesc) : 'Todo el Catálogo Completo'
+        ];
+
+        $nombreArchivo = 'Reporte_Inventario_Productos_' . now()->format('Ymd_His') . '.xlsx';
+
+        return Excel::download(new ProductosExport($productos, $totales, $filtros), $nombreArchivo);
     }
 }

@@ -43,6 +43,7 @@ Route::middleware(['auth'])->group(function () {
     // ============================================================
     Route::middleware(['permiso:pos'])->group(function () {
         Route::get('/pos', [PosController::class, 'index']);
+        Route::get('/pos/productos-ajax', [PosController::class, 'productosAjax']);
         Route::post('/pos/cobrar', [PosController::class, 'cobrar']);
     });
 
@@ -110,6 +111,9 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/reportes/ventas', [ReporteController::class, 'ventas']);
         Route::get('/reportes/ventas/excel', [ReporteController::class, 'exportarVentasExcel']);
         Route::get('/reportes/excel', [ReporteController::class, 'exportarVentasExcel']);
+
+        Route::get('/reportes/productos', [ReporteController::class, 'productos'])->name('reportes.productos');
+        Route::get('/reportes/productos/excel', [ReporteController::class, 'exportarProductosExcel'])->name('reportes.productos.excel');
 
         Route::get('/reportes/cierre-mes', [ReporteController::class, 'cierreMes']);
         Route::post('/reportes/cierre-mes/cerrar', [ReporteController::class, 'storeCierreMes']);

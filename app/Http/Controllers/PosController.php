@@ -24,7 +24,32 @@ class PosController extends Controller
         $categorias = Categoria::orderBy('nombre')->get();
         $clientes = Cliente::orderBy('nombre', 'asc')->get();
 
-        return view('pos.index', compact('productos', 'categorias', 'clientes'));
+        // Historial de clientes que ya registraron compras previas (para autocompletado y validación)
+        $clientesHistorial = Venta::select('cliente', DB::raw('count(*) as total_compras'), DB::raw('max(fecha) as ultima_compra'))
+            ->whereNotNull('cliente')
+            ->where('cliente', '!=', '')
+            ->groupBy('cliente')
+            ->orderBy('total_compras', 'desc')
+            ->get();
+
+        return view('pos.index', compact('productos', 'categorias', 'clientes', 'clientesHistorial'));
+    }
+
+    /**
+     * Retorna el catálogo actualizado para refrescar la tabla del POS vía AJAX sin recargar la página.
+     */
+    public function productosAjax()
+    {
+        $productos = Producto::with(['marca', 'unidad', 'categoria'])
+            ->where('stock', '>', 0)
+            ->orderBy('nombre', 'asc')
+            ->get();
+
+        return response()->json([
+            'success'   => true,
+            'total'     => $productos->count(),
+            'productos' => $productos
+        ]);
     }
 
     public function cobrar(Request $request)

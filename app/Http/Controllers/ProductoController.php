@@ -14,7 +14,7 @@ class ProductoController extends Controller
     // 1. Mostrar la pantalla
     public function index()
     {
-        $productos = Producto::with(['marca', 'unidad', 'categoria'])->orderBy('id', 'desc')->get();
+        $productos = Producto::with(['marca', 'unidad', 'categoria'])->orderBy('nombre', 'asc')->get();
         $marcas = Marca::all();
         $unidades = Unidad::all();
         $categorias = Categoria::orderBy('nombre')->get();

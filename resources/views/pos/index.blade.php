@@ -59,16 +59,16 @@
         box-shadow: 0 0 0 3px rgba(2, 132, 199, 0.15);
     }
 
-    /* Inputs ultra legibles para Talonario y Cliente */
+    /* Inputs ultra legibles y estilizados para Talonario y Cliente */
     .input-pos-destacado {
-        font-size: 1.05rem !important;
+        font-size: 0.96rem !important;
         font-weight: 600 !important;
         color: #0f172a !important;
-        height: 44px !important;
+        height: 40px !important;
         border: 2px solid #cbd5e1 !important;
-        border-radius: 10px !important;
+        border-radius: 9px !important;
         background-color: #ffffff !important;
-        padding-left: 14px !important;
+        padding-left: 12px !important;
         transition: all 0.2s;
     }
     .input-pos-destacado:focus {
@@ -77,12 +77,19 @@
         background-color: #ffffff !important;
     }
     .label-pos-destacado {
-        font-size: 0.92rem !important;
+        font-size: 0.88rem !important;
         font-weight: 800 !important;
         color: #1e293b !important;
-        margin-bottom: 5px !important;
+        margin-bottom: 4px !important;
         display: flex;
         align-items: center;
+    }
+    .item-sugerencia-cliente {
+        cursor: pointer;
+        transition: background-color 0.15s ease;
+    }
+    .item-sugerencia-cliente:hover {
+        background-color: #f1f5f9 !important;
     }
 
     /* Botones de método de pago */
@@ -257,6 +264,16 @@
     .input-cantidad-item {
         -moz-appearance: textfield;
     }
+
+    /* Animación de giro para botón Actualizar Catálogo */
+    @keyframes spinPosAnim {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+    }
+    .spin-anim {
+        display: inline-block;
+        animation: spinPosAnim 0.75s linear infinite;
+    }
 </style>
 
 <!-- ALERTAS DE ÉXITO O ERROR -->
@@ -310,16 +327,16 @@
     <!-- COLUMNA IZQUIERDA: Catálogo de Productos Disponibles -->
     <div class="col-lg-7 col-xl-8">
         <div class="pos-card h-100 d-flex flex-column">
-            <!-- Barra superior con buscador y categorías -->
+            <!-- Barra superior con buscador, categorías y botón Actualizar -->
             <div class="p-3 border-bottom bg-light bg-opacity-50">
                 <div class="row g-2 align-items-center">
-                    <div class="col-md-7">
+                    <div class="col-md-6 col-lg-6">
                         <div class="input-group" style="height: 44px;">
                             <span class="search-btn-left"><i class="bi bi-search"></i></span>
                             <input type="text" id="buscadorProductos" class="form-control search-input" placeholder="Buscar por producto, código o marca..." autofocus>
                         </div>
                     </div>
-                    <div class="col-md-5">
+                    <div class="col-md-4 col-lg-4">
                         <select id="filtroCategoria" class="form-select border-1" style="height: 44px; font-size: 0.95rem;">
                             <option value="">Todas las categorías</option>
                             @foreach($categorias as $categoria)
@@ -327,7 +344,21 @@
                             @endforeach
                         </select>
                     </div>
+                    <div class="col-md-2 col-lg-2">
+                        <button type="button" id="btnActualizarCatalogoPos" class="btn btn-outline-primary w-100 fw-bold d-flex align-items-center justify-content-center gap-1 shadow-sm" style="height: 44px; font-size: 0.88rem; border-radius: 10px;" title="Actualizar precios y existencias en tiempo real sin perder el carrito">
+                            <i class="bi bi-arrow-clockwise fs-6" id="iconActualizarCatalogo"></i> <span>Actualizar</span>
+                        </button>
+                    </div>
                 </div>
+            </div>
+
+            <!-- Banner / Notificación de Catálogo Actualizado -->
+            <div id="toastActualizarPos" class="alert alert-success alert-dismissible fade show border-0 rounded-0 py-2 px-3 m-0 align-items-center justify-content-between" style="display: none; background: #ecfdf5; border-bottom: 1px solid #a7f3d0 !important; font-size: 0.83rem;">
+                <div class="d-flex align-items-center">
+                    <i class="bi bi-check-circle-fill text-success me-2 fs-6"></i>
+                    <span id="txtToastActualizarPos" class="text-success fw-semibold">Catálogo actualizado con éxito.</span>
+                </div>
+                <button type="button" class="btn-close py-2" onclick="document.getElementById('toastActualizarPos').style.display='none'"></button>
             </div>
 
             <!-- Tabla de productos -->
@@ -461,9 +492,12 @@
         <div class="pos-card h-100 d-flex flex-column border-top border-primary border-4">
             
             <div class="p-2.5 px-3 border-bottom d-flex justify-content-between align-items-center bg-white">
-                <div class="d-flex align-items-center">
-                    <i class="bi bi-receipt-cutoff fs-5 text-primary me-2"></i>
+                <div class="d-flex align-items-center gap-2">
+                    <i class="bi bi-receipt-cutoff fs-5 text-primary"></i>
                     <h6 class="fw-bold m-0 text-dark">Detalle de Cobro</h6>
+                    <span id="badgeAutoGuardado" class="badge bg-success bg-opacity-10 text-success border border-success-subtle px-2 py-0.5" style="display: none; font-size: 0.68rem;" title="Tu carrito está guardado automáticamente en cola">
+                        <i class="bi bi-cloud-check-fill me-1"></i>En Cola
+                    </span>
                 </div>
                 <button type="button" class="btn btn-sm btn-outline-danger border-0 py-0 px-2" id="btnVaciarCarrito" title="Vaciar carrito" style="display: none; font-size: 0.78rem;">
                     <i class="bi bi-trash3 me-1"></i> Vaciar
@@ -473,6 +507,34 @@
             <!-- FORMULARIO DE COBRO -->
             <form id="formVenta" action="/pos/cobrar" method="POST" class="d-flex flex-column flex-grow-1 m-0">
                 @csrf
+
+                <!-- Banner de Carrito en Cola Restaurado (Estilo PedidosYa / Delivery) -->
+                <div id="bannerCarritoEnCola" class="p-2.5 px-3 border-bottom" style="display: none; background: linear-gradient(135deg, #f0fdf4 0%, #e0f2fe 100%);">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div class="d-flex align-items-center gap-2" style="min-width: 0;">
+                            <div class="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center flex-shrink-0 shadow-sm" style="width: 28px; height: 28px; font-size: 0.85rem;">
+                                <i class="bi bi-clock-history"></i>
+                            </div>
+                            <div style="min-width: 0;">
+                                <div class="fw-bold text-dark text-truncate" style="font-size: 0.80rem;">
+                                    Carrito en cola recuperado
+                                    <span class="badge bg-primary text-white ms-1" id="badgeNumItemsCola" style="font-size: 0.68rem;">0 productos</span>
+                                </div>
+                                <div class="text-muted small" style="font-size: 0.70rem;" id="txtDetalleCarritoCola">
+                                    Restauramos tu carrito pendiente para que no pierdas tu avance.
+                                </div>
+                            </div>
+                        </div>
+                        <div class="d-flex gap-1 flex-shrink-0 ms-2">
+                            <button type="button" class="btn btn-sm btn-outline-danger py-0.5 px-2 rounded-pill fw-semibold" id="btnDescartarCarritoCola" style="font-size: 0.70rem;" title="Descartar carrito en cola">
+                                <i class="bi bi-x-circle me-1"></i>Descartar
+                            </button>
+                            <button type="button" class="btn btn-sm btn-primary py-0.5 px-2.5 rounded-pill fw-bold" id="btnContinuarCarritoCola" style="font-size: 0.70rem;" title="Continuar venta">
+                                <i class="bi bi-check2 me-1"></i>Continuar
+                            </button>
+                        </div>
+                    </div>
+                </div>
                 
                 <!-- Área de productos en el carrito -->
                 <div class="flex-grow-1 p-2 bg-light" style="min-height: 220px; max-height: 300px; overflow-y: auto;" id="contenedorCarrito">
@@ -507,14 +569,14 @@
                     <div id="inputsOcultosCarrito"></div>
 
                     <!-- CAMPO 1: Nº DE TALONARIO / NOTA FÍSICA -->
-                    <div class="mb-3 text-start">
+                    <div class="mb-2.5 text-start">
                         <div class="d-flex justify-content-between align-items-center mb-1">
                             <label class="label-pos-destacado m-0 d-flex align-items-center" for="inputNumeroNota">
-                                <i class="bi bi-receipt text-primary me-2 fs-5"></i>
+                                <i class="bi bi-receipt text-primary me-1.5 fs-6"></i>
                                 <span>Nº de Talonario</span>
-                                <span class="badge bg-light text-secondary border ms-2 fw-normal" style="font-size: 0.7rem; padding: 2px 6px;">Opcional</span>
+                                <span class="badge bg-light text-secondary border ms-1.5 fw-normal py-0 px-1.5" style="font-size: 0.68rem;">Opcional</span>
                             </label>
-                            <span class="badge bg-secondary bg-opacity-10 text-secondary border border-secondary-subtle font-monospace" style="font-size: 0.72rem; padding: 2px 7px;">
+                            <span class="badge bg-secondary bg-opacity-10 text-secondary border border-secondary-subtle font-monospace py-0 px-1.5" style="font-size: 0.70rem;">
                                 Auto: SYS-XXXXXX
                             </span>
                         </div>
@@ -522,62 +584,65 @@
                                name="numero_nota" 
                                id="inputNumeroNota"
                                class="form-control input-pos-destacado" 
-                               placeholder="Ej. 00154 (dejar vacío para número automático)">
-                        <small class="text-muted d-block mt-1" style="font-size: 0.74rem;">
-                            <i class="bi bi-info-circle me-1"></i>Si emites talonario manual escribe el número aquí; si está vacío se genera automáticamente.
-                        </small>
+                               placeholder="Ej. 00154 (vacío = correlativo automático)"
+                               style="height: 40px !important; font-size: 0.95rem !important;">
                     </div>
 
                     <!-- CAMPO 2: SELECTOR DE TARIFA (OCASIONAL VS REGULAR / FERRETERÍA) -->
-                    <div class="mb-3 text-start">
-                        <div class="d-flex justify-content-between align-items-center mb-1.5">
+                    <div class="mb-2.5 text-start">
+                        <div class="d-flex justify-content-between align-items-center mb-1">
                             <label class="label-pos-destacado m-0 d-flex align-items-center gap-1.5">
-                                <i class="bi bi-tags-fill text-primary fs-5"></i>
+                                <i class="bi bi-tags-fill text-primary fs-6"></i>
                                 <span>Lista de Precios</span>
                             </label>
-                            <span id="badgeTarifaActiva" class="badge bg-secondary bg-opacity-10 text-secondary border border-secondary-subtle" style="font-size: 0.72rem;">
+                            <span id="badgeTarifaActiva" class="badge bg-secondary bg-opacity-10 text-secondary border border-secondary-subtle py-0.5 px-2" style="font-size: 0.70rem;">
                                 Tarifa Venta Ocasional
                             </span>
                         </div>
                         <div class="btn-group w-100 p-1 rounded-3 bg-light border shadow-sm" role="group">
                             <input type="radio" class="btn-check" name="tipo_tarifa" id="tarifa_ocasional" value="Ocasional" checked autocomplete="off">
-                            <label class="btn btn-tarifa py-2 w-50 fw-bold" for="tarifa_ocasional" id="lblTarifaOcasional">
+                            <label class="btn btn-tarifa py-1.5 w-50 fw-bold" for="tarifa_ocasional" id="lblTarifaOcasional">
                                 <i class="bi bi-person me-1"></i> Cliente Ocasional
-                                <small class="d-block text-muted fw-normal" style="font-size: 0.70rem;">Precio Venta Normal</small>
+                                <small class="d-block text-muted fw-normal" style="font-size: 0.68rem;">Precio Venta Normal</small>
                             </label>
 
                             <input type="radio" class="btn-check" name="tipo_tarifa" id="tarifa_regular" value="Regular" autocomplete="off">
-                            <label class="btn btn-tarifa py-2 w-50 fw-bold" for="tarifa_regular" id="lblTarifaRegular">
+                            <label class="btn btn-tarifa py-1.5 w-50 fw-bold" for="tarifa_regular" id="lblTarifaRegular">
                                 <i class="bi bi-building-check me-1"></i> Cliente Regular
-                                <small class="d-block text-muted fw-normal" style="font-size: 0.70rem;">Precio Ferretería / Mayorista</small>
+                                <small class="d-block text-muted fw-normal" style="font-size: 0.68rem;">Precio Ferretería / Mayorista</small>
                             </label>
                         </div>
                     </div>
 
-                    <!-- CAMPO 3: NOMBRE DEL CLIENTE (CON BUSCADOR DE REGULARES) -->
-                    <div class="mb-3 text-start position-relative">
+                    <!-- CAMPO 3: NOMBRE DEL CLIENTE (CON BUSCADOR Y AUTOCOMPLETADO INTELIGENTE) -->
+                    <div class="mb-2.5 text-start position-relative">
                         <div class="d-flex justify-content-between align-items-center mb-1">
-                            <label class="label-pos-destacado m-0">
-                                <i class="bi bi-person-fill text-primary me-2 fs-5"></i>
-                                Nombre del Cliente *
-                            </label>
+                            <div class="d-flex align-items-center gap-1.5">
+                                <label class="label-pos-destacado m-0">
+                                    <i class="bi bi-person-fill text-primary me-1 fs-6"></i>
+                                    Nombre del Cliente *
+                                </label>
+                                <button type="button" class="btn btn-xs py-0 px-2 rounded-pill border fw-bold text-primary bg-primary bg-opacity-10" id="btnChipClienteVarios" style="font-size: 0.70rem;" title="Rellenar rápidamente 'Cliente Varios'">
+                                    <i class="bi bi-magic me-1"></i>Varios
+                                </button>
+                            </div>
                             @if(count($clientes) > 0)
                             <div class="dropdown position-relative">
-                                <button type="button" class="btn btn-primary fw-bold shadow-sm d-inline-flex align-items-center gap-1.5 px-3 py-1.5" 
+                                <button type="button" class="btn btn-sm btn-outline-primary fw-bold shadow-sm d-inline-flex align-items-center gap-1 px-2.5 py-0.5" 
                                         id="btnDropdownClientesRegulares"
-                                        aria-expanded="false" style="font-size: 0.82rem; border-radius: 8px;"
+                                        aria-expanded="false" style="font-size: 0.76rem; border-radius: 8px;"
                                         title="Buscar y seleccionar un cliente regular registrado">
-                                    <i class="bi bi-person-check-fill fs-6"></i> 
-                                    <span>Clientes Regulares</span> 
-                                    <i class="bi bi-chevron-down ms-1" style="font-size:0.7rem;"></i>
+                                    <i class="bi bi-building-check"></i> 
+                                    <span>Ferreterías</span> 
+                                    <i class="bi bi-chevron-down ms-0.5" style="font-size:0.65rem;"></i>
                                 </button>
                                 <div class="dropdown-menu shadow-lg p-2 rounded-3 border" 
                                      id="menuDropdownClientesRegulares"
-                                     style="position: absolute !important; right: 0 !important; left: auto !important; top: 100% !important; min-width: 290px; max-width: 330px; width: 310px; max-height: 290px; overflow-y: auto; z-index: 1060;">
+                                     style="position: absolute !important; right: 0 !important; left: auto !important; top: 100% !important; min-width: 290px; max-width: 330px; width: 310px; max-height: 280px; overflow-y: auto; z-index: 1075;">
                                     <div class="px-2 py-1 mb-2 border-bottom">
                                         <div class="input-group input-group-sm">
                                             <span class="input-group-text bg-light border-end-0"><i class="bi bi-search text-muted"></i></span>
-                                            <input type="text" id="buscadorRapidoClientesDrop" class="form-control border-start-0" placeholder="Buscar por nombre, teléfono o NIT...">
+                                            <input type="text" id="buscadorRapidoClientesDrop" class="form-control border-start-0" placeholder="Buscar ferretería o cliente...">
                                         </div>
                                     </div>
                                     <div id="listaDropClientes">
@@ -585,14 +650,14 @@
                                             <a href="javascript:void(0)" class="dropdown-item p-2 rounded-2 item-cliente-drop mb-1"
                                                onclick="seleccionarClienteRegular({{ $cli->id }}, '{{ addslashes($cli->nombre) }}', '{{ $cli->telefono ?? '' }}')">
                                                 <div class="d-flex justify-content-between align-items-center">
-                                                    <div class="fw-bold text-dark" style="font-size: 0.88rem;">{{ $cli->nombre }}</div>
+                                                    <div class="fw-bold text-dark" style="font-size: 0.86rem;">{{ $cli->nombre }}</div>
                                                     @if(($cli->saldo_pendiente ?? 0) > 0)
-                                                        <span class="badge bg-danger bg-opacity-10 text-danger border border-danger-subtle" style="font-size: 0.68rem;">
+                                                        <span class="badge bg-danger bg-opacity-10 text-danger border border-danger-subtle" style="font-size: 0.66rem;">
                                                             Debe Bs. {{ number_format($cli->saldo_pendiente, 2) }}
                                                         </span>
                                                     @endif
                                                 </div>
-                                                <div class="small text-muted" style="font-size: 0.75rem;">
+                                                <div class="small text-muted" style="font-size: 0.72rem;">
                                                     @if($cli->telefono)
                                                         <i class="bi bi-telephone text-success me-1"></i>{{ $cli->telefono }}
                                                     @endif
@@ -613,44 +678,49 @@
                         <!-- Input de Cliente con Sugerencias Flotantes -->
                         <div class="position-relative">
                             <div class="input-group">
-                                <span class="input-group-text bg-white border-end-0 text-muted px-3" style="height: 44px;"><i class="bi bi-person fs-5"></i></span>
+                                <span class="input-group-text bg-white border-end-0 text-muted px-2.5" style="height: 40px;"><i class="bi bi-person fs-5"></i></span>
                                 <input type="text" 
                                        name="cliente" 
                                        id="inputCliente" 
                                        class="form-control input-pos-destacado border-start-0" 
-                                       placeholder="Ingresa nombre del cliente..." 
+                                       value="Cliente Varios"
+                                       placeholder="Nombre del cliente o ferretería..." 
                                        autocomplete="off"
-                                       required>
+                                       required
+                                       style="height: 40px !important; font-size: 0.95rem !important;">
                             </div>
                             <!-- Lista flotante de autocompletado en tiempo real -->
                             <div id="sugerenciasClientesPos" class="list-group shadow-lg position-absolute w-100 rounded-3 border" 
-                                 style="display: none; top: 100%; left: 0; z-index: 1070; max-height: 200px; overflow-y: auto; background: #ffffff;">
+                                 style="display: none; top: 100%; left: 0; z-index: 1080; max-height: 220px; overflow-y: auto; background: #ffffff;">
                             </div>
                         </div>
 
+                        <!-- Aviso de coincidencia / Corrección de mayúsculas y acentos -->
+                        <div id="contenedorAvisoCliente" class="mt-1" style="display: none;"></div>
+
                         <!-- Chip cuando un cliente regular está seleccionado -->
-                        <div id="badgeClienteSeleccionado" class="mt-2 p-2 rounded-3 bg-primary bg-opacity-10 border border-primary-subtle d-flex justify-content-between align-items-center" style="display: none !important;">
-                            <div class="d-flex align-items-center gap-2">
-                                <i class="bi bi-patch-check-fill text-primary fs-5"></i>
+                        <div id="badgeClienteSeleccionado" class="mt-1.5 p-1.5 px-2.5 rounded-3 bg-primary bg-opacity-10 border border-primary-subtle d-flex justify-content-between align-items-center" style="display: none !important;">
+                            <div class="d-flex align-items-center gap-1.5">
+                                <i class="bi bi-patch-check-fill text-primary fs-6"></i>
                                 <div>
                                     <span class="fw-bold text-primary small" id="txtNombreClienteRegular">—</span>
-                                    <small class="text-muted ms-1" id="txtDetalleClienteRegular">· Cliente Regular</small>
+                                    <small class="text-muted ms-1" id="txtDetalleClienteRegular" style="font-size:0.72rem;">· Cliente Regular</small>
                                 </div>
                             </div>
-                            <button type="button" class="btn btn-sm btn-link text-danger p-0 text-decoration-none fw-bold" onclick="desvincularClienteRegular()" title="Desvincular">
-                                <i class="bi bi-x-circle-fill fs-5"></i>
+                            <button type="button" class="btn btn-sm btn-link text-danger p-0 text-decoration-none fw-bold" onclick="desvincularClienteRegular()" title="Desvincular cliente regular">
+                                <i class="bi bi-x-circle-fill fs-6"></i>
                             </button>
                         </div>
                     </div>
 
-                    <!-- CAMPO 3: MÉTODO DE PAGO (EFECTIVO / QR / POR PAGAR) -->
-                    <div class="mb-3 text-start">
-                        <div class="d-flex justify-content-between align-items-center mb-1.5">
+                    <!-- CAMPO 4: MÉTODO DE PAGO (EFECTIVO / QR / POR PAGAR) -->
+                    <div class="mb-2.5 text-start">
+                        <div class="d-flex justify-content-between align-items-center mb-1">
                             <label class="label-pos-destacado m-0">
-                                <i class="bi bi-credit-card-2-front-fill text-primary me-2 fs-5"></i>
+                                <i class="bi bi-credit-card-2-front-fill text-primary me-1.5 fs-6"></i>
                                 Método de Pago *
                             </label>
-                            <button type="button" onclick="abrirModalQRManual()" class="btn btn-sm btn-outline-primary py-0 px-2.5 rounded-pill fw-semibold border-1 shadow-none" style="font-size: 0.75rem;" title="Ver código QR de pago">
+                            <button type="button" onclick="abrirModalQRManual()" class="btn btn-sm btn-outline-primary py-0 px-2 rounded-pill fw-semibold border-1 shadow-none" style="font-size: 0.72rem;" title="Ver código QR de pago">
                                 <i class="bi bi-qr-code me-1"></i>Ver QR
                             </button>
                         </div>
@@ -658,27 +728,27 @@
                             <!-- Efectivo -->
                             <div class="col-4 position-relative">
                                 <input type="radio" class="btn-check" name="metodo_pago" id="pago_efectivo" value="Efectivo" checked>
-                                <label class="btn btn-metodo-pago metodo-efectivo w-100 d-flex flex-column align-items-center" for="pago_efectivo">
-                                    <i class="bi bi-cash-coin fs-4 mb-1"></i>
-                                    <span style="font-size: 0.85rem; font-weight: 700;">Efectivo</span>
+                                <label class="btn btn-metodo-pago metodo-efectivo w-100 d-flex flex-column align-items-center py-2" for="pago_efectivo">
+                                    <i class="bi bi-cash-coin fs-5 mb-0.5"></i>
+                                    <span style="font-size: 0.82rem; font-weight: 700;">Efectivo</span>
                                 </label>
                             </div>
 
                             <!-- QR -->
                             <div class="col-4 position-relative">
                                 <input type="radio" class="btn-check" name="metodo_pago" id="pago_qr" value="QR">
-                                <label class="btn btn-metodo-pago metodo-qr w-100 d-flex flex-column align-items-center" for="pago_qr">
-                                    <i class="bi bi-qr-code-scan fs-4 mb-1"></i>
-                                    <span style="font-size: 0.85rem; font-weight: 700;">QR Simple</span>
+                                <label class="btn btn-metodo-pago metodo-qr w-100 d-flex flex-column align-items-center py-2" for="pago_qr">
+                                    <i class="bi bi-qr-code-scan fs-5 mb-0.5"></i>
+                                    <span style="font-size: 0.82rem; font-weight: 700;">QR Simple</span>
                                 </label>
                             </div>
 
                             <!-- Por Pagar (Crédito) -->
                             <div class="col-4 position-relative">
                                 <input type="radio" class="btn-check" name="metodo_pago" id="pago_por_pagar" value="Por Pagar">
-                                <label class="btn btn-metodo-pago metodo-credito w-100 d-flex flex-column align-items-center" for="pago_por_pagar">
-                                    <i class="bi bi-clock-history fs-4 mb-1"></i>
-                                    <span style="font-size: 0.85rem; font-weight: 700;">Por Pagar</span>
+                                <label class="btn btn-metodo-pago metodo-credito w-100 d-flex flex-column align-items-center py-2" for="pago_por_pagar">
+                                    <i class="bi bi-clock-history fs-5 mb-0.5"></i>
+                                    <span style="font-size: 0.82rem; font-weight: 700;">Por Pagar</span>
                                 </label>
                             </div>
                         </div>
@@ -759,6 +829,8 @@
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     let carrito = [];
+    const POS_STORAGE_KEY = 'dg_pos_carrito_activo_v1';
+    const VENTA_COMPLETADA_EXITOSA = @if(session('success_venta_id')) true @else false @endif;
 
     // Elementos DOM
     const listaCarrito = document.getElementById('listaCarrito');
@@ -767,12 +839,15 @@ document.addEventListener('DOMContentLoaded', function() {
     const txtTotal = document.getElementById('txtTotal');
     const inputTotalVenta = document.getElementById('inputTotalVenta');
     const inputCliente = document.getElementById('inputCliente');
+    const inputIdCliente = document.getElementById('inputIdCliente');
+    const inputNumeroNota = document.getElementById('inputNumeroNota');
     const inputsOcultos = document.getElementById('inputsOcultosCarrito');
     const btnCobrar = document.getElementById('btnCobrar');
     const btnVaciar = document.getElementById('btnVaciarCarrito');
     const buscador = document.getElementById('buscadorProductos');
     const filtroCat = document.getElementById('filtroCategoria');
-    const filasProductos = document.querySelectorAll('.fila-producto');
+    const tbodyProductos = document.querySelector('#tablaProductos tbody');
+    let filasProductos = document.querySelectorAll('.fila-producto');
     const contadorVisibles = document.getElementById('contadorProductosVisibles');
     
     // Elementos Por Pagar
@@ -973,6 +1048,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 const m = bootstrap.Modal.getOrCreateInstance(modalEl);
                 m.hide();
             }
+            localStorage.removeItem(POS_STORAGE_KEY);
             formVenta.submit();
         });
     }
@@ -984,6 +1060,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 alert('El carrito está vacío. Agrega al menos un producto antes de cobrar.');
                 return;
             }
+            // Al cobrar se limpia el almacenamiento para que la próxima venta inicie limpia
+            localStorage.removeItem(POS_STORAGE_KEY);
         });
     }
 
@@ -1035,6 +1113,26 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         }
 
+        // Lógica de nombre del cliente según tarifa
+        if (nuevaTarifa === 'Ocasional') {
+            // Al pasar a Ocasional, si estaba vacío o tenía cliente regular, rellenar "Cliente Varios"
+            if (inputCliente && (inputCliente.value.trim() === '' || (inputIdCliente && inputIdCliente.value !== ''))) {
+                inputCliente.value = 'Cliente Varios';
+                if (inputIdCliente) inputIdCliente.value = '';
+                if (badgeCliente) badgeCliente.style.setProperty('display', 'none', 'important');
+                const aviso = document.getElementById('contenedorAvisoCliente');
+                if (aviso) aviso.style.display = 'none';
+            }
+        } else if (nuevaTarifa === 'Regular') {
+            // Al pasar a Regular, si tenía "Cliente Varios", limpiar para elegir cliente regular
+            if (inputCliente && inputCliente.value.trim().toLowerCase() === 'cliente varios') {
+                inputCliente.value = '';
+                const aviso = document.getElementById('contenedorAvisoCliente');
+                if (aviso) aviso.style.display = 'none';
+                inputCliente.focus();
+            }
+        }
+
         // Recalcular carrito si ya tiene productos
         if (forzarRecalculo && carrito.length > 0) {
             carrito.forEach(item => {
@@ -1048,6 +1146,9 @@ document.addEventListener('DOMContentLoaded', function() {
             });
             renderizarCarrito();
         }
+
+        validarBotonCobrar();
+        guardarCarritoEnStorage();
     };
 
     radiosTarifa.forEach(r => {
@@ -1056,10 +1157,15 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
 
-    // 3. Agregar productos al carrito
-    document.querySelectorAll('.btn-agregar-producto').forEach(boton => {
-        boton.addEventListener('click', function() {
-            const fila = this.closest('tr');
+    // 3. Agregar productos al carrito (Delegado en tbody para soportar actualizaciones dinámicas AJAX sin recargar)
+    if (tbodyProductos) {
+        tbodyProductos.addEventListener('click', function(e) {
+            const boton = e.target.closest('.btn-agregar-producto');
+            if (!boton) return;
+
+            const fila = boton.closest('tr');
+            if (!fila) return;
+
             const id = fila.dataset.id;
             const codigo = fila.dataset.codigo;
             const nombre = fila.dataset.nombre;
@@ -1097,41 +1203,86 @@ document.addEventListener('DOMContentLoaded', function() {
             renderizarCarrito();
 
             // Efecto visual de pulsación
-            this.classList.add('btn-success');
-            setTimeout(() => this.classList.remove('btn-success'), 300);
+            boton.classList.add('btn-success');
+            setTimeout(() => boton.classList.remove('btn-success'), 300);
         });
-    });
+    }
 
     
-    // Lógica para Clientes Regulares y Búsqueda Rápida
-    const inputIdCliente = document.getElementById("inputIdCliente");
+    // ==========================================
+    // CATÁLOGO UNIFICADO DE CLIENTES (REGULARES + HISTORIAL DE VENTAS)
+    // ==========================================
     const badgeCliente = document.getElementById("badgeClienteSeleccionado");
     const txtNomReg = document.getElementById("txtNombreClienteRegular");
     const txtDetReg = document.getElementById("txtDetalleClienteRegular");
     const btnDropCli = document.getElementById("btnDropdownClientesRegulares");
     const menuDropCli = document.getElementById("menuDropdownClientesRegulares");
     const cajaSugerencias = document.getElementById("sugerenciasClientesPos");
+    const chipClienteVarios = document.getElementById("btnChipClienteVarios");
+    const contenedorAvisoCliente = document.getElementById("contenedorAvisoCliente");
 
-    // Catálogo en memoria para búsqueda instantánea
     @php
-        $clientesListaJs = $clientes->map(function($c) {
+        $clientesRegularesJs = $clientes->map(function($c) {
             return [
                 'id' => $c->id,
-                'nombre' => $c->nombre,
+                'nombre' => trim($c->nombre),
                 'telefono' => $c->telefono,
                 'ci_nit' => $c->ci_nit,
                 'saldo_pendiente' => floatval($c->saldo_pendiente ?? 0),
+                'tipo' => 'regular',
+                'total_compras' => 0,
+            ];
+        })->values();
+
+        $clientesHistorialJs = (isset($clientesHistorial) ? $clientesHistorial : collect())->map(function($h) {
+            return [
+                'nombre' => trim($h->cliente),
+                'total_compras' => intval($h->total_compras),
+                'ultima_compra' => $h->ultima_compra ? date('d/m/Y', strtotime($h->ultima_compra)) : '',
+                'tipo' => 'historial',
             ];
         })->values();
     @endphp
-    const clientesCatalogo = @json($clientesListaJs);
 
+    const clientesRegularesCatalogo = @json($clientesRegularesJs);
+    const clientesHistorialCatalogo = @json($clientesHistorialJs);
+
+    function normalizarTexto(txt) {
+        return (txt || '').toLowerCase()
+            .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+            .replace(/\s+/g, ' ')
+            .trim();
+    }
+
+    // Función rápida para asignar "Cliente Varios"
+    window.asignarClienteVarios = function() {
+        if (inputCliente) {
+            inputCliente.value = "Cliente Varios";
+            if (inputIdCliente) inputIdCliente.value = "";
+            if (badgeCliente) badgeCliente.style.setProperty('display', 'none', 'important');
+            if (cajaSugerencias) cajaSugerencias.style.display = "none";
+            if (contenedorAvisoCliente) contenedorAvisoCliente.style.display = "none";
+            cambiarTarifa('Ocasional', true);
+            validarBotonCobrar();
+            guardarCarritoEnStorage();
+        }
+    };
+
+    if (chipClienteVarios) {
+        chipClienteVarios.addEventListener('click', function(e) {
+            e.preventDefault();
+            asignarClienteVarios();
+        });
+    }
+
+    // Seleccionar cliente regular con cuenta / ferretería
     window.seleccionarClienteRegular = function(id, nombre, tel) {
         if (inputCliente) inputCliente.value = nombre;
         if (inputIdCliente) inputIdCliente.value = id;
         if (txtNomReg) txtNomReg.textContent = nombre;
         if (txtDetReg) txtDetReg.textContent = tel ? `Cliente Regular · Tel: ${tel}` : 'Cliente Regular Registrado';
         if (badgeCliente) badgeCliente.style.setProperty('display', 'flex', 'important');
+        if (contenedorAvisoCliente) contenedorAvisoCliente.style.display = "none";
         
         // Al seleccionar un cliente regular registrado, se activa automáticamente su tarifa
         cambiarTarifa('Regular', true);
@@ -1145,24 +1296,73 @@ document.addEventListener('DOMContentLoaded', function() {
         if (cajaSugerencias) cajaSugerencias.style.display = "none";
         
         validarBotonCobrar();
+        guardarCarritoEnStorage();
+    };
+
+    // Seleccionar cliente existente desde el historial de ventas previas
+    window.seleccionarClienteHistorial = function(nombreExacto, totalCompras) {
+        if (inputCliente) {
+            inputCliente.value = nombreExacto;
+            if (inputIdCliente) inputIdCliente.value = "";
+            if (badgeCliente) badgeCliente.style.setProperty('display', 'none', 'important');
+            if (cajaSugerencias) cajaSugerencias.style.display = "none";
+
+            if (contenedorAvisoCliente) {
+                contenedorAvisoCliente.innerHTML = `
+                    <div class="d-flex align-items-center justify-content-between p-1.5 px-2.5 rounded-2 bg-light border border-success-subtle" style="font-size: 0.74rem;">
+                        <span class="text-success fw-semibold">
+                            <i class="bi bi-patch-check-fill text-success me-1"></i>Cliente en historial (${totalCompras} compra(s) previas)
+                        </span>
+                        <span class="badge bg-success bg-opacity-10 text-success border border-success-subtle py-0 px-1" style="font-size:0.65rem;">Verificado</span>
+                    </div>
+                `;
+                contenedorAvisoCliente.style.display = "block";
+            }
+
+            validarBotonCobrar();
+            guardarCarritoEnStorage();
+        }
+    };
+
+    // Aplicar corrección de mayúsculas y acentos
+    window.aplicarNombreCorrecto = function(nombreCorrecto) {
+        if (inputCliente) {
+            inputCliente.value = nombreCorrecto;
+            if (cajaSugerencias) cajaSugerencias.style.display = "none";
+            if (contenedorAvisoCliente) {
+                contenedorAvisoCliente.innerHTML = `
+                    <div class="d-flex align-items-center p-1.5 px-2.5 rounded-2 bg-light border border-success-subtle text-success fw-semibold" style="font-size: 0.74rem;">
+                        <i class="bi bi-check-circle-fill me-1"></i>Nombre corregido a: <strong>${nombreCorrecto}</strong>
+                    </div>
+                `;
+                contenedorAvisoCliente.style.display = "block";
+                setTimeout(() => {
+                    if (contenedorAvisoCliente) contenedorAvisoCliente.style.display = "none";
+                }, 3500);
+            }
+            validarBotonCobrar();
+            guardarCarritoEnStorage();
+        }
     };
 
     window.desvincularClienteRegular = function() {
         if (inputIdCliente) inputIdCliente.value = "";
         if (badgeCliente) badgeCliente.style.setProperty('display', 'none', 'important');
         if (inputCliente) {
-            inputCliente.value = "";
+            inputCliente.value = "Cliente Varios";
             inputCliente.focus();
         }
         if (cajaSugerencias) cajaSugerencias.style.display = "none";
+        if (contenedorAvisoCliente) contenedorAvisoCliente.style.display = "none";
 
         // Vuelve a tarifa de venta ocasional
         cambiarTarifa('Ocasional', true);
 
         validarBotonCobrar();
+        guardarCarritoEnStorage();
     };
 
-    // Control manual e infalible para el botón "Clientes Regulares"
+    // Control manual para el botón "Clientes Regulares / Ferreterías"
     if (btnDropCli && menuDropCli) {
         btnDropCli.addEventListener("click", function(e) {
             e.preventDefault();
@@ -1196,45 +1396,76 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    // Autocompletado dinámico mientras el usuario escribe en el input
+    // Autocompletado dinámico inteligente mientras el usuario escribe en el input de cliente
     if (inputCliente) {
         inputCliente.addEventListener("input", function() {
-            const query = this.value.toLowerCase().trim();
+            const rawVal = this.value;
+            const queryNorm = normalizarTexto(rawVal);
+            const aviso = document.getElementById("contenedorAvisoCliente");
 
             // Desvincular si cambió el texto respecto al cliente regular seleccionado
             if (inputIdCliente && inputIdCliente.value !== "") {
-                if (txtNomReg && query !== txtNomReg.textContent.trim().toLowerCase()) {
+                if (txtNomReg && queryNorm !== normalizarTexto(txtNomReg.textContent)) {
                     inputIdCliente.value = "";
                     if (badgeCliente) badgeCliente.style.setProperty('display', 'none', 'important');
                 }
             }
 
-            // Mostrar sugerencias coincidentes
+            // Mostrar sugerencias coincidentes (de clientes regulares y del historial de compras)
             if (cajaSugerencias) {
-                if (query.length >= 1 && (!inputIdCliente || inputIdCliente.value === "")) {
-                    const coincidencias = clientesCatalogo.filter(c => 
-                        c.nombre.toLowerCase().includes(query) || 
-                        (c.telefono && c.telefono.includes(query)) ||
-                        (c.ci_nit && c.ci_nit.toLowerCase().includes(query))
+                if (queryNorm.length >= 1 && (!inputIdCliente || inputIdCliente.value === "")) {
+                    const matchesReg = clientesRegularesCatalogo.filter(c => 
+                        normalizarTexto(c.nombre).includes(queryNorm) || 
+                        (c.telefono && c.telefono.includes(queryNorm)) ||
+                        (c.ci_nit && normalizarTexto(c.ci_nit).includes(queryNorm))
                     );
 
-                    if (coincidencias.length > 0) {
+                    const regNombresSet = new Set(clientesRegularesCatalogo.map(r => normalizarTexto(r.nombre)));
+                    const matchesHist = clientesHistorialCatalogo.filter(h => 
+                        !regNombresSet.has(normalizarTexto(h.nombre)) &&
+                        normalizarTexto(h.nombre).includes(queryNorm)
+                    );
+
+                    const totalMatches = matchesReg.length + matchesHist.length;
+
+                    if (totalMatches > 0) {
                         let html = '';
-                        coincidencias.slice(0, 5).forEach(c => {
+
+                        matchesReg.slice(0, 4).forEach(c => {
                             const badgeDeuda = c.saldo_pendiente > 0 
-                                ? `<span class="badge bg-danger bg-opacity-10 text-danger border border-danger-subtle ms-1" style="font-size:0.68rem;">Debe Bs. ${c.saldo_pendiente.toFixed(2)}</span>` 
+                                ? `<span class="badge bg-danger bg-opacity-10 text-danger border border-danger-subtle ms-1" style="font-size:0.66rem;">Debe Bs. ${c.saldo_pendiente.toFixed(2)}</span>` 
                                 : '';
-                            const meta = c.telefono ? `<small class="text-muted ms-2"><i class="bi bi-telephone text-success"></i> ${c.telefono}</small>` : '';
+                            const meta = c.telefono ? `<small class="text-muted ms-1.5"><i class="bi bi-telephone text-success"></i> ${c.telefono}</small>` : '';
                             html += `
-                                <button type="button" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center py-2 px-3"
+                                <button type="button" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center py-2 px-3 border-0 border-bottom"
                                         onclick="seleccionarClienteRegular(${c.id}, '${c.nombre.replace(/'/g, "\\'")}', '${c.telefono || ''}')">
                                     <div>
-                                        <strong class="text-dark small">${c.nombre}</strong> ${meta}
+                                        <strong class="text-dark small d-block">${c.nombre}</strong>
+                                        <small class="text-muted" style="font-size: 0.72rem;">Cliente Regular ${meta}</small>
                                     </div>
-                                    <div>${badgeDeuda}</div>
+                                    <div class="text-end">
+                                        <span class="badge bg-primary bg-opacity-10 text-primary border border-primary-subtle" style="font-size: 0.65rem;">Regular</span>
+                                        ${badgeDeuda}
+                                    </div>
                                 </button>
                             `;
                         });
+
+                        matchesHist.slice(0, 4).forEach(h => {
+                            html += `
+                                <button type="button" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center py-2 px-3 border-0 border-bottom"
+                                        onclick="seleccionarClienteHistorial('${h.nombre.replace(/'/g, "\\'")}', ${h.total_compras})">
+                                    <div>
+                                        <strong class="text-dark small d-block">${h.nombre}</strong>
+                                        <small class="text-muted" style="font-size: 0.72rem;">
+                                            <i class="bi bi-clock-history text-secondary me-1"></i>${h.total_compras} venta(s) registradas anteriormente
+                                        </small>
+                                    </div>
+                                    <span class="badge bg-secondary bg-opacity-10 text-secondary border border-secondary-subtle" style="font-size: 0.65rem;">Historial</span>
+                                </button>
+                            `;
+                        });
+
                         cajaSugerencias.innerHTML = html;
                         cajaSugerencias.style.display = "block";
                     } else {
@@ -1245,7 +1476,62 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
             }
 
+            // Detección de coincidencia para mayúsculas / ortografía en vivo
+            if (aviso) {
+                if (queryNorm.length >= 2) {
+                    const exactoReg = clientesRegularesCatalogo.find(c => normalizarTexto(c.nombre) === queryNorm);
+                    const exactoHist = clientesHistorialCatalogo.find(h => normalizarTexto(h.nombre) === queryNorm);
+                    const match = exactoReg || exactoHist;
+
+                    if (match && rawVal !== match.nombre) {
+                        aviso.innerHTML = `
+                            <div class="d-flex align-items-center justify-content-between p-1.5 px-2.5 rounded-2 bg-light border border-info-subtle" style="font-size: 0.74rem;">
+                                <span><i class="bi bi-info-circle text-info me-1"></i>Registrado como: <strong>${match.nombre}</strong></span>
+                                <button type="button" class="btn btn-xs btn-outline-primary py-0 px-2 fw-bold" onclick="aplicarNombreCorrecto('${match.nombre.replace(/'/g, "\\'")}')" style="font-size:0.70rem;">
+                                    Corregir a "${match.nombre}"
+                                </button>
+                            </div>
+                        `;
+                        aviso.style.display = "block";
+                    } else if (match && rawVal === match.nombre) {
+                        const compras = match.total_compras ? ` · ${match.total_compras} compras previas` : '';
+                        aviso.innerHTML = `
+                            <div class="d-flex align-items-center p-1 px-2.5 rounded-2 text-muted" style="font-size: 0.72rem;">
+                                <i class="bi bi-check-circle-fill text-success me-1"></i>Cliente en sistema${compras}
+                            </div>
+                        `;
+                        aviso.style.display = "block";
+                    } else {
+                        aviso.style.display = "none";
+                    }
+                } else {
+                    aviso.style.display = "none";
+                }
+            }
+
             validarBotonCobrar();
+            guardarCarritoEnStorage();
+        });
+
+        // Al salir del input (blur): si escribió en minúsculas un nombre existente (ej. "cliente varios"), autocorregir a mayúsculas
+        inputCliente.addEventListener("blur", function() {
+            setTimeout(() => {
+                const rawVal = this.value;
+                const queryNorm = normalizarTexto(rawVal);
+                if (queryNorm.length >= 2) {
+                    const exactoReg = clientesRegularesCatalogo.find(c => normalizarTexto(c.nombre) === queryNorm);
+                    const exactoHist = clientesHistorialCatalogo.find(h => normalizarTexto(h.nombre) === queryNorm);
+                    const match = exactoReg || exactoHist;
+
+                    if (match && rawVal !== match.nombre) {
+                        this.value = match.nombre;
+                        const aviso = document.getElementById("contenedorAvisoCliente");
+                        if (aviso) aviso.style.display = "none";
+                        validarBotonCobrar();
+                        guardarCarritoEnStorage();
+                    }
+                }
+            }, 250);
         });
     }
 
@@ -1261,12 +1547,136 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
+    // ==========================================
+    // GESTIÓN DE ALMACENAMIENTO (CARRITO EN COLA / AUTO-GUARDADO ESTILO PEDIDOSYA)
+    // ==========================================
+    function guardarCarritoEnStorage() {
+        if (carrito.length > 0) {
+            const payload = {
+                carrito: carrito,
+                tarifaActiva: tarifaActiva,
+                cliente: inputCliente ? inputCliente.value : '',
+                idCliente: inputIdCliente ? inputIdCliente.value : '',
+                nombreClienteRegular: txtNomReg ? txtNomReg.textContent : '',
+                detalleClienteRegular: txtDetReg ? txtDetReg.textContent : '',
+                numeroNota: inputNumeroNota ? inputNumeroNota.value : '',
+                timestamp: Date.now()
+            };
+            try {
+                localStorage.setItem(POS_STORAGE_KEY, JSON.stringify(payload));
+            } catch (e) {
+                console.warn('No se pudo guardar carrito en localStorage:', e);
+            }
+            const badgeAuto = document.getElementById('badgeAutoGuardado');
+            if (badgeAuto) badgeAuto.style.display = 'inline-flex';
+        } else {
+            try {
+                localStorage.removeItem(POS_STORAGE_KEY);
+            } catch (e) {}
+            const badgeAuto = document.getElementById('badgeAutoGuardado');
+            if (badgeAuto) badgeAuto.style.display = 'none';
+            const bannerCola = document.getElementById('bannerCarritoEnCola');
+            if (bannerCola) bannerCola.style.display = 'none';
+        }
+    }
+
+    function restaurarCarritoDesdeStorage() {
+        if (VENTA_COMPLETADA_EXITOSA) {
+            try {
+                localStorage.removeItem(POS_STORAGE_KEY);
+            } catch (e) {}
+            if (inputCliente && (!inputCliente.value || inputCliente.value.trim() === '')) {
+                inputCliente.value = 'Cliente Varios';
+            }
+            return;
+        }
+
+        try {
+            const guardadoRaw = localStorage.getItem(POS_STORAGE_KEY);
+            if (!guardadoRaw) {
+                if (inputCliente && (!inputCliente.value || inputCliente.value.trim() === '')) {
+                    inputCliente.value = 'Cliente Varios';
+                }
+                return;
+            }
+
+            const guardado = JSON.parse(guardadoRaw);
+            if (guardado && Array.isArray(guardado.carrito) && guardado.carrito.length > 0) {
+                carrito = guardado.carrito;
+
+                if (guardado.tarifaActiva) {
+                    cambiarTarifa(guardado.tarifaActiva, false);
+                }
+
+                if (inputCliente) {
+                    inputCliente.value = guardado.cliente || 'Cliente Varios';
+                }
+
+                if (guardado.idCliente && inputIdCliente) {
+                    inputIdCliente.value = guardado.idCliente;
+                    if (badgeCliente) {
+                        if (txtNomReg) txtNomReg.textContent = guardado.nombreClienteRegular || guardado.cliente;
+                        if (txtDetReg) txtDetReg.textContent = guardado.detalleClienteRegular || 'Cliente Regular Registrado';
+                        badgeCliente.style.setProperty('display', 'flex', 'important');
+                    }
+                }
+
+                if (guardado.numeroNota && inputNumeroNota) {
+                    inputNumeroNota.value = guardado.numeroNota;
+                }
+
+                renderizarCarrito();
+
+                // Mostrar banner visual de "Carrito en cola recuperado"
+                const bannerCola = document.getElementById('bannerCarritoEnCola');
+                const badgeNum = document.getElementById('badgeNumItemsCola');
+                const txtDet = document.getElementById('txtDetalleCarritoCola');
+                if (bannerCola) {
+                    if (badgeNum) badgeNum.textContent = `${carrito.length} ${carrito.length === 1 ? 'producto' : 'productos'}`;
+                    if (txtDet) txtDet.textContent = `Restauramos tus ${carrito.length} productos pendientes de tu sesión anterior.`;
+                    bannerCola.style.display = 'block';
+                }
+            }
+        } catch (e) {
+            console.error('Error al restaurar carrito en cola desde almacenamiento:', e);
+        }
+    }
+
+    // Botones del banner "Carrito en Cola"
+    const btnContinuarCola = document.getElementById('btnContinuarCarritoCola');
+    if (btnContinuarCola) {
+        btnContinuarCola.addEventListener('click', function() {
+            const bannerCola = document.getElementById('bannerCarritoEnCola');
+            if (bannerCola) bannerCola.style.display = 'none';
+        });
+    }
+
+    const btnDescartarCola = document.getElementById('btnDescartarCarritoCola');
+    if (btnDescartarCola) {
+        btnDescartarCola.addEventListener('click', function() {
+            if (confirm('¿Deseas descartar este carrito en cola y empezar uno nuevo?')) {
+                carrito = [];
+                try {
+                    localStorage.removeItem(POS_STORAGE_KEY);
+                } catch (e) {}
+                renderizarCarrito();
+                const bannerCola = document.getElementById('bannerCarritoEnCola');
+                if (bannerCola) bannerCola.style.display = 'none';
+            }
+        });
+    }
+
     // 4. Vaciar carrito
     if (btnVaciar) {
         btnVaciar.addEventListener('click', function() {
             if (carrito.length > 0 && confirm('¿Deseas vaciar todo el carrito?')) {
                 carrito = [];
+                try {
+                    localStorage.removeItem(POS_STORAGE_KEY);
+                } catch (e) {}
                 renderizarCarrito();
+                const bannerCola = document.getElementById('bannerCarritoEnCola');
+                if (bannerCola) bannerCola.style.display = 'none';
             }
         });
     }
@@ -1287,7 +1697,14 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     if (inputCliente) {
-        inputCliente.addEventListener('input', validarBotonCobrar);
+        inputCliente.addEventListener('input', function() {
+            validarBotonCobrar();
+            guardarCarritoEnStorage();
+        });
+    }
+
+    if (inputNumeroNota) {
+        inputNumeroNota.addEventListener('input', guardarCarritoEnStorage);
     }
 
     // 6. Dibujar el carrito en pantalla
@@ -1304,6 +1721,7 @@ document.addEventListener('DOMContentLoaded', function() {
             inputTotalVenta.value = 0;
             actualizarSaldoPendiente();
             validarBotonCobrar();
+            guardarCarritoEnStorage();
             return;
         }
 
@@ -1373,6 +1791,7 @@ document.addEventListener('DOMContentLoaded', function() {
         actualizarSaldoPendiente();
         validarBotonCobrar();
         asignarEventosCarrito();
+        guardarCarritoEnStorage();
     }
 
     // Alternar individualmente el precio de un ítem en el carrito
@@ -1460,6 +1879,187 @@ document.addEventListener('DOMContentLoaded', function() {
             });
         });
     }
+
+    // ==========================================
+    // ACTUALIZAR CATÁLOGO VÍA AJAX (SIN RECARGAR PÁGINA NI PERDER CARRITO)
+    // ==========================================
+    const btnActualizarPos = document.getElementById('btnActualizarCatalogoPos');
+    const iconActualizarPos = document.getElementById('iconActualizarCatalogo');
+    const toastActualizarPos = document.getElementById('toastActualizarPos');
+    const txtToastActualizarPos = document.getElementById('txtToastActualizarPos');
+
+    function actualizarTablaProductosDOM(productos) {
+        if (!tbodyProductos) return;
+
+        if (!productos || productos.length === 0) {
+            tbodyProductos.innerHTML = `
+                <tr>
+                    <td colspan="5" class="text-center py-5 text-muted">
+                        <i class="bi bi-box-seam fs-1 d-block mb-2 text-muted"></i>
+                        <h6>No hay productos con stock disponible en el sistema.</h6>
+                        <p class="small text-muted mb-0">Agrega stock desde el módulo de Inventario o Productos.</p>
+                    </td>
+                </tr>
+            `;
+            filasProductos = document.querySelectorAll('.fila-producto');
+            filtrarProductos();
+            return;
+        }
+
+        let html = '';
+        productos.forEach(p => {
+            const pVenta = parseFloat(p.precio_venta) || 0;
+            const tienePC = (p.precio_cliente !== null && parseFloat(p.precio_cliente) > 0);
+            const pCliente = tienePC ? parseFloat(p.precio_cliente) : pVenta;
+
+            const stk = parseInt(p.stock) || 0;
+            const minStk = parseInt(p.stock_minimo) || 5;
+            const umbralBajo = Math.max(minStk * 2, minStk + 5);
+
+            let stockBadge = '';
+            if (stk <= 0) {
+                stockBadge = `<span class="badge bg-danger text-white border px-2 py-1 fs-6" title="Agotado">0</span>`;
+            } else if (stk <= minStk) {
+                stockBadge = `<span class="badge bg-danger-subtle text-danger border border-danger-subtle px-2 py-1 fs-6 fw-bold" title="Stock crítico (Mín: ${minStk})">${stk}</span>`;
+            } else if (stk <= umbralBajo) {
+                stockBadge = `<span class="badge bg-warning-subtle text-warning border border-warning-subtle px-2 py-1 fs-6 fw-bold" title="Por agotarse (Mín: ${minStk})">${stk}</span>`;
+            } else {
+                stockBadge = `<span class="badge bg-success-subtle text-success border border-success-subtle px-2 py-1 fs-6 fw-bold" title="Stock óptimo">${stk}</span>`;
+            }
+
+            const lineaPC = tienePC
+                ? `<div class="linea-precio-cliente d-flex align-items-center justify-content-end gap-1 mt-0.5" style="color: #0284c7;">
+                        <i class="bi bi-tag-fill" style="font-size: 0.65rem;"></i>
+                        <span class="fw-bold val-precio-cliente" style="font-size: 0.88rem;">Bs. ${pCliente.toFixed(2)}</span>
+                        <span class="badge py-0 px-1" style="font-size: 0.64rem; background: #e0f2fe; color: #0369a1; border: 1px solid #bae6fd;">Cliente</span>
+                    </div>`
+                : `<div class="linea-precio-cliente text-muted mt-0.5" style="font-size: 0.68rem;" title="Sin precio especial: aplica el mismo precio de venta">
+                        <span>Cliente: <em>Mismo</em></span>
+                    </div>`;
+
+            const marcaNom = (p.marca && p.marca.nombre) ? p.marca.nombre : 'Genérico';
+            const catBadge = (p.categoria && p.categoria.nombre)
+                ? `<span class="badge bg-light text-muted border">${p.categoria.nombre}</span>`
+                : '';
+
+            html += `
+                <tr class="fila-producto" 
+                    data-id="${p.id}" 
+                    data-codigo="${p.codigo || ''}" 
+                    data-nombre="${p.nombre || ''}" 
+                    data-precio-venta="${pVenta}" 
+                    data-precio-cliente="${pCliente}" 
+                    data-tiene-precio-cliente="${tienePC ? '1' : '0'}" 
+                    data-precio="${pVenta}" 
+                    data-stock="${stk}" 
+                    data-categoria="${p.id_categoria || ''}">
+                    <td class="ps-4">
+                        <span class="badge-code">${p.codigo || 'S/C'}</span>
+                    </td>
+                    <td>
+                        <div class="fw-bold text-dark" style="font-size: 0.98rem;">${p.nombre || ''}</div>
+                        <div class="text-muted small">
+                            <span class="me-2"><i class="bi bi-tag me-1"></i>${marcaNom}</span>
+                            ${catBadge}
+                        </div>
+                    </td>
+                    <td class="text-center">
+                        ${stockBadge}
+                    </td>
+                    <td class="text-end">
+                        <div class="box-precio-pos">
+                            <div class="linea-precio-venta d-flex align-items-center justify-content-end gap-1">
+                                <span class="fw-bold text-dark val-precio-venta" style="font-size: 0.94rem;">
+                                    Bs. ${pVenta.toFixed(2)}
+                                </span>
+                                <span class="badge bg-light text-secondary border py-0 px-1" style="font-size: 0.64rem;">Venta</span>
+                            </div>
+                            ${lineaPC}
+                        </div>
+                    </td>
+                    <td class="text-center pe-4">
+                        <button type="button" class="btn btn-sm btn-primary fw-bold px-3 py-1.5 rounded-pill btn-agregar-producto shadow-sm">
+                            <i class="bi bi-plus-lg me-1"></i> Agregar
+                        </button>
+                    </td>
+                </tr>
+            `;
+        });
+
+        tbodyProductos.innerHTML = html;
+        filasProductos = document.querySelectorAll('.fila-producto');
+        filtrarProductos();
+    }
+
+    if (btnActualizarPos) {
+        btnActualizarPos.addEventListener('click', async function() {
+            try {
+                btnActualizarPos.disabled = true;
+                if (iconActualizarPos) iconActualizarPos.classList.add('spin-anim');
+
+                const res = await fetch('/pos/productos-ajax');
+                if (!res.ok) throw new Error('Error al conectar con el servidor.');
+                const data = await res.json();
+
+                if (data && data.success && Array.isArray(data.productos)) {
+                    actualizarTablaProductosDOM(data.productos);
+
+                    // Sincronización inteligente de precios con productos ya existentes en el carrito
+                    let preciosSincronizados = 0;
+                    carrito.forEach(cartItem => {
+                        const pDb = data.productos.find(p => String(p.id) === String(cartItem.id));
+                        if (pDb) {
+                            const nuevoPV = parseFloat(pDb.precio_venta) || 0;
+                            const nuevoPC = (pDb.precio_cliente !== null && parseFloat(pDb.precio_cliente) > 0)
+                                ? parseFloat(pDb.precio_cliente)
+                                : nuevoPV;
+                            const nuevoStock = parseInt(pDb.stock) || 0;
+
+                            cartItem.stockMaximo = nuevoStock;
+                            if (cartItem.precioVenta !== nuevoPV || cartItem.precioCliente !== nuevoPC) {
+                                cartItem.precioVenta = nuevoPV;
+                                cartItem.precioCliente = nuevoPC;
+                                cartItem.tienePrecioCliente = (pDb.precio_cliente !== null && parseFloat(pDb.precio_cliente) > 0);
+                                cartItem.precio = cartItem.esTarifaCliente ? nuevoPC : nuevoPV;
+                                preciosSincronizados++;
+                            }
+                        }
+                    });
+
+                    if (preciosSincronizados > 0) {
+                        renderizarCarrito();
+                    }
+
+                    // Mostrar notificación de actualización
+                    if (toastActualizarPos && txtToastActualizarPos) {
+                        if (preciosSincronizados > 0) {
+                            txtToastActualizarPos.innerHTML = `<strong>¡Catálogo y carrito sincronizados!</strong> Se actualizaron los precios de ${preciosSincronizados} producto(s) en tu carrito sin perder tu avance.`;
+                        } else {
+                            txtToastActualizarPos.innerHTML = `<strong>¡Catálogo actualizado!</strong> Se cargaron los precios y existencias más recientes (${data.total} productos con stock). Tu carrito se mantuvo intacto.`;
+                        }
+                        toastActualizarPos.style.display = 'flex';
+                        setTimeout(() => {
+                            if (toastActualizarPos) toastActualizarPos.style.display = 'none';
+                        }, 6000);
+                    }
+                }
+            } catch (err) {
+                console.error('Error al actualizar catálogo POS:', err);
+                alert('No se pudo actualizar el catálogo: ' + err.message);
+            } finally {
+                btnActualizarPos.disabled = false;
+                if (iconActualizarPos) iconActualizarPos.classList.remove('spin-anim');
+            }
+        });
+    }
+
+    // Inicializar catálogo y restaurar carrito si estaba guardado en cola
+    if (inputCliente && (!inputCliente.value || inputCliente.value.trim() === '')) {
+        inputCliente.value = 'Cliente Varios';
+    }
+    restaurarCarritoDesdeStorage();
+    filtrarProductos();
+    validarBotonCobrar();
 });
 </script>
 

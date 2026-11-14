@@ -348,7 +348,7 @@
             <thead class="table-custom-header">
                 <tr>
                     <th class="ps-4 sortable text-start" style="width: 25%;" data-col="0">
-                        PRODUCTO <i class="icono-orden bi bi-arrow-down-up ms-1" style="font-size: 0.8em; opacity: 0.5;"></i>
+                        PRODUCTO <i class="icono-orden bi bi-caret-down-fill text-primary ms-1" style="font-size: 0.8em; opacity: 1;" title="Ordenado alfabéticamente (A - Z)"></i>
                     </th>
                     <th class="sortable text-center" style="width: 12%;" data-col="1">
                         CÓDIGO <i class="icono-orden bi bi-arrow-down-up ms-1" style="font-size: 0.8em; opacity: 0.5;"></i>
@@ -807,103 +807,128 @@
 @endauth
 
 <!-- ============================================== -->
-<!-- JAVASCRIPT DEL CATÁLOGO DE PRODUCTOS           -->
+<!-- JAVASCRIPT DEL CATÁLOGO DE PRODUCTOS (ULTRA-RÁPIDO) -->
 <!-- ============================================== -->
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    // 1. Filtrado dinámico combinado (Búsqueda + Categoría + Estado Stock)
+    const tabla = document.getElementById('tablaProductos');
+    const tbody = tabla ? tabla.querySelector('tbody') : null;
     const buscador = document.getElementById('buscadorProductos');
     const filtroCat = document.getElementById('filtroCategoria');
     const filtroStock = document.getElementById('filtroStock');
-    const filas = document.querySelectorAll('.fila-producto');
     const contador = document.getElementById('contadorVisibles');
 
+    if (!tabla || !tbody) return;
+
+    // 1. Pre-procesar filas en memoria UNA SOLA VEZ para que la búsqueda y ordenación sean instantáneas (0 lag)
+    const domFilas = Array.from(tbody.querySelectorAll('tr.fila-producto'));
+    const cacheFilas = domFilas.map(tr => {
+        const celdas = Array.from(tr.children);
+        const sortValues = celdas.map(td => {
+            const raw = td.getAttribute('data-sort-value') ?? '';
+            const n = Number(raw);
+            const isNum = raw !== '' && !isNaN(n);
+            return isNum ? n : raw.toLowerCase();
+        });
+
+        return {
+            tr: tr,
+            texto: (tr.innerText || tr.textContent).toLowerCase(),
+            categoria: tr.getAttribute('data-categoria') || '',
+            estadoStock: tr.getAttribute('data-estado-stock') || '',
+            sortValues: sortValues
+        };
+    });
+
+    // 2. Filtrado dinámico optimizado en memoria
+    let debounceTimer = null;
     function filtrarTabla() {
         const texto = buscador ? buscador.value.toLowerCase().trim() : '';
         const cat = filtroCat ? filtroCat.value : '';
         const stockState = filtroStock ? filtroStock.value : '';
         let visibles = 0;
 
-        filas.forEach(fila => {
-            const contenido = fila.textContent.toLowerCase();
-            const coincideTexto = (texto === '' || contenido.includes(texto));
+        for (let i = 0; i < cacheFilas.length; i++) {
+            const item = cacheFilas[i];
+            const coincideTexto = (texto === '' || item.texto.includes(texto));
+            const coincideCat = (cat === '' || item.categoria === cat);
 
-            const idCat = fila.getAttribute('data-categoria') || '';
-            const coincideCat = (cat === '' || idCat === cat);
-
-            const estado = fila.getAttribute('data-estado-stock') || '';
             let coincideStock = true;
             if (stockState === 'critico') {
-                coincideStock = (estado === 'critico' || estado === 'sin_stock');
+                coincideStock = (item.estadoStock === 'critico' || item.estadoStock === 'sin_stock');
             } else if (stockState !== '') {
-                coincideStock = (estado === stockState);
+                coincideStock = (item.estadoStock === stockState);
             }
 
             if (coincideTexto && coincideCat && coincideStock) {
-                fila.style.display = '';
+                if (item.tr.style.display !== '') item.tr.style.display = '';
                 visibles++;
             } else {
-                fila.style.display = 'none';
+                if (item.tr.style.display !== 'none') item.tr.style.display = 'none';
             }
-        });
+        }
 
         if (contador) contador.textContent = visibles;
     }
 
-    if (buscador) buscador.addEventListener('input', filtrarTabla);
+    if (buscador) {
+        buscador.addEventListener('input', function() {
+            clearTimeout(debounceTimer);
+            debounceTimer = setTimeout(filtrarTabla, 80);
+        });
+    }
     if (filtroCat) filtroCat.addEventListener('change', filtrarTabla);
     if (filtroStock) filtroStock.addEventListener('change', filtrarTabla);
 
-    // 2. Ordenamiento de Columnas
-    const tabla = document.getElementById('tablaProductos');
-    if (tabla) {
-        const headers = tabla.querySelectorAll('th.sortable');
-        let colActual = -1;
-        let ordenAsc = true;
+    // 3. Ordenamiento Ultrarrápido (<10ms) usando caché en memoria y DocumentFragment (0 bloqueos)
+    const headers = tabla.querySelectorAll('th.sortable');
+    let colActual = 0; // Inicia ordenado alfabéticamente por Nombre de Producto (Col 0)
+    let ordenAsc = true;
 
-        headers.forEach((header, index) => {
-            header.addEventListener('click', () => {
-                ordenAsc = (colActual === index) ? !ordenAsc : true;
-                colActual = index;
+    headers.forEach((header, index) => {
+        header.style.cursor = 'pointer';
+        header.title = 'Haz clic para ordenar de forma instantánea';
 
-                headers.forEach(h => {
-                    const icon = h.querySelector('.icono-orden');
-                    if (icon) {
-                        icon.className = 'icono-orden bi bi-arrow-down-up ms-1';
-                        icon.style.opacity = '0.5';
-                    }
-                });
+        header.addEventListener('click', () => {
+            ordenAsc = (colActual === index) ? !ordenAsc : true;
+            colActual = index;
 
-                const iconActual = header.querySelector('.icono-orden');
-                if (iconActual) {
-                    iconActual.className = `icono-orden bi ${ordenAsc ? 'bi-caret-down-fill text-primary' : 'bi-caret-up-fill text-primary'} ms-1`;
-                    iconActual.style.opacity = '1';
+            // Actualizar iconos visuales de cabecera
+            headers.forEach(h => {
+                const icon = h.querySelector('.icono-orden');
+                if (icon) {
+                    icon.className = 'icono-orden bi bi-arrow-down-up ms-1';
+                    icon.style.opacity = '0.5';
                 }
-
-                const tbody = tabla.querySelector('tbody');
-                const filasArray = Array.from(tbody.querySelectorAll('tr.fila-producto'));
-
-                filasArray.sort((a, b) => {
-                    let valA = a.children[index].getAttribute('data-sort-value') ?? '';
-                    let valB = b.children[index].getAttribute('data-sort-value') ?? '';
-
-                    if (!isNaN(valA) && !isNaN(valB) && valA !== '' && valB !== '') {
-                        valA = parseFloat(valA);
-                        valB = parseFloat(valB);
-                    } else {
-                        valA = valA.toString().toLowerCase();
-                        valB = valB.toString().toLowerCase();
-                    }
-
-                    if (valA < valB) return ordenAsc ? -1 : 1;
-                    if (valA > valB) return ordenAsc ? 1 : -1;
-                    return 0;
-                });
-
-                filasArray.forEach(fila => tbody.appendChild(fila));
             });
+
+            const iconActual = header.querySelector('.icono-orden');
+            if (iconActual) {
+                iconActual.className = `icono-orden bi ${ordenAsc ? 'bi-caret-down-fill text-primary' : 'bi-caret-up-fill text-primary'} ms-1`;
+                iconActual.style.opacity = '1';
+            }
+
+            // Ordenamiento ultrarrápido en memoria pura
+            cacheFilas.sort((a, b) => {
+                const valA = a.sortValues[index];
+                const valB = b.sortValues[index];
+
+                if (typeof valA === 'number' && typeof valB === 'number') {
+                    return ordenAsc ? valA - valB : valB - valA;
+                }
+                if (valA < valB) return ordenAsc ? -1 : 1;
+                if (valA > valB) return ordenAsc ? 1 : -1;
+                return 0;
+            });
+
+            // Reinserción masiva en 1 solo reflow usando DocumentFragment
+            const fragment = document.createDocumentFragment();
+            for (let i = 0; i < cacheFilas.length; i++) {
+                fragment.appendChild(cacheFilas[i].tr);
+            }
+            tbody.appendChild(fragment);
         });
-    }
+    });
 
     // 3. Generador de Códigos Estándar Ferretero
     const prefijosFerreteria = {
