@@ -15,41 +15,131 @@
     .stat-card-prod {
         border-radius: 14px;
         border: none;
-        padding: 20px;
+        padding: 16px 18px;
         background: #ffffff;
         box-shadow: 0 4px 18px rgba(0,0,0,0.04);
         transition: transform 0.2s, box-shadow 0.2s;
         display: flex;
         align-items: center;
-        gap: 16px;
+        gap: 14px;
+        min-width: 0;
+        height: 100%;
     }
     .stat-card-prod:hover {
         transform: translateY(-2px);
         box-shadow: 0 6px 22px rgba(0,0,0,0.07);
     }
+    .stat-content-prod {
+        min-width: 0;
+        flex: 1;
+        overflow: hidden;
+    }
     .stat-icon-prod {
-        width: 52px;
-        height: 52px;
+        width: 48px;
+        height: 48px;
         border-radius: 12px;
         display: flex;
         align-items: center;
         justify-content: center;
-        font-size: 1.5rem;
+        font-size: 1.4rem;
         flex-shrink: 0;
     }
     .stat-val-prod {
-        font-size: 1.6rem;
+        font-size: 1.45rem;
         font-weight: 800;
         color: #0f172a;
-        line-height: 1.1;
+        line-height: 1.15;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+    .stat-val-valor {
+        font-size: 1.25rem;
+    }
+    .stat-currency {
+        font-size: 0.8em;
+        font-weight: 700;
+        color: #6366f1;
+        margin-right: 2px;
     }
     .stat-lbl-prod {
-        font-size: 0.78rem;
+        font-size: 0.75rem;
         font-weight: 700;
         text-transform: uppercase;
-        letter-spacing: 0.6px;
+        letter-spacing: 0.5px;
         color: #64748b;
-        margin-bottom: 4px;
+        margin-bottom: 3px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    /* Encabezado Principal Responsive */
+    .header-productos {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        width: 100%;
+        margin-bottom: 1.5rem;
+    }
+    .header-prod-left {
+        display: flex;
+        align-items: center;
+        min-width: 0;
+    }
+    .header-prod-actions {
+        display: flex;
+        gap: 10px;
+        margin-left: auto;
+        flex-shrink: 0;
+    }
+
+    /* Responsive específico para móviles */
+    @media (max-width: 767.98px) {
+        .header-productos {
+            flex-direction: column;
+            align-items: stretch;
+            gap: 12px;
+        }
+        .header-prod-left {
+            width: 100%;
+        }
+        .header-prod-actions {
+            width: 100%;
+            margin-left: 0;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+        }
+        .header-prod-actions .btn {
+            width: 100%;
+            justify-content: center;
+            padding: 8px 10px !important;
+            font-size: 0.88rem;
+        }
+        .stat-card-prod {
+            padding: 12px 10px;
+            gap: 10px;
+            border-radius: 12px;
+        }
+        .stat-icon-prod {
+            width: 38px;
+            height: 38px;
+            border-radius: 9px;
+            font-size: 1.15rem;
+        }
+        .stat-val-prod {
+            font-size: 1.15rem;
+        }
+        .stat-val-valor {
+            font-size: 0.95rem;
+            letter-spacing: -0.3px;
+        }
+        .stat-lbl-prod {
+            font-size: 0.68rem;
+            letter-spacing: 0.2px;
+            margin-bottom: 2px;
+        }
     }
 
     /* Tabla */
@@ -202,18 +292,18 @@
 @endif
 
 <!-- ENCABEZADO PRINCIPAL -->
-<div class="d-flex justify-content-between align-items-center mb-4">
-    <div class="d-flex align-items-center">
-        <div class="bg-primary bg-opacity-10 p-3 rounded-3 me-3 text-primary">
+<div class="header-productos">
+    <div class="header-prod-left">
+        <div class="bg-primary bg-opacity-10 p-2 p-md-3 rounded-3 me-3 text-primary flex-shrink-0">
             <i class="bi bi-box-seam-fill fs-2"></i>
         </div>
         <div>
             <h3 class="fw-bold m-0 text-dark">Gestión de Productos</h3>
-            <small class="text-muted">Catálogo maestro • Códigos estandarizados, precios y existencias</small>
+            <small class="text-muted d-block">Catálogo maestro • Códigos estandarizados, precios y existencias</small>
         </div>
     </div>
     
-    <div class="d-flex gap-2">
+    <div class="header-prod-actions">
         @auth
         <button class="btn btn-primary fw-bold shadow-sm px-4 py-2" style="border-radius: 10px;" data-bs-toggle="modal" data-bs-target="#modalNuevoProducto">
             <i class="bi bi-plus-lg me-1"></i> Nuevo Producto
@@ -228,17 +318,17 @@
 <!-- ============================================== -->
 <!-- STATS CARDS: MÉTRICAS DEL CATÁLOGO             -->
 <!-- ============================================== -->
-<div class="row g-3 mb-4">
+<div class="row g-2 g-md-3 mb-4">
     <!-- Total Productos -->
     <div class="col-6 col-md-3">
         <div class="stat-card-prod">
             <div class="stat-icon-prod" style="background: rgba(2, 132, 199, 0.12); color: #0284c7;">
                 <i class="bi bi-boxes"></i>
             </div>
-            <div>
+            <div class="stat-content-prod">
                 <div class="stat-lbl-prod">Total Catálogo</div>
                 <div class="stat-val-prod">{{ $totalProductos }}</div>
-                <small class="text-muted">artículos registrados</small>
+                <small class="text-muted d-block text-truncate">artículos registrados</small>
             </div>
         </div>
     </div>
@@ -249,10 +339,10 @@
             <div class="stat-icon-prod" style="background: rgba(16, 185, 129, 0.12); color: #10b981;">
                 <i class="bi bi-building-check"></i>
             </div>
-            <div>
+            <div class="stat-content-prod">
                 <div class="stat-lbl-prod">Stock en Tienda</div>
                 <div class="stat-val-prod text-success">{{ number_format($totalStockUnidades, 0) }}</div>
-                <small class="text-muted">unidades físicas</small>
+                <small class="text-muted d-block text-truncate">unidades físicas</small>
             </div>
         </div>
     </div>
@@ -263,16 +353,16 @@
             <div class="stat-icon-prod" style="background: rgba(239, 68, 68, 0.12); color: #ef4444;">
                 <i class="bi bi-exclamation-triangle"></i>
             </div>
-            <div>
-                <div class="stat-lbl-prod">Stock Crítico (≤ Mín)</div>
+            <div class="stat-content-prod">
+                <div class="stat-lbl-prod">Stock Crítico</div>
                 <div class="stat-val-prod {{ $productosCriticos > 0 ? 'text-danger' : 'text-secondary' }}">
                     {{ $productosCriticos }}
                 </div>
-                <small class="text-muted">
+                <small class="text-muted d-block text-truncate">
                     @if($productosAlerta > 0)
                         <span class="text-warning-emphasis fw-bold">+{{ $productosAlerta }} por agotarse</span>
                     @else
-                        artículos bajo mínimo
+                        artículos bajo mín.
                     @endif
                 </small>
             </div>
@@ -285,12 +375,12 @@
             <div class="stat-icon-prod" style="background: rgba(99, 102, 241, 0.12); color: #6366f1;">
                 <i class="bi bi-cash-stack"></i>
             </div>
-            <div>
+            <div class="stat-content-prod">
                 <div class="stat-lbl-prod">Valor en Tienda</div>
-                <div class="stat-val-prod" style="color: #4f46e5; font-size: 1.4rem;">
-                    Bs. {{ number_format($valorInventario, 2) }}
+                <div class="stat-val-prod stat-val-valor" style="color: #4f46e5;">
+                    <span class="stat-currency">Bs.</span>{{ number_format($valorInventario, 2) }}
                 </div>
-                <small class="text-muted">precio de venta</small>
+                <small class="text-muted d-block text-truncate">precio de venta</small>
             </div>
         </div>
     </div>

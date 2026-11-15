@@ -403,7 +403,7 @@ class ReporteController extends Controller
         $fechaInicio = Carbon::createFromFormat('Y-m', $mes)->startOfMonth();
         $fechaFin    = Carbon::createFromFormat('Y-m', $mes)->endOfMonth();
 
-        $productos = Producto::with(['categoria', 'marca', 'unidad'])->orderBy('id')->get();
+        $productos = Producto::with(['categoria', 'marca', 'unidad'])->orderBy('nombre', 'asc')->get();
 
         $ventasPorProducto = DB::table('detalle_ventas')
             ->join('ventas', 'detalle_ventas.id_venta', '=', 'ventas.id')
@@ -474,7 +474,7 @@ class ReporteController extends Controller
     // ============================================================
     public function productos(Request $request)
     {
-        $query = Producto::with(['marca', 'unidad', 'categoria']);
+        $query = Producto::with(['marca', 'unidad', 'unidadSecundaria', 'categoria']);
 
         if ($request->filled('buscar')) {
             $buscar = trim($request->buscar);
@@ -531,7 +531,7 @@ class ReporteController extends Controller
 
     public function exportarProductosExcel(Request $request)
     {
-        $query = Producto::with(['marca', 'unidad', 'categoria']);
+        $query = Producto::with(['marca', 'unidad', 'unidadSecundaria', 'categoria']);
 
         $filtrosDesc = [];
         if ($request->filled('buscar')) {

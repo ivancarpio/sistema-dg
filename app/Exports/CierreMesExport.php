@@ -43,10 +43,10 @@ class CierreMesExport implements FromView, WithTitle, WithStyles, ShouldAutoSize
                 'font' => ['bold' => true, 'size' => 13],
                 'alignment' => ['horizontal' => 'center', 'vertical' => 'center'],
             ],
-            // Fila 5 - Cabecera columnas
-            5 => [
-                'font' => ['bold' => true, 'size' => 11],
-                'alignment' => ['horizontal' => 'center', 'vertical' => 'center'],
+            // Fila 4 - Cabecera columnas
+            4 => [
+                'font' => ['bold' => true, 'size' => 11, 'color' => ['rgb' => 'FFFFFF']],
+                'alignment' => ['vertical' => 'center'],
             ],
         ];
     }

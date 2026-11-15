@@ -414,6 +414,15 @@
         justify-content: center;
         flex-shrink: 0;
     }
+    .chart-donut-wrapper {
+        height: 275px;
+        position: relative;
+    }
+    @media (max-width: 767.98px) {
+        .chart-donut-wrapper {
+            height: 300px !important;
+        }
+    }
 </style>
 
 {{-- ======================================================== --}}
@@ -683,7 +692,7 @@
             </div>
             <div class="card-body p-3.5 pt-2 d-flex flex-column justify-content-center">
                 @if(count($top5Labels) > 0)
-                <div style="height: 275px; position: relative;">
+                <div class="chart-donut-wrapper">
                     <canvas id="chartProductos"></canvas>
                 </div>
                 @else
@@ -796,23 +805,16 @@
                         $estilo = $gradientesAzul[$rank];
                         $nombreClienteRaw = $tieneCliente ? $cl->nombre_cliente : '';
                         $nombreMostrar = $tieneCliente ? $cl->nombre_cliente : 'Posición #'.$rank.' disponible';
-                        $tooltipHtml = $tieneCliente 
-                            ? "<strong>🏆 Top #{$rank}: " . e($cl->nombre_cliente) . "</strong><br><small>{$cl->total_compras} compra(s) &bull; Total: Bs. " . number_format($cl->total_monto, 2) . "</small><br><span style='font-size:0.7rem; color:#bae6fd;'><i class='bi bi-cursor-fill me-1'></i>Haz clic para ver ficha y detalles</span>"
-                            : "<strong>Posición #{$rank} Disponible</strong><br><small>Aún no registra compras en este mes</small>";
                     @endphp
                     <div class="funnel-tier shadow-sm" 
                          style="width: {{ $anchoNivel }}%; background: {{ $estilo['fondo'] }}; {{ !$tieneCliente ? 'border: 1px dashed ' . ($rank <= 4 ? 'rgba(255,255,255,0.6)' : 'rgba(3,74,117,0.3)') . ';' : '' }}"
-                         data-bs-toggle="tooltip"
-                         data-bs-html="true"
-                         data-bs-placement="top"
-                         title="{{ $tooltipHtml }}"
                          onclick="abrirModalTopCliente({{ $rank }}, '{{ addslashes($nombreClienteRaw) }}', '{{ $tieneCliente ? $cl->total_compras : 0 }}', '{{ $tieneCliente ? number_format($cl->total_monto, 2) : '0.00' }}', {{ $tieneCliente ? 'true' : 'false' }})">
                         <div class="d-flex align-items-center justify-content-between px-3 py-1" style="color: {{ $estilo['texto'] }}; min-height: 27px;">
                             <div class="d-flex align-items-center me-2 text-truncate" style="flex: 1 1 auto; min-width: 0;">
                                 <span class="funnel-rank-badge me-2" style="background: {{ $estilo['badge'] }}; color: {{ $estilo['texto'] }};">
                                     #{{ $rank }}
                                 </span>
-                                <span class="fw-bold text-truncate" style="font-size: 0.81rem;" title="{{ $nombreMostrar }}">
+                                <span class="fw-bold text-truncate" style="font-size: 0.81rem;">
                                     {{ $nombreMostrar }}
                                 </span>
                                 @if($tieneCliente)
@@ -1127,17 +1129,25 @@ document.addEventListener('DOMContentLoaded', function() {
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
-                cutout: '60%',
+                cutout: '62%',
+                layout: {
+                    padding: {
+                        top: 4,
+                        bottom: 4,
+                        left: 2,
+                        right: 4
+                    }
+                },
                 plugins: {
                     legend: {
-                        position: 'right',
+                        position: window.innerWidth < 768 ? 'bottom' : 'right',
                         align: 'center',
                         labels: {
-                            boxWidth: 12,
-                            boxHeight: 12,
-                            padding: 8,
+                            boxWidth: 9,
+                            boxHeight: 9,
+                            padding: 5,
                             font: {
-                                size: 11,
+                                size: 10,
                                 weight: '600',
                                 family: "'Plus Jakarta Sans', system-ui, sans-serif"
                             },
@@ -1148,9 +1158,12 @@ document.addEventListener('DOMContentLoaded', function() {
                                     return data.labels.map((label, i) => {
                                         const valor = data.datasets[0].data[i];
                                         const pct = total > 0 ? Math.round((valor / total) * 100) : 0;
-                                        const nombreCorto = label.length > 18 ? label.substring(0, 16) + '...' : label;
+                                        // Evitar cualquier corte horizontal truncando adecuadamente
+                                        const isMobile = window.innerWidth < 768;
+                                        const maxLen = isMobile ? 16 : 10;
+                                        const nombreCorto = label.length > (maxLen + 2) ? label.substring(0, maxLen) + '…' : label;
                                         return {
-                                            text: `${nombreCorto} (${valor} u. - ${pct}%)`,
+                                            text: `${nombreCorto} · ${valor}u (${pct}%)`,
                                             fillStyle: data.datasets[0].backgroundColor[i],
                                             hidden: isNaN(data.datasets[0].data[i]) || chart.getDatasetMeta(0).data[i].hidden,
                                             index: i
@@ -1178,6 +1191,17 @@ document.addEventListener('DOMContentLoaded', function() {
                             }
                         }
                     }
+                }
+            }
+        });
+
+        window.addEventListener('resize', () => {
+            if (chartProductosInstance) {
+                const shouldBeBottom = window.innerWidth < 768;
+                const currentPos = chartProductosInstance.options.plugins.legend.position;
+                if ((shouldBeBottom && currentPos !== 'bottom') || (!shouldBeBottom && currentPos !== 'right')) {
+                    chartProductosInstance.options.plugins.legend.position = shouldBeBottom ? 'bottom' : 'right';
+                    chartProductosInstance.update();
                 }
             }
         });

@@ -84,9 +84,10 @@
         border: 1px solid #cbd5e1;
         border-radius: 8px 8px 0 0;
         background-color: #ffffff;
+        -webkit-overflow-scrolling: touch;
     }
     .tabla-scroll-masivo::-webkit-scrollbar {
-        width: 12px;
+        width: 10px;
     }
     .tabla-scroll-masivo::-webkit-scrollbar-track {
         background: #f1f5f9;
@@ -101,14 +102,87 @@
         background-color: #0369a1;
     }
     .table-masiva td {
-        padding: 10px 12px !important;
+        padding: 9px 12px !important;
         vertical-align: middle !important;
         white-space: normal !important;
     }
     .table-masiva th {
-        padding: 10px 12px !important;
+        padding: 9px 12px !important;
         background-color: #f8fafc !important;
         z-index: 5;
+    }
+
+    /* Responsive Móvil para Modal de Administración Masiva */
+    @media (max-width: 767.98px) {
+        #modalAsignacionMasiva .modal-dialog {
+            margin: 0.5rem auto;
+            max-width: 96%;
+        }
+        #modalAsignacionMasiva .modal-body {
+            padding: 12px !important;
+        }
+        #modalAsignacionMasiva .paso-1-card {
+            padding: 10px 12px !important;
+            margin-bottom: 12px !important;
+        }
+        #modalAsignacionMasiva .select-masivo-cat {
+            font-size: 0.88rem !important;
+            padding: 8px 10px !important;
+        }
+        #modalAsignacionMasiva .info-banner-paso1 {
+            font-size: 0.73rem !important;
+            padding: 6px 8px !important;
+            line-height: 1.35;
+        }
+        .tabla-scroll-masivo {
+            height: 320px !important;
+            max-height: 320px !important;
+        }
+        .table-masiva th {
+            padding: 6px 6px !important;
+            font-size: 0.72rem !important;
+        }
+        .table-masiva td {
+            padding: 7px 6px !important;
+            font-size: 0.80rem !important;
+            line-height: 1.25;
+        }
+        .table-masiva .prod-code {
+            font-size: 0.72rem !important;
+            white-space: nowrap;
+        }
+        .table-masiva .prod-name {
+            font-size: 0.82rem !important;
+            line-height: 1.25 !important;
+        }
+        .table-masiva .cat-badge {
+            font-size: 0.68rem !important;
+            padding: 2px 5px !important;
+            white-space: normal !important;
+            display: inline-block;
+            max-width: 100px;
+        }
+        #modalAsignacionMasiva .modal-footer {
+            flex-direction: column-reverse !important;
+            align-items: stretch !important;
+            gap: 10px !important;
+            padding: 14px 16px !important;
+            background-color: #f8fafc !important;
+            border-top: 1px solid #e2e8f0 !important;
+        }
+        #modalAsignacionMasiva .modal-footer > div {
+            width: 100% !important;
+        }
+        #modalAsignacionMasiva .modal-footer .d-flex {
+            flex-direction: column !important;
+            width: 100% !important;
+            gap: 8px !important;
+        }
+        #modalAsignacionMasiva .modal-footer .btn {
+            width: 100% !important;
+            font-size: 0.88rem !important;
+            padding: 9px 12px !important;
+        }
     }
 </style>
 
@@ -673,65 +747,79 @@
 <!-- 1. MODAL: ADMINISTRACIÓN MASIVA DE CATEGORÍAS -->
 <div class="modal fade" id="modalAsignacionMasiva" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered modal-lg">
-        <form action="/configuracion/categorias/asignar-masivo" method="POST" class="modal-content modal-content-clean">
+        <form action="/configuracion/categorias/asignar-masivo" method="POST" class="modal-content modal-content-clean border-0 shadow-lg rounded-4 overflow-hidden">
             @csrf
-            <div class="modal-header bg-primary text-white border-0 py-3 px-4">
+            <div class="modal-header border-0 py-3 px-4" style="background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%);">
                 <div class="d-flex align-items-center">
-                    <div class="d-flex align-items-center justify-content-center me-3 flex-shrink-0" style="width: 44px; height: 44px; border-radius: 12px; background: rgba(255, 255, 255, 0.2);">
+                    <div class="d-flex align-items-center justify-content-center me-3 flex-shrink-0" style="width: 44px; height: 44px; border-radius: 12px; background: rgba(255, 255, 255, 0.2); backdrop-filter: blur(4px);">
                         <i class="bi bi-grid-3x3-gap-fill fs-4 text-white"></i>
                     </div>
                     <div>
-                        <h5 class="modal-title fw-bold m-0 text-white">Administración Masiva de Categorías</h5>
-                        <small class="text-white-50">Asigna productos a una categoría o desvincúlalos ("Sin Categoría") en un solo paso</small>
+                        <h5 class="modal-title fw-bold m-0 text-white" style="font-size: 1.15rem; letter-spacing: -0.2px;">Administración Masiva de Categorías</h5>
+                        <small class="text-white-50" style="font-size: 0.8rem;">Organiza, reasigna o desvincula productos por lote rápidamente</small>
                     </div>
                 </div>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
             </div>
 
-            <div class="modal-body p-4 bg-white">
+            <div class="modal-body p-3 p-md-4 bg-white">
                 
                 <!-- PASO 1: CATEGORÍA DESTINO O ACCIÓN -->
-                <div class="mb-4 p-3 bg-light rounded-3 border">
-                    <div class="d-flex justify-content-between align-items-center mb-1">
-                        <label class="form-label fw-bold text-dark m-0">
-                            <i class="bi bi-folder-fill text-primary me-1"></i> Paso 1: Selecciona la Categoría de Destino
+                <div class="card border border-primary border-opacity-20 rounded-4 mb-3 p-3 shadow-sm paso-1-card" style="background: linear-gradient(180deg, #f8fafc 0%, #ffffff 100%);">
+                    <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-2">
+                        <label class="form-label fw-bold text-dark m-0 d-flex align-items-center gap-2">
+                            <span class="badge bg-primary text-white rounded-circle p-1 d-inline-flex align-items-center justify-content-center" style="width: 22px; height: 22px; font-size: 0.78rem;">1</span>
+                            <span style="font-size: 0.94rem;">Selecciona la Categoría de Destino</span>
                         </label>
-                        <span class="badge bg-white text-secondary border px-2 py-1">Opcional si vas a Quitar</span>
+                        <span class="badge bg-light text-secondary border px-2 py-0.5 rounded-pill" style="font-size: 0.72rem;">
+                            Opcional si vas a Quitar
+                        </span>
                     </div>
-                    <select name="id_categoria" id="selectCategoriaDestino" class="form-select form-select-lg fw-bold">
-                        <option value="">-- Elige una categoría de la lista --</option>
-                        <option value="sin_categoria" class="text-danger fw-bold">❌ Quitar categoría (Dejar como "Sin Categoría")</option>
-                        <optgroup label="── Categorías Disponibles ──">
-                            @foreach($categorias as $cat)
-                                <option value="{{ $cat->id }}">{{ $cat->nombre }} (Actualmente {{ $cat->productos_count }} prod.)</option>
-                            @endforeach
-                        </optgroup>
-                    </select>
-                    <small class="text-muted d-block mt-2">
-                        <i class="bi bi-info-circle me-1"></i> Para asignar, selecciona la categoría arriba. Si deseas quitar la categoría a los productos, puedes usar directamente el botón rojo inferior.
-                    </small>
+
+                    <div class="input-group shadow-sm" style="border-radius: 12px;">
+                        <span class="input-group-text bg-white border-end-0 text-primary px-3" style="border-color: #cbd5e1; border-top-left-radius: 12px; border-bottom-left-radius: 12px;">
+                            <i class="bi bi-folder2-open fs-5"></i>
+                        </span>
+                        <select name="id_categoria" id="selectCategoriaDestino" class="form-select fw-bold border-start-0 select-masivo-cat" style="border-color: #cbd5e1; border-top-right-radius: 12px; border-bottom-right-radius: 12px; font-size: 0.92rem; color: #1e293b; background-color: #ffffff; cursor: pointer; min-height: 42px;">
+                            <option value="" selected>-- Elige una categoría de la lista --</option>
+                            <option value="sin_categoria" class="text-danger fw-bold" style="padding: 8px; font-weight: 700;">❌ Quitar categoría (Dejar como "Sin Categoría")</option>
+                            <optgroup label="Categorías Disponibles" style="font-weight: 700; color: #0284c7; padding: 4px;">
+                                @foreach($categorias as $cat)
+                                    <option value="{{ $cat->id }}" style="color: #1e293b; font-weight: 500; padding: 6px 8px;">
+                                        📁 {{ $cat->nombre }} ({{ $cat->productos_count }} prod.)
+                                    </option>
+                                @endforeach
+                            </optgroup>
+                        </select>
+                    </div>
+
+                    <div class="d-flex align-items-center gap-2 mt-2 p-2 px-2.5 rounded-3 info-banner-paso1" style="background: rgba(2, 132, 199, 0.06); border: 1px solid rgba(2, 132, 199, 0.15); font-size: 0.76rem; color: #0284c7;">
+                        <i class="bi bi-info-circle-fill fs-6 flex-shrink-0"></i>
+                        <span>Para asignar, selecciona la categoría arriba. Si deseas quitar la categoría a los productos seleccionados, pulsa el botón rojo inferior.</span>
+                    </div>
                 </div>
 
                 <!-- PASO 2: FILTROS Y SELECCIÓN DE PRODUCTOS -->
-                <div class="d-flex justify-content-between align-items-center mb-2">
-                    <label class="form-label fw-bold text-dark m-0">
-                        <i class="bi bi-check2-square text-primary me-1"></i> Paso 2: Marca los Productos
+                <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-2">
+                    <label class="form-label fw-bold text-dark m-0 d-flex align-items-center gap-2">
+                        <span class="badge bg-primary text-white rounded-circle p-1 d-inline-flex align-items-center justify-content-center" style="width: 22px; height: 22px; font-size: 0.78rem;">2</span>
+                        <span style="font-size: 0.94rem;">Marca los Productos a Actualizar</span>
                     </label>
-                    <span id="badgeConteoSeleccionados" class="badge bg-primary px-3 py-2 rounded-pill fs-7 fw-bold">
+                    <span id="badgeConteoSeleccionados" class="badge bg-primary px-2.5 py-1 rounded-pill fw-bold shadow-sm" style="font-size: 0.80rem;">
                         0 seleccionados
                     </span>
                 </div>
 
                 <!-- Buscador y filtro en vivo dentro del modal -->
-                <div class="row g-2 mb-3">
-                    <div class="col-md-7">
-                        <div class="input-group">
-                            <span class="input-group-text bg-white"><i class="bi bi-search text-muted"></i></span>
-                            <input type="text" id="buscadorMasivoProd" class="form-control" placeholder="Filtrar por nombre o código...">
+                <div class="row g-2 mb-2.5">
+                    <div class="col-12 col-md-7">
+                        <div class="input-group shadow-none" style="min-height: 38px;">
+                            <span class="input-group-text bg-white border-end-0 text-muted px-2.5" style="border-radius: 8px 0 0 8px; border-color: #cbd5e1;"><i class="bi bi-search"></i></span>
+                            <input type="text" id="buscadorMasivoProd" class="form-control border-start-0" placeholder="Buscar por nombre o código..." style="border-radius: 0 8px 8px 0; border-color: #cbd5e1; font-size: 0.88rem;">
                         </div>
                     </div>
-                    <div class="col-md-5">
-                        <select id="filtroCategoriaActualMasivo" class="form-select">
+                    <div class="col-12 col-md-5">
+                        <select id="filtroCategoriaActualMasivo" class="form-select shadow-none" style="min-height: 38px; border-radius: 8px; border-color: #cbd5e1; font-size: 0.86rem;">
                             <option value="todos">Todos los productos ({{ count($productos) }})</option>
                             <option value="sin_cat">Solo sin categoría ({{ $productos->whereNull('id_categoria')->count() }})</option>
                             @foreach($categorias as $cat)
@@ -741,31 +829,33 @@
                     </div>
                 </div>
 
-                <!-- Botones rápidos de selección -->
-                <div class="d-flex justify-content-between align-items-center mb-2">
-                    <div class="btn-group btn-group-sm">
-                        <button type="button" class="btn btn-outline-primary" id="btnMarcarVisibles">
-                            <i class="bi bi-check-all"></i> Marcar visibles
+                <!-- Botones rápidos de selección con layout anti-solapamiento -->
+                <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-2 pb-1">
+                    <div class="d-flex gap-1.5">
+                        <button type="button" class="btn btn-sm btn-outline-primary fw-bold px-2.5 py-1 rounded-2 d-inline-flex align-items-center gap-1 shadow-none" id="btnMarcarVisibles" style="font-size: 0.78rem;">
+                            <i class="bi bi-check-all fs-6"></i> <span>Marcar visibles</span>
                         </button>
-                        <button type="button" class="btn btn-outline-secondary" id="btnDesmarcarTodosMasivo">
-                            <i class="bi bi-x"></i> Desmarcar todos
+                        <button type="button" class="btn btn-sm btn-outline-secondary fw-semibold px-2.5 py-1 rounded-2 d-inline-flex align-items-center gap-1 shadow-none" id="btnDesmarcarTodosMasivo" style="font-size: 0.78rem;">
+                            <i class="bi bi-x-circle"></i> <span>Desmarcar todos</span>
                         </button>
                     </div>
-                    <small class="text-muted fw-bold" id="txtTotalVisiblesMasivo">Mostrando {{ count($productos) }} producto(s)</small>
+                    <div class="text-muted small fw-semibold text-end" id="txtTotalVisiblesMasivo" style="font-size: 0.78rem;">
+                        Mostrando <strong class="text-dark">{{ count($productos) }}</strong> producto(s)
+                    </div>
                 </div>
 
-                <!-- Tabla de productos con scroll garantizado, visible y sin cortes -->
+                <!-- Tabla de productos con scroll vertical -->
                 <div class="tabla-scroll-masivo">
                     <table class="table table-hover table-masiva m-0">
                         <thead class="sticky-top">
                             <tr>
-                                <th style="width: 45px;" class="text-center">
+                                <th style="width: 40px;" class="text-center">
                                     <i class="bi bi-check2"></i>
                                 </th>
-                                <th>CÓDIGO</th>
+                                <th style="width: 100px;">CÓDIGO</th>
                                 <th>PRODUCTO</th>
-                                <th>CATEGORÍA ACTUAL</th>
-                                <th class="text-center">STOCK</th>
+                                <th style="width: 130px;">CATEGORÍA ACTUAL</th>
+                                <th style="width: 70px;" class="text-center">STOCK</th>
                             </tr>
                         </thead>
                         <tbody id="tbodyProductosMasivo">
@@ -778,13 +868,13 @@
                                 <td class="text-center">
                                     <input type="checkbox" name="productos_ids[]" value="{{ $prod->id }}" id="checkProd{{ $prod->id }}" class="form-check-input check-prod-item" style="cursor: pointer; width: 1.15rem; height: 1.15rem;">
                                 </td>
-                                <td class="small fw-bold text-secondary">{{ $prod->codigo }}</td>
-                                <td class="fw-bold text-dark">{{ $prod->nombre }}</td>
+                                <td class="small fw-bold text-secondary prod-code">{{ $prod->codigo }}</td>
+                                <td class="fw-bold text-dark prod-name">{{ $prod->nombre }}</td>
                                 <td>
                                     @if($prod->categoria)
-                                        <span class="badge bg-primary bg-opacity-10 text-primary border border-primary border-opacity-25">{{ $prod->categoria->nombre }}</span>
+                                        <span class="badge bg-primary bg-opacity-10 text-primary border border-primary border-opacity-25 cat-badge">{{ $prod->categoria->nombre }}</span>
                                     @else
-                                        <span class="badge bg-warning bg-opacity-25 text-dark"><i class="bi bi-question-circle"></i> Sin Categoría</span>
+                                        <span class="badge bg-warning bg-opacity-25 text-dark cat-badge"><i class="bi bi-question-circle"></i> Sin Categoría</span>
                                     @endif
                                 </td>
                                 <td class="text-center small fw-bold">{{ $prod->stock }}</td>
@@ -794,7 +884,6 @@
                                 <td colspan="5" class="text-center py-4 text-muted">No hay productos registrados en el inventario.</td>
                             </tr>
                             @endforelse
-                            <!-- Fila de espacio para asegurar que el último producto nunca se corte -->
                             <tr style="height: 25px; border: none; background: transparent;">
                                 <td colspan="5" style="border: none; padding: 10px;" class="text-center text-muted small fst-italic">
                                     Fin de la lista de productos
@@ -804,8 +893,8 @@
                     </table>
                 </div>
 
-                <!-- Barra informativa inferior con guía de scroll -->
-                <div class="bg-light p-2 px-3 border border-top-0 rounded-bottom d-flex justify-content-between align-items-center small text-muted">
+                <!-- Barra informativa inferior con guía de scroll (visible solo en desktop para ahorrar espacio en móvil) -->
+                <div class="bg-light p-2 px-3 border border-top-0 rounded-bottom d-none d-md-flex justify-content-between align-items-center small text-muted">
                     <div>
                         <i class="bi bi-mouse-fill text-primary me-1"></i> 
                         <strong>Desplaza la barra lateral azul</strong> hacia abajo para ver y marcar todos los productos.
@@ -819,17 +908,17 @@
 
             <div class="modal-footer border-0 bg-light p-3 px-4 d-flex justify-content-between align-items-center">
                 <div>
-                    <button type="button" class="btn btn-light border px-3" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn btn-light border px-4 fw-semibold" data-bs-dismiss="modal">Cancelar</button>
                 </div>
-                <div class="d-flex gap-2">
+                <div class="d-flex align-items-center gap-2">
                     <!-- Botón Quitar Categoría -->
-                    <button type="submit" name="accion" value="quitar" class="btn btn-outline-danger fw-bold px-3 py-2" id="btnQuitarMasivo" onclick="return validarAccionMasiva('quitar');">
-                        <i class="bi bi-folder-x me-1"></i> Quitar de Categoría ("Sin Categoría")
+                    <button type="submit" name="accion" value="quitar" class="btn btn-outline-danger fw-bold px-3 py-2 d-inline-flex align-items-center justify-content-center" id="btnQuitarMasivo" onclick="return validarAccionMasiva('quitar');">
+                        <i class="bi bi-folder-x me-1.5"></i> Quitar de Categoría ("Sin Categoría")
                     </button>
 
                     <!-- Botón Asignar Categoría -->
-                    <button type="submit" name="accion" value="asignar" class="btn btn-primary fw-bold px-4 py-2 shadow-sm" id="btnGuardarMasivo" onclick="return validarAccionMasiva('asignar');">
-                        <i class="bi bi-folder-check me-1"></i> Asignar a Categoría
+                    <button type="submit" name="accion" value="asignar" class="btn btn-primary fw-bold px-4 py-2 shadow-sm d-inline-flex align-items-center justify-content-center" id="btnGuardarMasivo" onclick="return validarAccionMasiva('asignar');">
+                        <i class="bi bi-folder-check me-1.5"></i> Asignar a Categoría
                     </button>
                 </div>
             </div>

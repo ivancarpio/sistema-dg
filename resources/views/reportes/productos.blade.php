@@ -269,6 +269,11 @@
                     </td>
                     <td class="text-start" data-sort-value="{{ strtolower($p->nombre) }}">
                         <div class="fw-bold text-dark">{{ $p->nombre }}</div>
+                        @if($p->tieneUnidadSecundaria())
+                            <span class="badge bg-light text-secondary border px-1.5 py-0.5 mt-1" style="font-size: 0.68rem;">
+                                <i class="bi bi-layers-half me-1 text-primary"></i>Dual: {{ optional($p->unidad)->nombre ?? 'Unid' }} + {{ optional($p->unidadSecundaria)->nombre }}
+                            </span>
+                        @endif
                     </td>
                     <td class="text-center" data-sort-value="{{ strtolower(optional($p->categoria)->nombre ?? '') }}">
                         @if($p->categoria)
@@ -285,20 +290,50 @@
                         @endif
                     </td>
                     <td class="text-center" data-sort-value="{{ strtolower(optional($p->unidad)->nombre ?? '') }}">
-                        <span class="small text-muted">{{ optional($p->unidad)->nombre ?? 'Pieza' }}</span>
+                        <span class="small fw-semibold text-dark">{{ optional($p->unidad)->nombre ?? 'Pieza' }}</span>
+                        @if($p->tieneUnidadSecundaria())
+                            <div class="mt-1">
+                                <span class="badge bg-primary bg-opacity-10 text-primary border border-primary border-opacity-25" style="font-size: 0.70rem; font-weight: 600;" title="Segunda unidad de venta / empaque">
+                                    <i class="bi bi-box-seam me-1"></i>{{ optional($p->unidadSecundaria)->nombre }}
+                                    @if($p->factor_conversion > 1)
+                                        (x{{ number_format($p->factor_conversion, 0) }})
+                                    @endif
+                                </span>
+                            </div>
+                        @endif
                     </td>
                     <td class="text-end" data-sort-value="{{ $costo }}">
                         <span class="text-muted small">Bs. {{ number_format($costo, 2) }}</span>
                     </td>
                     <td class="text-end" data-sort-value="{{ $pv }}">
-                        <span class="fw-bold text-dark">Bs. {{ number_format($pv, 2) }}</span>
+                        <div>
+                            <span class="fw-bold text-dark">Bs. {{ number_format($pv, 2) }}</span>
+                            @if($p->tieneUnidadSecundaria())
+                                <small class="text-muted d-block" style="font-size: 0.68rem;">/ {{ optional($p->unidad)->nombre ?? 'Unid' }}</small>
+                            @endif
+                        </div>
+                        @if($p->tieneUnidadSecundaria() && $p->precio_venta_secundario > 0)
+                            <div class="mt-1 pt-1 border-top border-light">
+                                <span class="fw-bold text-success" style="font-size: 0.85rem;">Bs. {{ number_format($p->precio_venta_secundario, 2) }}</span>
+                                <small class="text-muted d-block" style="font-size: 0.68rem;">/ {{ optional($p->unidadSecundaria)->nombre }}</small>
+                            </div>
+                        @endif
                     </td>
                     <td class="text-end" data-sort-value="{{ $pc ?? $pv }}">
                         @if($pc !== null && $pc > 0)
-                            <span class="fw-bold text-primary">Bs. {{ number_format($pc, 2) }}</span>
-                            <small class="d-block text-muted" style="font-size: 0.65rem;">Ferretería</small>
+                            <div>
+                                <span class="fw-bold text-primary">Bs. {{ number_format($pc, 2) }}</span>
+                                <small class="d-block text-muted" style="font-size: 0.65rem;">/ {{ optional($p->unidad)->nombre ?? 'Unid' }}</small>
+                            </div>
                         @else
                             <span class="text-muted small">—</span>
+                        @endif
+
+                        @if($p->tieneUnidadSecundaria() && $p->precio_cliente_secundario > 0)
+                            <div class="mt-1 pt-1 border-top border-light">
+                                <span class="fw-bold text-primary" style="font-size: 0.85rem;">Bs. {{ number_format($p->precio_cliente_secundario, 2) }}</span>
+                                <small class="d-block text-muted" style="font-size: 0.65rem;">/ {{ optional($p->unidadSecundaria)->nombre }}</small>
+                            </div>
                         @endif
                     </td>
                     <td class="text-center" data-sort-value="{{ $stk }}">

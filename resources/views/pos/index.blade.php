@@ -867,11 +867,13 @@
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body text-center p-3">
-                <img src="{{ asset('img/qr_banco.jpeg') }}" 
-                     alt="QR de Pago" 
-                     class="img-fluid rounded-3 mb-2 shadow-sm border p-2 bg-white" 
-                     style="max-width: 220px;"
-                     onerror="this.src='https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=SISTEMA_DG_PAGO'">
+                <div class="d-flex justify-content-center mb-2">
+                    <img src="{{ asset('img/qr_banco.jpeg') }}" 
+                         alt="QR de Pago" 
+                         class="img-fluid rounded-3 shadow-sm border p-2 bg-white mx-auto d-block" 
+                         style="max-width: 240px; margin: 0 auto;"
+                         onerror="this.src='https://api.qrserver.com/v1/create-qr-code/?size=240x240&data=SISTEMA_DG_PAGO'">
+                </div>
                 <p class="text-muted small mb-0 fw-bold text-uppercase" style="font-size: 0.75rem;">Monto a transferir:</p>
                 <h3 class="fw-bold text-success mb-2" id="totalModalQR">Bs. 0.00</h3>
                 <div class="bg-light rounded-3 p-2 text-start small border">
