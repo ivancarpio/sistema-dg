@@ -266,6 +266,31 @@
     }
 
     /* Animación de giro para botón Actualizar Catálogo */
+    /* Segmented pill selector para unidades duales en POS */
+    .grupo-unidades-pos {
+        border: 1px solid #cbd5e1 !important;
+        background-color: #f1f5f9;
+        display: inline-flex;
+        padding: 2px !important;
+    }
+    .btn-toggle-unidad {
+        transition: all 0.18s ease-in-out;
+        border: none !important;
+        box-shadow: none !important;
+        color: #64748b;
+        cursor: pointer;
+        background: transparent;
+    }
+    .btn-toggle-unidad:hover:not(.active) {
+        background-color: #e2e8f0;
+        color: #0f172a;
+    }
+    .btn-toggle-unidad.active {
+        background-color: #0284c7 !important;
+        color: #ffffff !important;
+        box-shadow: 0 2px 6px rgba(2, 132, 199, 0.35) !important;
+    }
+
     @keyframes spinPosAnim {
         0% { transform: rotate(0deg); }
         100% { transform: rotate(360deg); }
@@ -376,31 +401,70 @@
                     <tbody>
                         @forelse($productos as $producto)
                         @php
-                            $pCliente = ($producto->precio_cliente !== null && $producto->precio_cliente > 0) ? floatval($producto->precio_cliente) : floatval($producto->precio_venta);
-                            $tienePCliente = ($producto->precio_cliente !== null && $producto->precio_cliente > 0);
+                            $unidadBase = optional($producto->unidad)->nombre ?? 'Pieza';
+                            $pClienteBase = ($producto->precio_cliente !== null && $producto->precio_cliente > 0) ? floatval($producto->precio_cliente) : floatval($producto->precio_venta);
+                            $tienePClienteBase = ($producto->precio_cliente !== null && $producto->precio_cliente > 0);
+
+                            $tieneSec = $producto->tieneUnidadSecundaria();
+                            $unidadSec = $tieneSec ? (optional($producto->unidadSecundaria)->nombre ?? 'Paquete') : '';
+                            $factorSec = $tieneSec ? floatval($producto->factor_conversion ?? 1) : 1;
+                            $pVentaSec = $tieneSec ? $producto->getPrecioSecundarioPara('Ocasional') : 0;
+                            $pClienteSec = $tieneSec ? $producto->getPrecioSecundarioPara('Regular') : 0;
+                            $tienePClienteSec = $tieneSec && (($producto->precio_cliente_secundario !== null && $producto->precio_cliente_secundario > 0) || ($producto->precio_venta_secundario !== null && $producto->precio_venta_secundario > 0));
                         @endphp
                         <tr class="fila-producto" 
                             data-id="{{ $producto->id }}" 
                             data-codigo="{{ $producto->codigo }}"
                             data-nombre="{{ $producto->nombre }}"
-                            data-precio-venta="{{ $producto->precio_venta }}"
-                            data-precio-cliente="{{ $pCliente }}"
-                            data-tiene-precio-cliente="{{ $tienePCliente ? '1' : '0' }}"
-                            data-precio="{{ $producto->precio_venta }}"
                             data-stock="{{ $producto->stock }}"
-                            data-categoria="{{ $producto->id_categoria }}">
+                            data-categoria="{{ $producto->id_categoria }}"
+                            data-unidad-base="{{ $unidadBase }}"
+                            data-precio-venta-base="{{ $producto->precio_venta }}"
+                            data-precio-cliente-base="{{ $pClienteBase }}"
+                            data-tiene-precio-cliente-base="{{ $tienePClienteBase ? '1' : '0' }}"
+                            data-tiene-secundaria="{{ $tieneSec ? '1' : '0' }}"
+                            data-unidad-secundaria="{{ $unidadSec }}"
+                            data-factor-secundaria="{{ $factorSec }}"
+                            data-precio-venta-secundario="{{ $pVentaSec }}"
+                            data-precio-cliente-secundario="{{ $pClienteSec }}"
+                            data-tiene-precio-cliente-sec="{{ $tienePClienteSec ? '1' : '0' }}"
+                            data-unidad-activa="base"
+                            data-precio-venta="{{ $producto->precio_venta }}"
+                            data-precio-cliente="{{ $pClienteBase }}"
+                            data-tiene-precio-cliente="{{ $tienePClienteBase ? '1' : '0' }}"
+                            data-precio="{{ $producto->precio_venta }}">
                             
                             <td class="ps-4">
                                 <span class="badge-code">{{ $producto->codigo }}</span>
                             </td>
                             <td>
                                 <div class="fw-bold text-dark" style="font-size: 0.98rem;">{{ $producto->nombre }}</div>
-                                <div class="text-muted small">
-                                    <span class="me-2"><i class="bi bi-tag me-1"></i>{{ optional($producto->marca)->nombre ?? 'Genérico' }}</span>
+                                <div class="text-muted small d-flex flex-wrap align-items-center gap-1.5 mt-0.5">
+                                    <span class="me-1"><i class="bi bi-tag me-1"></i>{{ optional($producto->marca)->nombre ?? 'Genérico' }}</span>
                                     @if($producto->categoria)
                                         <span class="badge bg-light text-muted border">{{ $producto->categoria->nombre }}</span>
                                     @endif
                                 </div>
+                                @if($tieneSec)
+                                    <!-- Selector interactivo de unidad dual -->
+                                    <div class="mt-1.5 d-flex align-items-center gap-1.5 selector-unidades-row">
+                                        <span class="text-muted" style="font-size: 0.70rem; font-weight: 600;">Vender por:</span>
+                                        <div class="btn-group btn-group-sm rounded-pill p-0.5 grupo-unidades-pos" role="group">
+                                            <button type="button" class="btn btn-xs py-0.5 px-2 rounded-pill fw-bold btn-toggle-unidad active" data-tipo="base" style="font-size: 0.72rem;">
+                                                <i class="bi bi-tag me-0.5"></i>{{ $unidadBase }}
+                                            </button>
+                                            <button type="button" class="btn btn-xs py-0.5 px-2 rounded-pill fw-bold btn-toggle-unidad" data-tipo="secundaria" style="font-size: 0.72rem;">
+                                                <i class="bi bi-boxes me-0.5"></i>{{ $unidadSec }} (x{{ number_format($factorSec, 0) }})
+                                            </button>
+                                        </div>
+                                    </div>
+                                @else
+                                    <div class="mt-0.5">
+                                        <span class="badge bg-light text-secondary border py-0 px-1.5" style="font-size: 0.68rem;">
+                                            <i class="bi bi-rulers me-1"></i>{{ $unidadBase }}
+                                        </span>
+                                    </div>
+                                @endif
                             </td>
                             <td class="text-center">
                                 @php
@@ -425,6 +489,9 @@
                                         {{ $stk }}
                                     </span>
                                 @endif
+                                <div class="text-muted small mt-0.5 txt-unidad-stock" style="font-size: 0.68rem;">
+                                    {{ $unidadBase }}
+                                </div>
                             </td>
                             <td class="text-end">
                                 <div class="box-precio-pos">
@@ -436,24 +503,21 @@
                                         <span class="badge bg-light text-secondary border py-0 px-1" style="font-size: 0.64rem;">Venta</span>
                                     </div>
                                     <!-- Tarifa Cliente Regular / Ferretería -->
-                                    @if($tienePCliente)
-                                        <div class="linea-precio-cliente d-flex align-items-center justify-content-end gap-1 mt-0.5" style="color: #0284c7;">
-                                            <i class="bi bi-tag-fill" style="font-size: 0.65rem;"></i>
-                                            <span class="fw-bold val-precio-cliente" style="font-size: 0.88rem;">
-                                                Bs. {{ number_format($pCliente, 2) }}
-                                            </span>
-                                            <span class="badge py-0 px-1" style="font-size: 0.64rem; background: #e0f2fe; color: #0369a1; border: 1px solid #bae6fd;">Cliente</span>
-                                        </div>
-                                    @else
-                                        <div class="linea-precio-cliente text-muted mt-0.5" style="font-size: 0.68rem;" title="Sin precio especial: aplica el mismo precio de venta">
-                                            <span>Cliente: <em>Mismo</em></span>
-                                        </div>
-                                    @endif
+                                    <div class="linea-precio-cliente box-pcliente-wrap d-flex align-items-center justify-content-end gap-1 mt-0.5" style="color: #0284c7; {{ $tienePClienteBase ? '' : 'display:none !important;' }}">
+                                        <i class="bi bi-tag-fill" style="font-size: 0.65rem;"></i>
+                                        <span class="fw-bold val-precio-cliente" style="font-size: 0.88rem;">
+                                            Bs. {{ number_format($pClienteBase, 2) }}
+                                        </span>
+                                        <span class="badge py-0 px-1" style="font-size: 0.64rem; background: #e0f2fe; color: #0369a1; border: 1px solid #bae6fd;">Cliente</span>
+                                    </div>
+                                    <div class="linea-precio-cliente-mismo text-muted mt-0.5" style="font-size: 0.68rem; {{ $tienePClienteBase ? 'display:none !important;' : '' }}" title="Sin precio especial: aplica el mismo precio de venta">
+                                        <span>Cliente: <em>Mismo</em></span>
+                                    </div>
                                 </div>
                             </td>
                             <td class="text-center pe-4">
                                 <button type="button" class="btn btn-sm btn-primary fw-bold px-3 py-1.5 rounded-pill btn-agregar-producto shadow-sm">
-                                    <i class="bi bi-plus-lg me-1"></i> Agregar
+                                    <i class="bi bi-plus-lg me-1"></i> <span class="lbl-btn-agregar">Agregar</span>
                                 </button>
                             </td>
                         </tr>
@@ -1147,6 +1211,11 @@ document.addEventListener('DOMContentLoaded', function() {
             renderizarCarrito();
         }
 
+        // Sincronizar precios en la tabla según la tarifa activa y la unidad activa en cada fila
+        document.querySelectorAll('.fila-producto').forEach(fila => {
+            actualizarFilaSegunUnidad(fila);
+        });
+
         validarBotonCobrar();
         guardarCarritoEnStorage();
     };
@@ -1157,9 +1226,83 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
 
-    // 3. Agregar productos al carrito (Delegado en tbody para soportar actualizaciones dinámicas AJAX sin recargar)
+    // Función para refrescar precios y etiquetas de una fila según la unidad activa (base o secundaria)
+    function actualizarFilaSegunUnidad(fila) {
+        if (!fila) return;
+        const tipo = fila.dataset.unidadActiva || 'base';
+        const esSec = (tipo === 'secundaria');
+
+        const pVentaBase = parseFloat(fila.dataset.precioVentaBase) || 0;
+        const pClienteBase = parseFloat(fila.dataset.precioClienteBase) || pVentaBase;
+        const tienePCBase = (fila.dataset.tienePrecioClienteBase === '1');
+
+        const pVentaSec = parseFloat(fila.dataset.precioVentaSecundario) || 0;
+        const pClienteSec = parseFloat(fila.dataset.precioClienteSecundario) || pVentaSec;
+        const tienePCSec = (fila.dataset.tienePrecioClienteSec === '1');
+
+        const pVenta = esSec ? pVentaSec : pVentaBase;
+        const pCliente = esSec ? pClienteSec : pClienteBase;
+        const tienePC = esSec ? tienePCSec : tienePCBase;
+
+        fila.dataset.precioVenta = pVenta;
+        fila.dataset.precioCliente = pCliente;
+        fila.dataset.tienePrecioCliente = tienePC ? '1' : '0';
+        fila.dataset.precio = (tarifaActiva === 'Regular') ? pCliente : pVenta;
+
+        // Actualizar valores visuales de precios en la fila
+        const elPVenta = fila.querySelector('.val-precio-venta');
+        if (elPVenta) elPVenta.textContent = `Bs. ${pVenta.toFixed(2)}`;
+
+        const elPCliente = fila.querySelector('.val-precio-cliente');
+        if (elPCliente) elPCliente.textContent = `Bs. ${pCliente.toFixed(2)}`;
+
+        const wrapPC = fila.querySelector('.box-pcliente-wrap');
+        const wrapMismo = fila.querySelector('.linea-precio-cliente-mismo');
+        if (wrapPC && wrapMismo) {
+            wrapPC.style.setProperty('display', tienePC ? 'flex' : 'none', 'important');
+            wrapMismo.style.setProperty('display', tienePC ? 'none' : 'block', 'important');
+        }
+
+        const unidadNom = esSec ? (fila.dataset.unidadSecundaria || 'Paquete') : (fila.dataset.unidadBase || 'Pieza');
+        const lblStock = fila.querySelector('.txt-unidad-stock');
+        if (lblStock) {
+            if (esSec) {
+                const factor = parseFloat(fila.dataset.factorSecundaria) || 1;
+                const stkBase = parseInt(fila.dataset.stock) || 0;
+                const equiv = Math.floor(stkBase / factor);
+                lblStock.innerHTML = `<span class="badge bg-primary bg-opacity-10 text-primary border border-primary-subtle px-1.5 py-0.5">${unidadNom} (disp: ~${equiv})</span>`;
+            } else {
+                lblStock.textContent = unidadNom;
+            }
+        }
+
+        const lblBtn = fila.querySelector('.lbl-btn-agregar');
+        if (lblBtn) {
+            lblBtn.textContent = esSec ? `+ ${unidadNom}` : 'Agregar';
+        }
+    }
+
+    // 3. Agregar productos al carrito y selector de unidad dual (Delegado en tbody para soportar actualizaciones dinámicas AJAX sin recargar)
     if (tbodyProductos) {
         tbodyProductos.addEventListener('click', function(e) {
+            // A) Click en botón selector de unidad (Base vs Secundaria)
+            const btnToggle = e.target.closest('.btn-toggle-unidad');
+            if (btnToggle) {
+                const fila = btnToggle.closest('tr');
+                if (!fila) return;
+                const tipo = btnToggle.dataset.tipo; // 'base' o 'secundaria'
+                fila.dataset.unidadActiva = tipo;
+
+                fila.querySelectorAll('.btn-toggle-unidad').forEach(b => {
+                    b.classList.remove('active');
+                });
+                btnToggle.classList.add('active');
+
+                actualizarFilaSegunUnidad(fila);
+                return;
+            }
+
+            // B) Click en botón "+ Agregar"
             const boton = e.target.closest('.btn-agregar-producto');
             if (!boton) return;
 
@@ -1169,27 +1312,80 @@ document.addEventListener('DOMContentLoaded', function() {
             const id = fila.dataset.id;
             const codigo = fila.dataset.codigo;
             const nombre = fila.dataset.nombre;
-            const precioVenta = parseFloat(fila.dataset.precioVenta) || 0;
-            const precioCliente = parseFloat(fila.dataset.precioCliente) || precioVenta;
-            const tienePrecioCliente = fila.dataset.tienePrecioCliente === '1';
-            const stockMaximo = parseInt(fila.dataset.stock) || 0;
+            const stockBase = parseInt(fila.dataset.stock) || 0;
+
+            const tipoUnidad = fila.dataset.unidadActiva || 'base';
+            const esSec = (tipoUnidad === 'secundaria');
+
+            const unidadMedida = esSec
+                ? (fila.dataset.unidadSecundaria || 'Paquete')
+                : (fila.dataset.unidadBase || 'Pieza');
+
+            const factorConversion = esSec
+                ? (parseFloat(fila.dataset.factorSecundaria) || 1)
+                : 1;
+
+            const precioVenta = esSec
+                ? (parseFloat(fila.dataset.precioVentaSecundario) || 0)
+                : (parseFloat(fila.dataset.precioVentaBase) || 0);
+
+            const precioCliente = esSec
+                ? (parseFloat(fila.dataset.precioClienteSecundario) || precioVenta)
+                : (parseFloat(fila.dataset.precioClienteBase) || precioVenta);
+
+            const tienePrecioCliente = esSec
+                ? (fila.dataset.tienePrecioClienteSec === '1')
+                : (fila.dataset.tienePrecioClienteBase === '1');
+
+            // Stock máximo vendible en esta unidad específica
+            const stockMaximo = Math.floor(stockBase / factorConversion);
+
+            if (stockMaximo < 1) {
+                alert(`¡Stock insuficiente! El stock actual (${stockBase} u.) no alcanza para completar 1 ${unidadMedida} de ${factorConversion} unidades.`);
+                return;
+            }
 
             const esCliente = (tarifaActiva === 'Regular');
             const precioAUsar = esCliente ? precioCliente : precioVenta;
 
-            const existente = carrito.find(item => item.id === id);
+            // Clave única para permitir vender piezas y paquetes del mismo producto en la misma nota
+            const itemKey = `${id}_${tipoUnidad}`;
+            const existente = carrito.find(item => item.key === itemKey);
 
             if (existente) {
-                if (existente.cantidad < stockMaximo) {
+                // Verificar que no sobrepase el stock base físico total
+                const unidadesOcupadasPorOtros = carrito
+                    .filter(item => item.id === id && item.key !== itemKey)
+                    .reduce((sum, it) => sum + (it.cantidad * (it.factorConversion || 1)), 0);
+                
+                const unidadesDisponibles = stockBase - unidadesOcupadasPorOtros;
+                const maxPermitido = Math.floor(unidadesDisponibles / factorConversion);
+
+                if (existente.cantidad < maxPermitido) {
                     existente.cantidad++;
                 } else {
-                    alert(`¡Atención! Stock máximo alcanzado (${stockMaximo} unidades).`);
+                    alert(`¡Atención! Stock máximo alcanzado (${maxPermitido} ${unidadMedida}).`);
                 }
             } else {
                 carrito.push({
+                    key: itemKey,
                     id: id,
                     codigo: codigo,
                     nombre: nombre,
+                    tipoUnidad: tipoUnidad,
+                    unidadMedida: unidadMedida,
+                    factorConversion: factorConversion,
+                    tieneSecundaria: fila.dataset.tieneSecundaria === '1',
+                    unidadBase: fila.dataset.unidadBase || 'Pieza',
+                    unidadSecundaria: fila.dataset.unidadSecundaria || 'Paquete',
+                    factorSecundaria: parseFloat(fila.dataset.factorSecundaria) || 1,
+                    precioVentaBase: parseFloat(fila.dataset.precioVentaBase) || 0,
+                    precioClienteBase: parseFloat(fila.dataset.precioClienteBase) || 0,
+                    tienePrecioClienteBase: fila.dataset.tienePrecioClienteBase === '1',
+                    precioVentaSecundario: parseFloat(fila.dataset.precioVentaSecundario) || 0,
+                    precioClienteSecundario: parseFloat(fila.dataset.precioClienteSecundario) || 0,
+                    tienePrecioClienteSec: fila.dataset.tienePrecioClienteSec === '1',
+                    stockBase: stockBase,
                     precioVenta: precioVenta,
                     precioCliente: precioCliente,
                     tienePrecioCliente: tienePrecioCliente,
@@ -1729,13 +1925,36 @@ document.addEventListener('DOMContentLoaded', function() {
         if (btnVaciar) btnVaciar.style.display = 'inline-block';
 
         carrito.forEach((item, index) => {
+            // Asegurar compatibilidad de campos para unidades duales
+            if (!item.key) item.key = `${item.id}_${item.tipoUnidad || 'base'}`;
+            if (!item.unidadMedida) item.unidadMedida = 'Pieza';
+            if (!item.factorConversion) item.factorConversion = 1;
+
             const subtotalItem = item.precio * item.cantidad;
             total += subtotalItem;
 
             const esCliente = item.esTarifaCliente;
             const badgeTarifaItem = esCliente
-                ? `<span class="badge" style="font-size: 0.65rem; background: #e0f2fe; color: #0284c7; border: 1px solid #bae6fd; cursor: pointer;" title="Tarifa Cliente Regular aplicada. Haz clic para alternar a Precio Venta"><i class="bi bi-tag-fill me-0.5"></i>P. Cliente</span>`
+                ? `<span class="badge" style="font-size: 0.65rem; background: #e0f2fe; color: #0369a1; border: 1px solid #bae6fd; cursor: pointer;" title="Tarifa Cliente Regular aplicada. Haz clic para alternar a Precio Venta"><i class="bi bi-tag-fill me-0.5"></i>P. Cliente</span>`
                 : `<span class="badge bg-light text-secondary border" style="font-size: 0.65rem; cursor: pointer;" title="Tarifa Venta Ocasional aplicada. Haz clic para alternar a Precio Cliente">P. Venta</span>`;
+
+            const badgeUnidad = item.tieneSecundaria
+                ? `<span class="badge ${item.tipoUnidad === 'secundaria' ? 'bg-primary text-white' : 'bg-light text-dark border'} fw-bold ms-1" 
+                         style="font-size: 0.70rem; cursor: pointer; transition: all 0.2s;" 
+                         onclick="toggleUnidadItemCarrito(${index})" 
+                         title="Haz clic para alternar entre ${item.unidadBase || 'Pieza'} y ${item.unidadSecundaria || 'Paquete'}">
+                        ${item.tipoUnidad === 'secundaria' 
+                            ? `<i class="bi bi-boxes me-0.5"></i>${item.unidadMedida} (x${Math.round(item.factorConversion)})` 
+                            : `<i class="bi bi-tag me-0.5"></i>${item.unidadMedida}`}
+                        <i class="bi bi-arrow-left-right opacity-75 ms-1" style="font-size: 0.65rem;"></i>
+                   </span>`
+                : (item.tipoUnidad === 'secundaria'
+                    ? `<span class="badge bg-primary bg-opacity-10 text-primary border border-primary-subtle fw-bold ms-1" style="font-size: 0.70rem;">
+                            <i class="bi bi-boxes me-0.5"></i>${item.unidadMedida} (x${Math.round(item.factorConversion)})
+                       </span>`
+                    : `<span class="badge bg-light text-secondary border fw-normal ms-1" style="font-size: 0.70rem;">
+                            ${item.unidadMedida}
+                       </span>`);
 
             const li = document.createElement('li');
             li.className = 'list-group-item bg-white rounded-3 shadow-sm mb-2 p-2.5 border-0';
@@ -1744,6 +1963,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     <div class="me-2" style="flex: 1 1 auto; min-width: 0;">
                         <span class="badge bg-light text-secondary border font-monospace me-1" style="font-size: 0.72rem; padding: 2px 6px;">${item.codigo}</span>
                         <span class="fw-bold text-dark d-inline" style="font-size: 0.88rem; line-height: 1.35; word-break: break-word;">${item.nombre}</span>
+                        ${badgeUnidad}
                     </div>
                     <button type="button" class="btn btn-sm btn-link text-danger p-0 btn-eliminar-item text-decoration-none ms-1 flex-shrink-0" data-index="${index}" title="Quitar producto">
                         <i class="bi bi-trash3 fs-5"></i>
@@ -1776,11 +1996,13 @@ document.addEventListener('DOMContentLoaded', function() {
             `;
             listaCarrito.appendChild(li);
 
-            // Inputs ocultos para enviar al backend
+            // Inputs ocultos para enviar al backend (con unidad y factor para descuento exacto de stock)
             inputsOcultos.innerHTML += `
                 <input type="hidden" name="productos[${index}][id]" value="${item.id}">
                 <input type="hidden" name="productos[${index}][cantidad]" value="${item.cantidad}">
                 <input type="hidden" name="productos[${index}][precio]" value="${item.precio}">
+                <input type="hidden" name="productos[${index}][unidad_medida]" value="${item.unidadMedida || ''}">
+                <input type="hidden" name="productos[${index}][factor_conversion]" value="${item.factorConversion || 1}">
             `;
         });
 
@@ -1805,6 +2027,32 @@ document.addEventListener('DOMContentLoaded', function() {
             item.precio = item.precioCliente;
             item.esTarifaCliente = true;
         }
+        renderizarCarrito();
+    };
+
+    // Alternar individualmente la unidad (Pieza <-> Paquete) de un ítem en el carrito
+    window.toggleUnidadItemCarrito = function(index) {
+        const item = carrito[index];
+        if (!item || !item.tieneSecundaria) return;
+
+        const nuevoTipo = (item.tipoUnidad === 'secundaria') ? 'base' : 'secundaria';
+        const esSec = (nuevoTipo === 'secundaria');
+
+        item.tipoUnidad = nuevoTipo;
+        item.key = `${item.id}_${nuevoTipo}`;
+        item.unidadMedida = esSec ? (item.unidadSecundaria || 'Paquete') : (item.unidadBase || 'Pieza');
+        item.factorConversion = esSec ? (item.factorSecundaria || 1) : 1;
+        item.precioVenta = esSec ? (item.precioVentaSecundario || 0) : (item.precioVentaBase || 0);
+        item.precioCliente = esSec ? (item.precioClienteSecundario || item.precioVenta) : (item.precioClienteBase || item.precioVenta);
+        item.tienePrecioCliente = esSec ? item.tienePrecioClienteSec : item.tienePrecioClienteBase;
+
+        item.precio = item.esTarifaCliente ? item.precioCliente : item.precioVenta;
+        const stockBase = item.stockBase || 0;
+        item.stockMaximo = Math.max(1, Math.floor(stockBase / item.factorConversion));
+        if (item.cantidad > item.stockMaximo) {
+            item.cantidad = item.stockMaximo;
+        }
+
         renderizarCarrito();
     };
 
@@ -1837,7 +2085,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
 
                 if (nuevaCant > stockMax) {
-                    alert(`¡Atención! Stock máximo disponible: ${stockMax} unidad(es).`);
+                    alert(`¡Atención! Stock máximo disponible: ${stockMax} ${carrito[idx].unidadMedida || 'unidad(es)'}.`);
                     nuevaCant = stockMax;
                 }
 
@@ -1854,7 +2102,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     carrito[idx].cantidad++;
                     renderizarCarrito();
                 } else {
-                    alert(`Stock máximo disponible: ${carrito[idx].stockMaximo}`);
+                    alert(`Stock máximo disponible: ${carrito[idx].stockMaximo} ${carrito[idx].unidadMedida || 'unidad(es)'}`);
                 }
             });
         });
@@ -1908,9 +2156,19 @@ document.addEventListener('DOMContentLoaded', function() {
 
         let html = '';
         productos.forEach(p => {
-            const pVenta = parseFloat(p.precio_venta) || 0;
-            const tienePC = (p.precio_cliente !== null && parseFloat(p.precio_cliente) > 0);
-            const pCliente = tienePC ? parseFloat(p.precio_cliente) : pVenta;
+            const unidadBase = (p.unidad && p.unidad.nombre) ? p.unidad.nombre : 'Pieza';
+            const pVentaBase = parseFloat(p.precio_venta) || 0;
+            const tienePCBase = (p.precio_cliente !== null && parseFloat(p.precio_cliente) > 0);
+            const pClienteBase = tienePCBase ? parseFloat(p.precio_cliente) : pVentaBase;
+
+            const pVentaSecRaw = (p.precio_venta_secundario !== null && p.precio_venta_secundario !== undefined) ? parseFloat(p.precio_venta_secundario) : 0;
+            const pClienteSecRaw = (p.precio_cliente_secundario !== null && p.precio_cliente_secundario !== undefined) ? parseFloat(p.precio_cliente_secundario) : 0;
+            const factorSec = (p.factor_conversion && parseFloat(p.factor_conversion) > 0) ? parseFloat(p.factor_conversion) : 1;
+            const tieneSec = !!(p.id_unidad_secundaria && (pVentaSecRaw > 0 || pClienteSecRaw > 0 || factorSec > 1));
+            const unidadSec = (tieneSec && p.unidad_secundaria && p.unidad_secundaria.nombre) ? p.unidad_secundaria.nombre : 'Paquete';
+            const pVentaSec = pVentaSecRaw > 0 ? pVentaSecRaw : pClienteSecRaw;
+            const pClienteSec = pClienteSecRaw > 0 ? pClienteSecRaw : pVentaSec;
+            const tienePCSec = (pClienteSecRaw > 0);
 
             const stk = parseInt(p.stock) || 0;
             const minStk = parseInt(p.stock_minimo) || 5;
@@ -1927,59 +2185,89 @@ document.addEventListener('DOMContentLoaded', function() {
                 stockBadge = `<span class="badge bg-success-subtle text-success border border-success-subtle px-2 py-1 fs-6 fw-bold" title="Stock óptimo">${stk}</span>`;
             }
 
-            const lineaPC = tienePC
-                ? `<div class="linea-precio-cliente d-flex align-items-center justify-content-end gap-1 mt-0.5" style="color: #0284c7;">
-                        <i class="bi bi-tag-fill" style="font-size: 0.65rem;"></i>
-                        <span class="fw-bold val-precio-cliente" style="font-size: 0.88rem;">Bs. ${pCliente.toFixed(2)}</span>
-                        <span class="badge py-0 px-1" style="font-size: 0.64rem; background: #e0f2fe; color: #0369a1; border: 1px solid #bae6fd;">Cliente</span>
-                    </div>`
-                : `<div class="linea-precio-cliente text-muted mt-0.5" style="font-size: 0.68rem;" title="Sin precio especial: aplica el mismo precio de venta">
-                        <span>Cliente: <em>Mismo</em></span>
-                    </div>`;
-
             const marcaNom = (p.marca && p.marca.nombre) ? p.marca.nombre : 'Genérico';
             const catBadge = (p.categoria && p.categoria.nombre)
                 ? `<span class="badge bg-light text-muted border">${p.categoria.nombre}</span>`
                 : '';
+
+            const selectorUnidadesHtml = tieneSec
+                ? `<div class="mt-1.5 d-flex align-items-center gap-1.5 selector-unidades-row">
+                        <span class="text-muted" style="font-size: 0.70rem; font-weight: 600;">Vender por:</span>
+                        <div class="btn-group btn-group-sm rounded-pill p-0.5 grupo-unidades-pos" role="group">
+                            <button type="button" class="btn btn-xs py-0.5 px-2 rounded-pill fw-bold btn-toggle-unidad active" data-tipo="base" style="font-size: 0.72rem;">
+                                <i class="bi bi-tag me-0.5"></i>${unidadBase}
+                            </button>
+                            <button type="button" class="btn btn-xs py-0.5 px-2 rounded-pill fw-bold btn-toggle-unidad" data-tipo="secundaria" style="font-size: 0.72rem;">
+                                <i class="bi bi-boxes me-0.5"></i>${unidadSec} (x${Math.round(factorSec)})
+                            </button>
+                        </div>
+                    </div>`
+                : `<div class="mt-0.5">
+                        <span class="badge bg-light text-secondary border py-0 px-1.5" style="font-size: 0.68rem;">
+                            <i class="bi bi-rulers me-1"></i>${unidadBase}
+                        </span>
+                    </div>`;
 
             html += `
                 <tr class="fila-producto" 
                     data-id="${p.id}" 
                     data-codigo="${p.codigo || ''}" 
                     data-nombre="${p.nombre || ''}" 
-                    data-precio-venta="${pVenta}" 
-                    data-precio-cliente="${pCliente}" 
-                    data-tiene-precio-cliente="${tienePC ? '1' : '0'}" 
-                    data-precio="${pVenta}" 
                     data-stock="${stk}" 
-                    data-categoria="${p.id_categoria || ''}">
+                    data-categoria="${p.id_categoria || ''}"
+                    data-unidad-base="${unidadBase}"
+                    data-precio-venta-base="${pVentaBase}"
+                    data-precio-cliente-base="${pClienteBase}"
+                    data-tiene-precio-cliente-base="${tienePCBase ? '1' : '0'}"
+                    data-tiene-secundaria="${tieneSec ? '1' : '0'}"
+                    data-unidad-secundaria="${unidadSec}"
+                    data-factor-secundaria="${factorSec}"
+                    data-precio-venta-secundario="${pVentaSec}"
+                    data-precio-cliente-secundario="${pClienteSec}"
+                    data-tiene-precio-cliente-sec="${tienePCSec ? '1' : '0'}"
+                    data-unidad-activa="base"
+                    data-precio-venta="${pVentaBase}" 
+                    data-precio-cliente="${pClienteBase}" 
+                    data-tiene-precio-cliente="${tienePCBase ? '1' : '0'}" 
+                    data-precio="${pVentaBase}">
                     <td class="ps-4">
                         <span class="badge-code">${p.codigo || 'S/C'}</span>
                     </td>
                     <td>
                         <div class="fw-bold text-dark" style="font-size: 0.98rem;">${p.nombre || ''}</div>
-                        <div class="text-muted small">
-                            <span class="me-2"><i class="bi bi-tag me-1"></i>${marcaNom}</span>
+                        <div class="text-muted small d-flex flex-wrap align-items-center gap-1.5 mt-0.5">
+                            <span class="me-1"><i class="bi bi-tag me-1"></i>${marcaNom}</span>
                             ${catBadge}
                         </div>
+                        ${selectorUnidadesHtml}
                     </td>
                     <td class="text-center">
                         ${stockBadge}
+                        <div class="text-muted small mt-0.5 txt-unidad-stock" style="font-size: 0.68rem;">
+                            ${unidadBase}
+                        </div>
                     </td>
                     <td class="text-end">
                         <div class="box-precio-pos">
                             <div class="linea-precio-venta d-flex align-items-center justify-content-end gap-1">
                                 <span class="fw-bold text-dark val-precio-venta" style="font-size: 0.94rem;">
-                                    Bs. ${pVenta.toFixed(2)}
+                                    Bs. ${pVentaBase.toFixed(2)}
                                 </span>
                                 <span class="badge bg-light text-secondary border py-0 px-1" style="font-size: 0.64rem;">Venta</span>
                             </div>
-                            ${lineaPC}
+                            <div class="linea-precio-cliente box-pcliente-wrap d-flex align-items-center justify-content-end gap-1 mt-0.5" style="color: #0284c7; ${tienePCBase ? '' : 'display:none !important;'}">
+                                <i class="bi bi-tag-fill" style="font-size: 0.65rem;"></i>
+                                <span class="fw-bold val-precio-cliente" style="font-size: 0.88rem;">Bs. ${pClienteBase.toFixed(2)}</span>
+                                <span class="badge py-0 px-1" style="font-size: 0.64rem; background: #e0f2fe; color: #0369a1; border: 1px solid #bae6fd;">Cliente</span>
+                            </div>
+                            <div class="linea-precio-cliente-mismo text-muted mt-0.5" style="font-size: 0.68rem; ${tienePCBase ? 'display:none !important;' : ''}" title="Sin precio especial: aplica el mismo precio de venta">
+                                <span>Cliente: <em>Mismo</em></span>
+                            </div>
                         </div>
                     </td>
                     <td class="text-center pe-4">
                         <button type="button" class="btn btn-sm btn-primary fw-bold px-3 py-1.5 rounded-pill btn-agregar-producto shadow-sm">
-                            <i class="bi bi-plus-lg me-1"></i> Agregar
+                            <i class="bi bi-plus-lg me-1"></i> <span class="lbl-btn-agregar">Agregar</span>
                         </button>
                     </td>
                 </tr>
@@ -2009,17 +2297,23 @@ document.addEventListener('DOMContentLoaded', function() {
                     carrito.forEach(cartItem => {
                         const pDb = data.productos.find(p => String(p.id) === String(cartItem.id));
                         if (pDb) {
-                            const nuevoPV = parseFloat(pDb.precio_venta) || 0;
-                            const nuevoPC = (pDb.precio_cliente !== null && parseFloat(pDb.precio_cliente) > 0)
-                                ? parseFloat(pDb.precio_cliente)
+                            const esSec = (cartItem.tipoUnidad === 'secundaria');
+                            const factor = esSec ? (parseFloat(pDb.factor_conversion) || 1) : 1;
+                            const nuevoPV = esSec ? (parseFloat(pDb.precio_venta_secundario) || 0) : (parseFloat(pDb.precio_venta) || 0);
+                            const tienePC = esSec
+                                ? (pDb.precio_cliente_secundario !== null && parseFloat(pDb.precio_cliente_secundario) > 0)
+                                : (pDb.precio_cliente !== null && parseFloat(pDb.precio_cliente) > 0);
+                            const nuevoPC = tienePC
+                                ? (esSec ? parseFloat(pDb.precio_cliente_secundario) : parseFloat(pDb.precio_cliente))
                                 : nuevoPV;
-                            const nuevoStock = parseInt(pDb.stock) || 0;
 
-                            cartItem.stockMaximo = nuevoStock;
+                            const nuevoStockBase = parseInt(pDb.stock) || 0;
+                            cartItem.stockMaximo = Math.floor(nuevoStockBase / factor);
+
                             if (cartItem.precioVenta !== nuevoPV || cartItem.precioCliente !== nuevoPC) {
                                 cartItem.precioVenta = nuevoPV;
                                 cartItem.precioCliente = nuevoPC;
-                                cartItem.tienePrecioCliente = (pDb.precio_cliente !== null && parseFloat(pDb.precio_cliente) > 0);
+                                cartItem.tienePrecioCliente = tienePC;
                                 cartItem.precio = cartItem.esTarifaCliente ? nuevoPC : nuevoPV;
                                 preciosSincronizados++;
                             }

@@ -265,6 +265,9 @@
             <tr>
                 <td class="text-center font-weight-bold">
                     {{ number_format($detalle->cantidad, 0) }}
+                    @if(!empty($detalle->unidad_medida))
+                        <span style="display: block; font-size: 8.5px; font-weight: normal; color: #64748b;">{{ $detalle->unidad_medida }}</span>
+                    @endif
                 </td>
                 <td class="text-left">
                     @if(optional($detalle->producto)->codigo)

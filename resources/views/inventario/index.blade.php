@@ -73,6 +73,24 @@
 .tipo-btn .tipo-icon { font-size: 1.5rem; margin-bottom: 4px; }
 .tipo-btn .tipo-label { font-size: 0.8rem; font-weight: 700; }
 
+/* Modo de conteo (Piezas vs Paquetes) */
+.btn-modo-conteo {
+    background: transparent;
+    color: #475569;
+    border: none !important;
+    transition: all 0.2s;
+    font-size: 0.82rem;
+}
+.btn-modo-conteo:hover:not(.active) {
+    background: #e2e8f0;
+    color: #0f172a;
+}
+.btn-modo-conteo.active {
+    background: #0284c7 !important;
+    color: #ffffff !important;
+    box-shadow: 0 2px 6px rgba(2, 132, 199, 0.3) !important;
+}
+
 /* Campo motivo con asterisco en rojo cuando está vacío */
 .campo-requerido.error { border-color: #ef4444 !important; box-shadow: 0 0 0 3px rgba(239,68,68,0.1) !important; }
 .msg-error { color: #dc2626; font-size: 0.78rem; font-weight: 600; margin-top: 4px; display: none; }
@@ -448,7 +466,7 @@
                 <div class="modal-body p-4">
 
                     {{-- 1. Producto --}}
-                    <div class="mb-4">
+                    <div class="mb-3">
                         <label class="form-label-custom">
                             <i class="bi bi-box-seam me-1"></i>Seleccionar Producto *
                         </label>
@@ -463,10 +481,32 @@
                         </div>
                     </div>
 
+                    {{-- Tarjeta contextual del producto seleccionado --}}
+                    <div id="cardInfoProducto" class="p-2.5 rounded-3 mb-3 bg-light border border-primary-subtle" style="display: none;">
+                        <div class="d-flex align-items-center justify-content-between">
+                            <div>
+                                <span class="badge bg-primary bg-opacity-10 text-primary border border-primary-subtle fw-bold" id="badgeCodigoProducto">COD</span>
+                                <strong class="text-dark ms-1" id="lblNombreProducto" style="font-size: 0.92rem;">Producto</strong>
+                                <div class="small text-muted mt-0.5">
+                                    Unidad Base: <span class="fw-semibold text-dark" id="lblUnidadBase">Pieza</span>
+                                    <span id="lblEmpaqueConfigurado" class="ms-2 text-primary" style="display: none;">
+                                        | Empaque: <strong id="txtEmpaqueConfigurado">Paquete (x6)</strong>
+                                    </span>
+                                </div>
+                            </div>
+                            <div class="text-end">
+                                <span class="text-muted small d-block" style="font-size: 0.70rem;">Stock actual</span>
+                                <span class="badge bg-success bg-opacity-10 text-success border border-success-subtle fs-6 fw-bold" id="badgeStockActual">
+                                    0 u.
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+
                     {{-- 2. Tipo de ajuste (botones visuales) --}}
-                    <div class="mb-4">
+                    <div class="mb-3">
                         <label class="form-label-custom">
-                            <i class="bi bi-arrow-left-right me-1"></i>Tipo de Ajuste *
+                            <i class="bi bi-arrow-left-right me-1"></i>Tipo de Movimiento *
                         </label>
                         <input type="hidden" name="tipo" id="tipoAjusteHidden" value="ENTRADA">
                         <div class="row g-2">
@@ -487,17 +527,86 @@
                         </div>
                     </div>
 
-                    {{-- 3. Cantidad --}}
-                    <div class="mb-4">
+                    {{-- 3. Selector de Modo de Conteo / Unidad --}}
+                    <div class="mb-3">
                         <label class="form-label-custom">
-                            <i class="bi bi-123 me-1"></i>Cantidad *
+                            <i class="bi bi-rulers me-1"></i>Modo de Conteo / Unidad de Medida *
+                        </label>
+                        <input type="hidden" name="modo_ingreso" id="modoIngresoHidden" value="piezas">
+                        <input type="hidden" name="nombre_empaque" id="nombreEmpaqueHidden" value="Paquete">
+                        
+                        <div class="btn-group w-100 rounded-3 p-1 bg-light border" role="group">
+                            <button type="button" class="btn btn-sm rounded-2 fw-bold btn-modo-conteo active" id="btnModoPiezas" onclick="seleccionarModoConteo('piezas')">
+                                <i class="bi bi-tag me-1"></i>Por Pieza / Unidad Suelta
+                            </button>
+                            <button type="button" class="btn btn-sm rounded-2 fw-bold btn-modo-conteo" id="btnModoEmpaque" onclick="seleccionarModoConteo('empaque')">
+                                <i class="bi bi-boxes me-1"></i>Por Paquete / Caja
+                            </button>
+                        </div>
+                    </div>
+
+                    {{-- Modo A: Cantidad en Piezas / Unidades Sueltas --}}
+                    <div id="bloqueConteoPiezas" class="mb-3">
+                        <label class="form-label-custom">
+                            <i class="bi bi-123 me-1"></i>Cantidad de Piezas <span id="lblUnidadBaseNombre">(Unidades)</span> *
                         </label>
                         <input type="number" name="cantidad" id="inputCantidad"
-                            class="form-control form-control-lg campo-requerido"
-                            min="1" placeholder="Ej: 10" required
-                            style="border-radius:10px;">
+                            class="form-control form-control-lg campo-requerido fw-bold"
+                            min="1" placeholder="Ej: 10" style="border-radius:10px;">
                         <div class="msg-error" id="errorCantidad">
                             <i class="bi bi-exclamation-circle me-1"></i>Ingresá una cantidad mayor a 0.
+                        </div>
+                    </div>
+
+                    {{-- Modo B: Cantidad en Paquetes / Cajas con Factor de Conversión --}}
+                    <div id="bloqueConteoEmpaque" class="mb-3" style="display: none;">
+                        <div class="card p-3 bg-light bg-opacity-75 border border-primary-subtle rounded-3">
+                            <div class="row g-2">
+                                <div class="col-md-6">
+                                    <label class="form-label text-dark fw-bold small">
+                                        <i class="bi bi-box me-1"></i>Cantidad de <span id="lblNombreEmpaqueText">Paquetes</span> *
+                                    </label>
+                                    <div class="input-group">
+                                        <input type="number" name="cantidad_empaques" id="inputCantEmpaques"
+                                            class="form-control fw-bold fs-5" min="1" value="1" placeholder="Ej: 10">
+                                        <span class="input-group-text bg-white small text-muted" id="txtSufijoEmpaque">paquetes</span>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label text-dark fw-bold small">
+                                        <i class="bi bi-calculator me-1"></i>Contenido por <span id="lblNombreEmpaqueText2">Paquete</span> *
+                                    </label>
+                                    <div class="input-group">
+                                        <input type="number" name="factor_conversion_empaque" id="inputFactorAjuste"
+                                            class="form-control fw-bold fs-5" min="1" value="1" placeholder="Ej: 6">
+                                        <span class="input-group-text bg-white small text-muted" id="txtSufijoPiezas">piezas c/u</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {{-- Banner en tiempo real de equivalencia física --}}
+                            <div class="mt-2.5 p-2 bg-white rounded-2 border border-info-subtle d-flex align-items-center justify-content-between">
+                                <div class="d-flex align-items-center gap-1.5" style="font-size: 0.85rem;">
+                                    <i class="bi bi-arrow-right-circle-fill text-primary"></i>
+                                    <span class="text-secondary">Equivalencia física:</span>
+                                    <strong class="text-dark" id="txtCalculoFormula">1 paquete × 1 piezas</strong>
+                                </div>
+                                <div class="text-end">
+                                    <span class="badge bg-success bg-opacity-10 text-success border border-success-subtle fs-6 fw-bold" id="badgeTotalPiezasCalc">
+                                        = 1 Piezas
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    {{-- Banner de proyección de stock resultante --}}
+                    <div id="boxProyeccionStock" class="p-2.5 rounded-3 mb-3 d-flex align-items-center justify-content-between" style="display: none; background: #f8fafc; border: 1px dashed #cbd5e1;">
+                        <small class="text-muted fw-semibold">Proyección de Stock:</small>
+                        <div>
+                            <span class="text-muted small" id="txtStockAntes">Stock actual: 0</span>
+                            <i class="bi bi-arrow-right mx-1 text-primary"></i>
+                            <strong class="text-primary" id="txtStockNuevoResultante">Nuevo: 0</strong>
                         </div>
                     </div>
 
@@ -509,14 +618,14 @@
                         </label>
                         <textarea name="motivo" id="inputMotivo" rows="3"
                             class="form-control campo-requerido"
-                            placeholder="Ej: Llegó mercadería de Santa Cruz, Devolución de cliente, Ajuste de inventario mensual..."
+                            placeholder="Ej: Llegada de mercadería de fábrica, Devolución de cliente, Ajuste físico..."
                             style="border-radius:10px; resize:none;"></textarea>
                         <div class="msg-error" id="errorMotivo">
                             <i class="bi bi-exclamation-circle me-1"></i>El motivo es obligatorio para registrar el ajuste.
                         </div>
                         <small class="text-muted mt-1 d-block">
                             <i class="bi bi-info-circle me-1"></i>
-                            Describí brevemente por qué se hace este ajuste. Es importante para la auditoría.
+                            Si ingresas paquetes, el sistema guardará automáticamente cuántos paquetes y el contenido en el historial.
                         </small>
                     </div>
 
@@ -542,13 +651,147 @@
 <script>
 document.addEventListener('DOMContentLoaded', function () {
 
+    @php
+        $productosDict = [];
+        foreach($productos as $p) {
+            $tieneSec = $p->tieneUnidadSecundaria();
+            $productosDict[$p->id] = [
+                'id' => $p->id,
+                'codigo' => $p->codigo,
+                'nombre' => $p->nombre,
+                'stock' => intval($p->stock ?? 0),
+                'unidad_base' => optional($p->unidad)->nombre ?? 'Pieza',
+                'tiene_sec' => $tieneSec,
+                'unidad_sec' => $tieneSec ? (optional($p->unidadSecundaria)->nombre ?? 'Paquete') : 'Paquete',
+                'factor_sec' => $tieneSec ? floatval($p->factor_conversion ?? 1) : 1,
+            ];
+        }
+    @endphp
+    const productosInventario = @json($productosDict);
+    let productoActual = null;
+    let modoConteoActual = 'piezas'; // 'piezas' o 'empaque'
+
     // =========================================
     // 1. TomSelect para el selector de producto
     // =========================================
-    new TomSelect("#selectProductoModal", {
+    const tomSelectProd = new TomSelect("#selectProductoModal", {
         create: false,
         placeholder: "Escribe para buscar un producto...",
-        sortField: { field: "text", direction: "asc" }
+        sortField: { field: "text", direction: "asc" },
+        onChange: function(value) {
+            const errProd = document.getElementById('errorProducto');
+            if (!value || !productosInventario[value]) {
+                document.getElementById('cardInfoProducto').style.display = 'none';
+                document.getElementById('boxProyeccionStock').style.display = 'none';
+                productoActual = null;
+                return;
+            }
+
+            if (errProd) errProd.style.display = 'none';
+            productoActual = productosInventario[value];
+
+            // Rellenar tarjeta contextual
+            document.getElementById('badgeCodigoProducto').textContent = productoActual.codigo;
+            document.getElementById('lblNombreProducto').textContent = productoActual.nombre;
+            document.getElementById('lblUnidadBase').textContent = productoActual.unidad_base;
+            document.getElementById('lblUnidadBaseNombre').textContent = `(${productoActual.unidad_base})`;
+            document.getElementById('badgeStockActual').textContent = `${productoActual.stock} ${productoActual.unidad_base}`;
+
+            // Si el producto tiene segunda unidad configurada
+            const elEmpaque = document.getElementById('lblEmpaqueConfigurado');
+            const txtEmpaque = document.getElementById('txtEmpaqueConfigurado');
+            if (productoActual.tiene_sec) {
+                txtEmpaque.textContent = `${productoActual.unidad_sec} (x${Math.round(productoActual.factor_sec)} ${productoActual.unidad_base})`;
+                elEmpaque.style.display = 'inline';
+                
+                // Actualizar nombres y factor en el bloque empaque
+                document.getElementById('lblNombreEmpaqueText').textContent = `${productoActual.unidad_sec}s`;
+                document.getElementById('lblNombreEmpaqueText2').textContent = productoActual.unidad_sec;
+                document.getElementById('txtSufijoEmpaque').textContent = `${productoActual.unidad_sec.toLowerCase()}s`;
+                document.getElementById('txtSufijoPiezas').textContent = `${productoActual.unidad_base.toLowerCase()}s c/u`;
+                document.getElementById('inputFactorAjuste').value = Math.round(productoActual.factor_sec);
+                document.getElementById('nombreEmpaqueHidden').value = productoActual.unidad_sec;
+            } else {
+                elEmpaque.style.display = 'none';
+                document.getElementById('lblNombreEmpaqueText').textContent = 'Paquetes / Cajas';
+                document.getElementById('lblNombreEmpaqueText2').textContent = 'Empaque';
+                document.getElementById('txtSufijoEmpaque').textContent = 'empaques';
+                document.getElementById('txtSufijoPiezas').textContent = `${productoActual.unidad_base.toLowerCase()}s c/u`;
+                document.getElementById('inputFactorAjuste').value = 1;
+                document.getElementById('nombreEmpaqueHidden').value = 'Paquete';
+            }
+
+            document.getElementById('cardInfoProducto').style.display = 'block';
+            recalcularEquivalenciaYProyeccion();
+        }
+    });
+
+    // Cambiar Modo de Conteo (Piezas vs Empaques)
+    window.seleccionarModoConteo = function(modo) {
+        modoConteoActual = modo;
+        document.getElementById('modoIngresoHidden').value = modo;
+
+        const btnP = document.getElementById('btnModoPiezas');
+        const btnE = document.getElementById('btnModoEmpaque');
+        const secP = document.getElementById('bloqueConteoPiezas');
+        const secE = document.getElementById('bloqueConteoEmpaque');
+
+        if (modo === 'piezas') {
+            btnP.classList.add('active');
+            btnE.classList.remove('active');
+            secP.style.display = 'block';
+            secE.style.display = 'none';
+        } else {
+            btnP.classList.remove('active');
+            btnE.classList.add('active');
+            secP.style.display = 'none';
+            secE.style.display = 'block';
+        }
+
+        recalcularEquivalenciaYProyeccion();
+    };
+
+    // Cálculo dinámico en tiempo real
+    window.recalcularEquivalenciaYProyeccion = function() {
+        if (!productoActual) return;
+
+        let totalPiezas = 0;
+        const nombreBase = productoActual.unidad_base || 'Pieza';
+        const stockAntes = productoActual.stock;
+
+        if (modoConteoActual === 'empaque') {
+            const cantEmp = parseInt(document.getElementById('inputCantEmpaques').value) || 0;
+            const factor = parseFloat(document.getElementById('inputFactorAjuste').value) || 1;
+            totalPiezas = Math.round(cantEmp * factor);
+
+            const nomEmp = document.getElementById('nombreEmpaqueHidden').value || 'paquete';
+            document.getElementById('txtCalculoFormula').textContent = `${cantEmp} ${nomEmp}(s) × ${factor} ${nombreBase.toLowerCase()}s`;
+            document.getElementById('badgeTotalPiezasCalc').textContent = `= ${totalPiezas} ${nombreBase}s`;
+        } else {
+            totalPiezas = parseInt(document.getElementById('inputCantidad').value) || 0;
+        }
+
+        const tipoAjuste = document.getElementById('tipoAjusteHidden').value;
+        let stockNuevo = 0;
+        if (tipoAjuste === 'ENTRADA') {
+            stockNuevo = stockAntes + totalPiezas;
+        } else {
+            stockNuevo = Math.max(0, stockAntes - totalPiezas);
+        }
+
+        const boxProy = document.getElementById('boxProyeccionStock');
+        if (totalPiezas > 0) {
+            document.getElementById('txtStockAntes').textContent = `Stock actual: ${stockAntes} ${nombreBase}`;
+            document.getElementById('txtStockNuevoResultante').textContent = `Nuevo Stock: ${stockNuevo} ${nombreBase}`;
+            boxProy.style.display = 'flex';
+        } else {
+            boxProy.style.display = 'none';
+        }
+    };
+
+    ['inputCantidad', 'inputCantEmpaques', 'inputFactorAjuste'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.addEventListener('input', recalcularEquivalenciaYProyeccion);
     });
 
     // =========================================
@@ -557,16 +800,42 @@ document.addEventListener('DOMContentLoaded', function () {
     document.getElementById('formNuevoAjuste').addEventListener('submit', function(e) {
         let valido = true;
 
-        // Validar Cantidad
-        const cantidad = document.getElementById('inputCantidad');
-        const errCantidad = document.getElementById('errorCantidad');
-        if (!cantidad.value || parseInt(cantidad.value) < 1) {
-            cantidad.classList.add('error');
-            errCantidad.style.display = 'block';
+        // Validar Producto
+        const errProd = document.getElementById('errorProducto');
+        if (!productoActual) {
+            if (errProd) errProd.style.display = 'block';
             valido = false;
         } else {
-            cantidad.classList.remove('error');
-            errCantidad.style.display = 'none';
+            if (errProd) errProd.style.display = 'none';
+        }
+
+        // Validar Cantidad según modo
+        if (modoConteoActual === 'piezas') {
+            const cantidad = document.getElementById('inputCantidad');
+            const errCantidad = document.getElementById('errorCantidad');
+            if (!cantidad.value || parseInt(cantidad.value) < 1) {
+                cantidad.classList.add('error');
+                errCantidad.style.display = 'block';
+                valido = false;
+            } else {
+                cantidad.classList.remove('error');
+                errCantidad.style.display = 'none';
+            }
+        } else {
+            const cantEmp = document.getElementById('inputCantEmpaques');
+            const factorEmp = document.getElementById('inputFactorAjuste');
+            if (!cantEmp.value || parseInt(cantEmp.value) < 1) {
+                cantEmp.classList.add('error');
+                valido = false;
+            } else {
+                cantEmp.classList.remove('error');
+            }
+            if (!factorEmp.value || parseFloat(factorEmp.value) < 1) {
+                factorEmp.classList.add('error');
+                valido = false;
+            } else {
+                factorEmp.classList.remove('error');
+            }
         }
 
         // Validar Motivo — OBLIGATORIO
@@ -584,7 +853,7 @@ document.addEventListener('DOMContentLoaded', function () {
         if (!valido) {
             e.preventDefault();
             // Hacer scroll al primer error
-            document.querySelector('.campo-requerido.error')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            document.querySelector('.campo-requerido.error, .error')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
         }
     });
 
@@ -667,6 +936,10 @@ function seleccionarTipo(tipo) {
     } else {
         btnE.className = 'tipo-btn';
         btnS.className = 'tipo-btn selected-salida';
+    }
+
+    if (typeof recalcularEquivalenciaYProyeccion === 'function') {
+        recalcularEquivalenciaYProyeccion();
     }
 }
 

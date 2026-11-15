@@ -69,7 +69,7 @@ class InventarioController extends Controller
         }
 
         $movimientos = $query->orderBy('fecha', 'desc')->orderBy('id', 'desc')->get(); 
-        $productos = Producto::orderBy('nombre', 'asc')->get();
+        $productos = Producto::with(['unidad', 'unidadSecundaria'])->orderBy('nombre', 'asc')->get();
 
         return view('inventario.index', compact('movimientos', 'productos', 'fechaFiltro', 'verTodo', 'subtituloPeriodo'));
     }
@@ -77,26 +77,40 @@ class InventarioController extends Controller
     public function store(Request $request)
     {
         $request->validate([
-            'id_producto' => 'required',
+            'id_producto' => 'required|exists:productos,id',
             'tipo'        => 'required',
-            'cantidad'    => 'required|numeric|min:1',
             'motivo'      => 'required|min:3',
         ], [
-            'motivo.required' => 'El motivo es obligatorio. Describí brevemente el motivo del ajuste.',
-            'motivo.min'      => 'El motivo debe tener al menos 3 caracteres.',
+            'id_producto.required' => 'Debes seleccionar un producto.',
+            'motivo.required'      => 'El motivo es obligatorio. Describe brevemente el motivo del ajuste.',
+            'motivo.min'           => 'El motivo debe tener al menos 3 caracteres.',
         ]);
 
-        $producto = Producto::findOrFail($request->id_producto);
+        $producto = Producto::with(['unidad', 'unidadSecundaria'])->findOrFail($request->id_producto);
         $stockAnterior = intval($producto->stock ?? 0);
-        $cantidad = intval($request->cantidad);
         $esEntrada = in_array(strtoupper(trim($request->tipo)), ['ENTRADA', 'AGREGAR']);
+
+        $modoIngreso = $request->input('modo_ingreso', 'piezas');
+        $unidadBaseNombre = optional($producto->unidad)->nombre ?? 'Pieza';
+        
+        if ($modoIngreso === 'empaque') {
+            $cantEmpaques = max(1, intval($request->input('cantidad_empaques', 1)));
+            $factor = max(1, floatval($request->input('factor_conversion_empaque', 1)));
+            $cantidadFisica = intval(ceil($cantEmpaques * $factor));
+            $nombreEmpaque = trim($request->input('nombre_empaque', '')) ?: (optional($producto->unidadSecundaria)->nombre ?? 'Paquete');
+            
+            $detalleEmpaque = "[{$cantEmpaques} {$nombreEmpaque}(s) x {$factor} u. = {$cantidadFisica} {$unidadBaseNombre}] ";
+        } else {
+            $cantidadFisica = max(1, intval($request->input('cantidad', 1)));
+            $detalleEmpaque = '';
+        }
 
         if ($esEntrada) {
             $tipoNormalizado = 'Entrada';
-            $stockNuevo = $stockAnterior + $cantidad;
+            $stockNuevo = $stockAnterior + $cantidadFisica;
         } else {
             $tipoNormalizado = 'Salida';
-            $stockNuevo = max(0, $stockAnterior - $cantidad);
+            $stockNuevo = max(0, $stockAnterior - $cantidadFisica);
         }
 
         $producto->stock = $stockNuevo;
@@ -106,14 +120,15 @@ class InventarioController extends Controller
         $movimiento = new Movimiento();
         $movimiento->id_producto    = $producto->id;
         $movimiento->tipo           = $tipoNormalizado;
-        $movimiento->cantidad       = $cantidad;
+        $movimiento->cantidad       = $cantidadFisica;
         $movimiento->stock_anterior = $stockAnterior;
         $movimiento->stock_nuevo    = $stockNuevo;
-        $movimiento->motivo         = $request->motivo;
+        $movimiento->motivo         = $detalleEmpaque . $request->motivo;
         $movimiento->fecha          = now();
         $movimiento->id_usuario     = Auth::id() ?? 1;
         $movimiento->save();
 
-        return redirect('/inventario')->with('success', 'Ajuste de inventario registrado y stock actualizado con éxito.');
+        $signo = $esEntrada ? '+' : '-';
+        return redirect('/inventario')->with('success', "Ajuste registrado con éxito: {$signo}{$cantidadFisica} {$unidadBaseNombre}(s) actualizadas en tienda.");
     }
 }

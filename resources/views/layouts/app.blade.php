@@ -963,11 +963,13 @@
         };
 
         // ---------------------------------------------------------------------
-        // 4. AUTO-CIERRE SUAVE DE NOTIFICACIONES A LOS 7 SEGUNDOS
+        // 4. AUTO-CIERRE SUAVE DE NOTIFICACIONES A LOS 5 SEGUNDOS
         // ---------------------------------------------------------------------
-        const alerts = document.querySelectorAll(".alert");
-        alerts.forEach(function(alertEl) {
-            alertEl.style.transition = "opacity 0.6s ease, transform 0.6s ease, max-height 0.6s ease, margin 0.6s ease, padding 0.6s ease";
+        window.configurarAutoCierreAlerta = function(alertEl, duracionMs = 5000) {
+            if (!alertEl || alertEl.dataset.autocierreIniciado) return;
+            alertEl.dataset.autocierreIniciado = "true";
+
+            alertEl.style.transition = "opacity 0.5s ease, transform 0.5s ease, max-height 0.5s ease, margin 0.5s ease, padding 0.5s ease";
             alertEl.style.position = "relative";
             alertEl.style.overflow = "hidden";
 
@@ -984,13 +986,13 @@
             progressInner.style.height = "100%";
             progressInner.style.width = "100%";
             progressInner.style.backgroundColor = "rgba(0, 0, 0, 0.25)";
-            progressInner.style.transition = "width 7s linear";
+            progressInner.style.transition = `width ${duracionMs / 1000}s linear`;
             progressBar.appendChild(progressInner);
             alertEl.appendChild(progressBar);
 
             setTimeout(function() {
                 progressInner.style.width = "0%";
-            }, 60);
+            }, 50);
 
             function cerrarAlerta() {
                 alertEl.style.opacity = "0";
@@ -1002,10 +1004,10 @@
                     } catch(e) {
                         alertEl.remove();
                     }
-                }, 600);
+                }, 500);
             }
 
-            let timer = setTimeout(cerrarAlerta, 7000);
+            let timer = setTimeout(cerrarAlerta, duracionMs);
 
             alertEl.addEventListener("mouseenter", function() {
                 clearTimeout(timer);
@@ -1013,9 +1015,46 @@
             });
 
             alertEl.addEventListener("mouseleave", function() {
-                timer = setTimeout(cerrarAlerta, 2500);
+                timer = setTimeout(cerrarAlerta, 2000);
             });
+        };
+
+        const alerts = document.querySelectorAll(".alert");
+        alerts.forEach(function(alertEl) {
+            window.configurarAutoCierreAlerta(alertEl, 5000);
         });
+
+        // Función global para mostrar alertas dinámicas desde cualquier script
+        window.mostrarAlertaFlotante = function(mensaje, tipo = 'success', duracionMs = 5000) {
+            let contenedor = document.getElementById('contenedorAlertasDinamicas');
+            if (!contenedor) {
+                contenedor = document.createElement('div');
+                contenedor.id = 'contenedorAlertasDinamicas';
+                contenedor.style.position = 'fixed';
+                contenedor.style.top = '22px';
+                contenedor.style.right = '24px';
+                contenedor.style.zIndex = '99999';
+                contenedor.style.minWidth = '320px';
+                contenedor.style.maxWidth = '460px';
+                document.body.appendChild(contenedor);
+            }
+
+            const alertDiv = document.createElement('div');
+            const alertClass = tipo === 'danger' ? 'alert-danger' : (tipo === 'warning' ? 'alert-warning' : 'alert-success');
+            const iconClass = tipo === 'danger' ? 'bi-exclamation-octagon-fill text-danger' : (tipo === 'warning' ? 'bi-exclamation-triangle-fill text-warning' : 'bi-check-circle-fill text-success');
+            
+            alertDiv.className = `alert ${alertClass} alert-dismissible fade show shadow-lg border-0 rounded-3 mb-3 p-3`;
+            alertDiv.setAttribute('role', 'alert');
+            alertDiv.innerHTML = `
+                <div class="d-flex align-items-center">
+                    <i class="bi ${iconClass} fs-4 me-2.5"></i>
+                    <div class="flex-grow-1" style="font-size: 0.95rem;"><strong>${mensaje}</strong></div>
+                    <button type="button" class="btn-close ms-2" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            `;
+            contenedor.appendChild(alertDiv);
+            window.configurarAutoCierreAlerta(alertDiv, duracionMs);
+        };
     });
     </script>
 

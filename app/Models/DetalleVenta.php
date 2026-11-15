@@ -13,6 +13,13 @@ class DetalleVenta extends Model
     protected $primaryKey = 'id';
     public $timestamps = false;
 
+    protected $casts = [
+        'cantidad'          => 'float',
+        'precio_unitario'   => 'float',
+        'subtotal'          => 'float',
+        'factor_conversion' => 'float',
+    ];
+
     // Le decimos que este detalle pertenece a un Producto específico
     public function producto()
     {

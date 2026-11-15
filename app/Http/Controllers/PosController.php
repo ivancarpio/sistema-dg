@@ -16,7 +16,7 @@ class PosController extends Controller
 {
     public function index()
     {
-        $productos = Producto::with(['marca', 'unidad', 'categoria'])
+        $productos = Producto::with(['marca', 'unidad', 'unidadSecundaria', 'categoria'])
             ->where('stock', '>', 0)
             ->orderBy('nombre', 'asc')
             ->get();
@@ -40,7 +40,7 @@ class PosController extends Controller
      */
     public function productosAjax()
     {
-        $productos = Producto::with(['marca', 'unidad', 'categoria'])
+        $productos = Producto::with(['marca', 'unidad', 'unidadSecundaria', 'categoria'])
             ->where('stock', '>', 0)
             ->orderBy('nombre', 'asc')
             ->get();
@@ -125,33 +125,45 @@ class PosController extends Controller
 
             // Detalle de la venta y rebaja de stock
             foreach ($request->productos as $item) {
+                $idProducto = $item['id'];
+                $cant = floatval($item['cantidad']);
+                $factor = (!empty($item['factor_conversion']) && floatval($item['factor_conversion']) > 0)
+                    ? floatval($item['factor_conversion'])
+                    : 1.0;
+                $unidad = !empty($item['unidad_medida']) ? trim($item['unidad_medida']) : null;
+                $precio = floatval($item['precio']);
+
                 $detalle = new DetalleVenta();
-                $detalle->id_venta        = $venta->id;
-                $detalle->id_producto     = $item['id'];
-                $detalle->cantidad        = $item['cantidad'];
-                $detalle->precio_unitario = $item['precio'];
-                $detalle->subtotal        = $item['cantidad'] * $item['precio'];
+                $detalle->id_venta          = $venta->id;
+                $detalle->id_producto       = $idProducto;
+                $detalle->unidad_medida     = $unidad;
+                $detalle->factor_conversion = $factor;
+                $detalle->cantidad          = $cant;
+                $detalle->precio_unitario   = $precio;
+                $detalle->subtotal          = $cant * $precio;
                 $detalle->save();
 
                 // Rebajar stock y guardar auditoría Kardex
-                $producto = Producto::find($item['id']);
+                $producto = Producto::find($idProducto);
                 if ($producto) {
                     $stockAnterior = intval($producto->stock ?? 0);
-                    $cantidadVendida = intval($item['cantidad']);
-                    $stockNuevo = max(0, $stockAnterior - $cantidadVendida);
+                    // Las unidades físicas a descontar equivalen a cantidad vendida * factor_conversion
+                    $unidadesFisicas = intval(ceil($cant * $factor));
+                    $stockNuevo = max(0, $stockAnterior - $unidadesFisicas);
 
                     $producto->stock = $stockNuevo;
                     $producto->save();
 
                     // Bitácora de inventario (Kardex)
+                    $textoUnidad = $unidad ? " ({$cant} {$unidad})" : "";
                     $movimiento = new Movimiento();
-                    $movimiento->id_producto    = $item['id'];
+                    $movimiento->id_producto    = $idProducto;
                     $movimiento->id_usuario     = Auth::id() ?? 1;
                     $movimiento->tipo           = 'Salida';
-                    $movimiento->cantidad       = $cantidadVendida;
+                    $movimiento->cantidad       = $unidadesFisicas;
                     $movimiento->stock_anterior = $stockAnterior;
                     $movimiento->stock_nuevo    = $stockNuevo;
-                    $movimiento->motivo         = 'Venta en POS #' . $numeroFinal;
+                    $movimiento->motivo         = 'Venta en POS #' . $numeroFinal . $textoUnidad;
                     $movimiento->fecha          = now();
                     $movimiento->save();
                 }
