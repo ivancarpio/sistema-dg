@@ -1464,17 +1464,18 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    // 2. Filtrado dinámico optimizado en memoria
+    // 2. Filtrado dinámico optimizado en memoria (Multi-palabra inteligente)
     let debounceTimer = null;
     function filtrarTabla() {
         const texto = buscador ? buscador.value.toLowerCase().trim() : '';
         const cat = filtroCat ? filtroCat.value : '';
         const stockState = filtroStock ? filtroStock.value : '';
+        const palabras = texto.split(/\s+/).filter(Boolean);
         let visibles = 0;
 
         for (let i = 0; i < cacheFilas.length; i++) {
             const item = cacheFilas[i];
-            const coincideTexto = (texto === '' || item.texto.includes(texto));
+            const coincideTexto = palabras.length === 0 || palabras.every(p => item.texto.includes(p));
             const coincideCat = (cat === '' || item.categoria === cat);
 
             let coincideStock = true;

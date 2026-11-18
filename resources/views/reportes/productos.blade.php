@@ -405,10 +405,11 @@ document.addEventListener('DOMContentLoaded', function() {
             clearTimeout(timer);
             timer = setTimeout(() => {
                 const q = filtroInput.value.toLowerCase().trim();
+                const palabras = q.split(/\s+/).filter(Boolean);
                 let visibles = 0;
                 for (let i = 0; i < cacheFilas.length; i++) {
                     const row = cacheFilas[i];
-                    if (q === '' || row.texto.includes(q)) {
+                    if (palabras.length === 0 || palabras.every(p => row.texto.includes(p))) {
                         row.tr.style.display = '';
                         visibles++;
                     } else {

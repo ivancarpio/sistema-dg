@@ -2,14 +2,11 @@
 
 @section('content')
 
-{{-- TomSelect para buscador del modal --}}
-<link href="https://cdn.jsdelivr.net/npm/tom-select@2.2.2/dist/css/tom-select.bootstrap5.min.css" rel="stylesheet">
-
 <style>
 /* ===== INVENTARIO — Diseño coherente con el sistema ===== */
 .card { border: none !important; box-shadow: 0 .125rem .25rem rgba(0,0,0,.075) !important; border-radius: .75rem !important; }
 
-/* Cabeceras de tabla */
+/* Cabeceras de tabla principal */
 .table-custom-header th {
     background-color: #f1f5f9 !important;
     font-size: 0.72rem; font-weight: 800; color: #64748b;
@@ -56,44 +53,105 @@
     border: 1px solid #ddd6fe;
 }
 
-/* Modal rediseñado */
+/* Modal rediseñado con estilo Administración Masiva */
 .modal-header-custom {
-    background: linear-gradient(135deg, #1e40af, #0ea5e9);
-    padding: 20px 24px; border-radius: 12px 12px 0 0;
+    background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%);
+    padding: 18px 24px;
+    border-radius: 14px 14px 0 0;
 }
-.modal-content { border: none !important; border-radius: 14px !important; overflow: hidden; }
+.modal-content-clean {
+    background-color: #ffffff !important;
+    border: none !important;
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.2), 0 10px 10px -5px rgba(0, 0, 0, 0.1) !important;
+    border-radius: 16px !important;
+    overflow: hidden;
+}
 .form-label-custom { font-size: 0.78rem; font-weight: 800; text-transform: uppercase;
     letter-spacing: 0.5px; color: #475569; margin-bottom: 6px; }
 
-/* Tipo de ajuste: botones visuales en lugar de select */
-.tipo-btn { border: 2px solid #e2e8f0; border-radius: 10px; padding: 12px 10px;
+/* Botones visuales de Tipo de Movimiento */
+.tipo-btn { border: 2px solid #e2e8f0; border-radius: 10px; padding: 10px 8px;
     cursor: pointer; transition: all 0.2s; text-align: center; background: #f8fafc; }
-.tipo-btn.selected-entrada { border-color: #16a34a; background: #f0fdf4; }
-.tipo-btn.selected-salida  { border-color: #dc2626; background: #fff1f2; }
-.tipo-btn .tipo-icon { font-size: 1.5rem; margin-bottom: 4px; }
-.tipo-btn .tipo-label { font-size: 0.8rem; font-weight: 700; }
+.tipo-btn.selected-entrada { border-color: #16a34a; background: #f0fdf4; box-shadow: 0 2px 6px rgba(22, 163, 74, 0.15); }
+.tipo-btn.selected-salida  { border-color: #dc2626; background: #fff1f2; box-shadow: 0 2px 6px rgba(220, 38, 38, 0.15); }
+.tipo-btn .tipo-icon { font-size: 1.35rem; margin-bottom: 2px; }
+.tipo-btn .tipo-label { font-size: 0.82rem; font-weight: 700; }
 
-/* Modo de conteo (Piezas vs Paquetes) */
-.btn-modo-conteo {
-    background: transparent;
-    color: #475569;
-    border: none !important;
-    transition: all 0.2s;
-    font-size: 0.82rem;
+/* Filas interactivas en tabla del modal */
+.fila-prod-ajuste {
+    cursor: pointer;
+    transition: background-color 0.15s ease;
 }
-.btn-modo-conteo:hover:not(.active) {
-    background: #e2e8f0;
-    color: #0f172a;
+.fila-prod-ajuste:hover {
+    background-color: #f0f9ff !important;
 }
-.btn-modo-conteo.active {
-    background: #0284c7 !important;
-    color: #ffffff !important;
-    box-shadow: 0 2px 6px rgba(2, 132, 199, 0.3) !important;
+.fila-prod-ajuste.fila-seleccionada {
+    background-color: #f0fdf4 !important;
 }
 
-/* Campo motivo con asterisco en rojo cuando está vacío */
+/* Scrollbar azul idéntico a Administración Masiva de Categorías */
+.tabla-scroll-masivo {
+    height: 320px !important;
+    max-height: 320px !important;
+    overflow-y: scroll !important;
+    border: 1px solid #cbd5e1;
+    border-radius: 8px 8px 0 0;
+    background-color: #ffffff;
+    -webkit-overflow-scrolling: touch;
+}
+.tabla-scroll-masivo::-webkit-scrollbar {
+    width: 10px;
+}
+.tabla-scroll-masivo::-webkit-scrollbar-track {
+    background: #f1f5f9;
+    border-radius: 4px;
+}
+.tabla-scroll-masivo::-webkit-scrollbar-thumb {
+    background-color: #0284c7;
+    border-radius: 6px;
+    border: 2px solid #f1f5f9;
+}
+.tabla-scroll-masivo::-webkit-scrollbar-thumb:hover {
+    background-color: #0369a1;
+}
+.table-masiva td {
+    padding: 8px 10px !important;
+    vertical-align: middle !important;
+}
+.table-masiva th {
+    padding: 9px 10px !important;
+    background-color: #f8fafc !important;
+    z-index: 5;
+    font-size: 0.74rem;
+    font-weight: 800;
+    color: #64748b;
+    letter-spacing: 0.5px;
+}
+
+/* Chips de motivo rápido */
+.chip-motivo {
+    cursor: pointer;
+    transition: all 0.15s;
+    border-radius: 6px;
+    font-size: 0.76rem;
+}
+.chip-motivo:hover {
+    background-color: #e0f2fe !important;
+    color: #0369a1 !important;
+    border-color: #bae6fd !important;
+}
+
+/* Campo requerido error */
 .campo-requerido.error { border-color: #ef4444 !important; box-shadow: 0 0 0 3px rgba(239,68,68,0.1) !important; }
-.msg-error { color: #dc2626; font-size: 0.78rem; font-weight: 600; margin-top: 4px; display: none; }
+.msg-error { color: #dc2626; font-size: 0.78rem; font-weight: 600; margin-top: 4px; }
+
+/* Responsive adjustments */
+@media (max-width: 767.98px) {
+    .tabla-scroll-masivo {
+        height: 280px !important;
+        max-height: 280px !important;
+    }
+}
 </style>
 
 {{-- ===== ALERTAS ===== --}}
@@ -173,38 +231,39 @@
     </div>
 </div>
 
-{{-- ===== FILTROS Y BÚSQUEDA AVANZADA (ESTILO VENTAS/REPORTES) ===== --}}
+{{-- ===== FILTROS Y BÚSQUEDA AVANZADA (SIN DESBORDAMIENTO EN PC NI MÓVIL) ===== --}}
 <div class="card p-3 mb-4 shadow-sm border-0 bg-white">
     <form action="/inventario" method="GET" class="row g-2 align-items-end">
-        <!-- Buscador rápido -->
-        <div class="col-md-4">
-            <label class="form-label small fw-bold text-muted mb-1">Buscar Producto o Motivo</label>
+        <!-- Buscador rápido inteligente -->
+        <div class="col-12 col-md-4 col-xl-3">
+            <label class="form-label small fw-bold text-muted mb-1">Buscar Producto, Motivo o Marca</label>
             <div class="input-group">
                 <span class="input-group-text bg-light text-muted border-end-0"><i class="bi bi-search"></i></span>
                 <input type="text" name="buscar" class="form-control border-start-0 bg-light" 
-                       placeholder="Ej. Tubo, Alambre, Ajuste..." value="{{ request('buscar') }}">
+                       placeholder="Ej. Tubo, Tigre, Ajuste..." value="{{ request('buscar') }}">
             </div>
         </div>
 
-        <!-- Fecha específica (por defecto Hoy) -->
-        <div class="col-md-3">
-            <div class="d-flex justify-content-between align-items-center mb-1">
-                <label class="form-label small fw-bold text-muted mb-0">Fecha de Movimientos</label>
-                @if(!$verTodo && $fechaFiltro === now()->toDateString())
-                    <span class="badge bg-success bg-opacity-10 text-success border border-success-subtle" style="font-size: 0.65rem;">Hoy</span>
-                @elseif($verTodo)
-                    <span class="badge bg-secondary bg-opacity-10 text-secondary border border-secondary-subtle" style="font-size: 0.65rem;">Histórico</span>
-                @endif
-            </div>
-            <div class="input-group">
-                <span class="input-group-text bg-light text-muted border-end-0"><i class="bi bi-calendar-event"></i></span>
-                <input type="date" name="fecha" id="inputFiltroFecha" class="form-control border-start-0 bg-light" 
-                       value="{{ $verTodo ? '' : ($fechaFiltro ?? now()->toDateString()) }}">
-            </div>
+        <!-- Rango de Fechas: Desde -->
+        <div class="col-6 col-md-2 col-xl-2">
+            <label class="form-label small fw-bold text-muted mb-1">
+                <i class="bi bi-calendar-event me-1"></i>Fecha Desde
+            </label>
+            <input type="date" name="fecha_desde" id="inputFechaDesde" class="form-control bg-light" 
+                   value="{{ $verTodo ? '' : ($fechaDesde ?? now()->toDateString()) }}">
+        </div>
+
+        <!-- Rango de Fechas: Hasta -->
+        <div class="col-6 col-md-2 col-xl-2">
+            <label class="form-label small fw-bold text-muted mb-1">
+                <i class="bi bi-calendar-check me-1"></i>Fecha Hasta
+            </label>
+            <input type="date" name="fecha_hasta" id="inputFechaHasta" class="form-control bg-light" 
+                   value="{{ $verTodo ? '' : ($fechaHasta ?? now()->toDateString()) }}">
         </div>
 
         <!-- Tipo de Movimiento -->
-        <div class="col-md-2">
+        <div class="col-12 col-md-4 col-xl-2">
             <label class="form-label small fw-bold text-muted mb-1">Tipo de Movimiento</label>
             <select name="tipo" class="form-select bg-light">
                 <option value="">Todos los tipos</option>
@@ -214,17 +273,24 @@
             </select>
         </div>
 
-        <!-- Botones de Acción -->
-        <div class="col-md-3 d-flex gap-1">
-            <button type="submit" class="btn btn-primary text-white flex-grow-1 fw-bold shadow-sm d-flex align-items-center justify-content-center" style="height: 38px;">
-                <i class="bi bi-funnel-fill me-1"></i> Filtrar
-            </button>
-            <a href="/inventario" class="btn btn-outline-success fw-semibold d-flex align-items-center justify-content-center px-2" title="Ver movimientos de Hoy" style="height: 38px; white-space: nowrap; font-size: 0.82rem;">
-                <i class="bi bi-calendar-check me-1"></i> Hoy
-            </a>
-            <a href="/inventario?ver=todos" class="btn btn-outline-secondary fw-semibold d-flex align-items-center justify-content-center px-2" title="Ver todo el historial acumulado" style="height: 38px; white-space: nowrap; font-size: 0.82rem;">
-                Histórico
-            </a>
+        <!-- Botones de Acción y Presets Rápidos (Alineados en una sola fila compacta) -->
+        <div class="col-12 col-md-12 col-xl-3">
+            <div class="d-flex align-items-center gap-1.5 w-100 flex-nowrap" style="height: 38px;">
+                <button type="submit" class="btn btn-primary text-white fw-bold shadow-sm d-flex align-items-center justify-content-center px-3" style="height: 38px; white-space: nowrap; flex-shrink: 0;">
+                    <i class="bi bi-funnel-fill me-1"></i> Filtrar
+                </button>
+                <div class="btn-group flex-grow-1 shadow-sm" role="group" style="height: 38px;">
+                    <a href="/inventario" class="btn btn-sm btn-outline-success fw-semibold d-flex align-items-center justify-content-center px-2 {{ (!$verTodo && ($fechaDesde ?? '') === now()->toDateString() && ($fechaHasta ?? '') === now()->toDateString()) ? 'active fw-bold' : '' }}" title="Ver movimientos de Hoy" style="white-space: nowrap; font-size: 0.82rem;">
+                        Hoy
+                    </a>
+                    <a href="/inventario?fecha_desde={{ now()->startOfWeek()->toDateString() }}&fecha_hasta={{ now()->toDateString() }}" class="btn btn-sm btn-outline-info fw-semibold d-flex align-items-center justify-content-center px-2" title="Ver movimientos de esta semana" style="white-space: nowrap; font-size: 0.82rem;">
+                        Semana
+                    </a>
+                    <a href="/inventario?ver=todos" class="btn btn-sm btn-outline-secondary fw-semibold d-flex align-items-center justify-content-center px-2 {{ $verTodo ? 'active fw-bold' : '' }}" title="Ver todo el historial acumulado" style="white-space: nowrap; font-size: 0.82rem;">
+                        Histórico
+                    </a>
+                </div>
+            </div>
         </div>
     </form>
 </div>
@@ -276,7 +342,7 @@
         </div>
     </div>
 
-    {{-- Tabla --}}
+    {{-- Tabla Principal --}}
     <div class="card-body p-0">
         <div class="table-responsive">
             <table class="table table-custom align-middle m-0" id="tablaInventario">
@@ -338,6 +404,11 @@
                             <small class="text-muted">
                                 <i class="bi bi-upc me-1"></i>
                                 {{ optional($mov->producto)->codigo ?? 'N/A' }}
+                                @if(optional($mov->producto)->marca)
+                                    <span class="badge ms-1" style="background:#e0f2fe; color:#0369a1; border:1px solid #bae6fd; font-size:0.70rem;">
+                                        {{ optional($mov->producto)->marca->nombre }}
+                                    </span>
+                                @endif
                             </small>
                         </td>
                         {{-- Tipo --}}
@@ -440,512 +511,592 @@
     </div>
 </div>
 
-{{-- ============================================================ --}}
-{{-- MODAL — NUEVO AJUSTE (Rediseñado + Validación de Motivo)      --}}
-{{-- ============================================================ --}}
+{{-- ========================================================================= --}}
+{{-- MODAL — REGISTRAR AJUSTE DE INVENTARIO (UNA SOLA VISTA, SIN PESTAÑAS)     --}}
+{{-- Diseñado fielmente al selector de Administración Masiva de Categorías     --}}
+{{-- ========================================================================= --}}
 <div class="modal fade" id="modalNuevoAjuste" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered" style="max-width: 520px;">
-        <div class="modal-content">
+    <div class="modal-dialog modal-dialog-centered modal-lg" style="max-width: 900px;">
+        <form action="/inventario" method="POST" id="formNuevoAjuste" class="modal-content modal-content-clean border-0 shadow-lg rounded-4 overflow-hidden" novalidate>
+            @csrf
 
             {{-- Header del modal --}}
-            <div class="modal-header-custom d-flex justify-content-between align-items-center">
-                <div class="d-flex align-items-center gap-3">
-                    <div style="background:rgba(255,255,255,0.15); padding:10px; border-radius:10px;">
-                        <i class="bi bi-sliders2 text-white fs-4"></i>
+            <div class="modal-header border-0 py-3 px-4" style="background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%);">
+                <div class="d-flex align-items-center">
+                    <div class="d-flex align-items-center justify-content-center me-3 flex-shrink-0" style="width: 44px; height: 44px; border-radius: 12px; background: rgba(255, 255, 255, 0.2); backdrop-filter: blur(4px);">
+                        <i class="bi bi-sliders2 fs-4 text-white"></i>
                     </div>
                     <div>
-                        <h5 class="fw-bold text-white m-0">Registrar Nuevo Ajuste</h5>
-                        <small class="text-white opacity-75">Entrada o salida manual de stock</small>
+                        <h5 class="modal-title fw-bold m-0 text-white" style="font-size: 1.15rem; letter-spacing: -0.2px;">Registrar Ajuste de Inventario</h5>
+                        <small class="text-white-50" style="font-size: 0.8rem;">Entrada o salida manual de stock para uno o múltiples productos</small>
                     </div>
                 </div>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
             </div>
 
-            <form action="/inventario" method="POST" id="formNuevoAjuste" novalidate>
-                @csrf
-                <div class="modal-body p-4">
+            <div class="modal-body p-3 p-md-4 bg-white">
 
-                    {{-- 1. Producto --}}
-                    <div class="mb-3">
-                        <label class="form-label-custom">
-                            <i class="bi bi-box-seam me-1"></i>Seleccionar Producto *
-                        </label>
-                        <select name="id_producto" id="selectProductoModal" required>
-                            <option value="" disabled selected>Escribe para buscar un producto...</option>
-                            @foreach($productos as $p)
-                                <option value="{{ $p->id }}">{{ $p->codigo }} — {{ $p->nombre }}</option>
-                            @endforeach
-                        </select>
-                        <div class="msg-error" id="errorProducto">
-                            <i class="bi bi-exclamation-circle me-1"></i>Seleccioná un producto.
-                        </div>
-                    </div>
-
-                    {{-- Tarjeta contextual del producto seleccionado --}}
-                    <div id="cardInfoProducto" class="p-2.5 rounded-3 mb-3 bg-light border border-primary-subtle" style="display: none;">
-                        <div class="d-flex align-items-center justify-content-between">
-                            <div>
-                                <span class="badge bg-primary bg-opacity-10 text-primary border border-primary-subtle fw-bold" id="badgeCodigoProducto">COD</span>
-                                <strong class="text-dark ms-1" id="lblNombreProducto" style="font-size: 0.92rem;">Producto</strong>
-                                <div class="small text-muted mt-0.5">
-                                    Unidad Base: <span class="fw-semibold text-dark" id="lblUnidadBase">Pieza</span>
-                                    <span id="lblEmpaqueConfigurado" class="ms-2 text-primary" style="display: none;">
-                                        | Empaque: <strong id="txtEmpaqueConfigurado">Paquete (x6)</strong>
-                                    </span>
-                                </div>
-                            </div>
-                            <div class="text-end">
-                                <span class="text-muted small d-block" style="font-size: 0.70rem;">Stock actual</span>
-                                <span class="badge bg-success bg-opacity-10 text-success border border-success-subtle fs-6 fw-bold" id="badgeStockActual">
-                                    0 u.
-                                </span>
-                            </div>
-                        </div>
-                    </div>
-
-                    {{-- 2. Tipo de ajuste (botones visuales) --}}
-                    <div class="mb-3">
-                        <label class="form-label-custom">
-                            <i class="bi bi-arrow-left-right me-1"></i>Tipo de Movimiento *
-                        </label>
-                        <input type="hidden" name="tipo" id="tipoAjusteHidden" value="ENTRADA">
-                        <div class="row g-2">
-                            <div class="col-6">
-                                <div class="tipo-btn selected-entrada" id="btnEntrada" onclick="seleccionarTipo('ENTRADA')">
-                                    <div class="tipo-icon text-success"><i class="bi bi-arrow-up-circle-fill"></i></div>
-                                    <div class="tipo-label text-success">Agregar (Entrada)</div>
-                                    <small class="text-muted">Suma stock</small>
-                                </div>
-                            </div>
-                            <div class="col-6">
-                                <div class="tipo-btn" id="btnSalida" onclick="seleccionarTipo('SALIDA')">
-                                    <div class="tipo-icon text-danger"><i class="bi bi-arrow-down-circle-fill"></i></div>
-                                    <div class="tipo-label text-danger">Restar (Salida)</div>
-                                    <small class="text-muted">Resta stock</small>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    {{-- 3. Selector de Modo de Conteo / Unidad --}}
-                    <div class="mb-3">
-                        <label class="form-label-custom">
-                            <i class="bi bi-rulers me-1"></i>Modo de Conteo / Unidad de Medida *
-                        </label>
-                        <input type="hidden" name="modo_ingreso" id="modoIngresoHidden" value="piezas">
-                        <input type="hidden" name="nombre_empaque" id="nombreEmpaqueHidden" value="Paquete">
-                        
-                        <div class="btn-group w-100 rounded-3 p-1 bg-light border" role="group">
-                            <button type="button" class="btn btn-sm rounded-2 fw-bold btn-modo-conteo active" id="btnModoPiezas" onclick="seleccionarModoConteo('piezas')">
-                                <i class="bi bi-tag me-1"></i>Por Pieza / Unidad Suelta
-                            </button>
-                            <button type="button" class="btn btn-sm rounded-2 fw-bold btn-modo-conteo" id="btnModoEmpaque" onclick="seleccionarModoConteo('empaque')">
-                                <i class="bi bi-boxes me-1"></i>Por Paquete / Caja
-                            </button>
-                        </div>
-                    </div>
-
-                    {{-- Modo A: Cantidad en Piezas / Unidades Sueltas --}}
-                    <div id="bloqueConteoPiezas" class="mb-3">
-                        <label class="form-label-custom">
-                            <i class="bi bi-123 me-1"></i>Cantidad de Piezas <span id="lblUnidadBaseNombre">(Unidades)</span> *
-                        </label>
-                        <input type="number" name="cantidad" id="inputCantidad"
-                            class="form-control form-control-lg campo-requerido fw-bold"
-                            min="1" placeholder="Ej: 10" style="border-radius:10px;">
-                        <div class="msg-error" id="errorCantidad">
-                            <i class="bi bi-exclamation-circle me-1"></i>Ingresá una cantidad mayor a 0.
-                        </div>
-                    </div>
-
-                    {{-- Modo B: Cantidad en Paquetes / Cajas con Factor de Conversión --}}
-                    <div id="bloqueConteoEmpaque" class="mb-3" style="display: none;">
-                        <div class="card p-3 bg-light bg-opacity-75 border border-primary-subtle rounded-3">
+                {{-- PASO 1: TIPO DE MOVIMIENTO Y CANTIDAD GENERAL --}}
+                <div class="card border border-primary border-opacity-20 rounded-4 mb-3 p-3 shadow-sm paso-1-card" style="background: linear-gradient(180deg, #f8fafc 0%, #ffffff 100%);">
+                    <div class="row g-3 align-items-center">
+                        <!-- Tipo de Movimiento (Botones Entrada / Salida) -->
+                        <div class="col-12 col-md-7">
+                            <label class="form-label fw-bold text-dark mb-1.5 d-flex align-items-center gap-1.5" style="font-size: 0.88rem;">
+                                <span class="badge bg-primary text-white rounded-circle p-1 d-inline-flex align-items-center justify-content-center" style="width: 20px; height: 20px; font-size: 0.74rem;">1</span>
+                                <span>Tipo de Movimiento *</span>
+                            </label>
+                            <input type="hidden" name="tipo" id="tipoAjusteHidden" value="ENTRADA">
                             <div class="row g-2">
-                                <div class="col-md-6">
-                                    <label class="form-label text-dark fw-bold small">
-                                        <i class="bi bi-box me-1"></i>Cantidad de <span id="lblNombreEmpaqueText">Paquetes</span> *
-                                    </label>
-                                    <div class="input-group">
-                                        <input type="number" name="cantidad_empaques" id="inputCantEmpaques"
-                                            class="form-control fw-bold fs-5" min="1" value="1" placeholder="Ej: 10">
-                                        <span class="input-group-text bg-white small text-muted" id="txtSufijoEmpaque">paquetes</span>
+                                <div class="col-6">
+                                    <div class="tipo-btn selected-entrada" id="btnEntradaModal" onclick="seleccionarTipoAjuste('ENTRADA')">
+                                        <div class="tipo-icon text-success"><i class="bi bi-arrow-up-circle-fill"></i></div>
+                                        <div class="tipo-label text-success">🟢 Entrada (Sumar)</div>
+                                        <small class="text-muted d-none d-sm-block">Ingreso de mercadería</small>
                                     </div>
                                 </div>
-                                <div class="col-md-6">
-                                    <label class="form-label text-dark fw-bold small">
-                                        <i class="bi bi-calculator me-1"></i>Contenido por <span id="lblNombreEmpaqueText2">Paquete</span> *
-                                    </label>
-                                    <div class="input-group">
-                                        <input type="number" name="factor_conversion_empaque" id="inputFactorAjuste"
-                                            class="form-control fw-bold fs-5" min="1" value="1" placeholder="Ej: 6">
-                                        <span class="input-group-text bg-white small text-muted" id="txtSufijoPiezas">piezas c/u</span>
+                                <div class="col-6">
+                                    <div class="tipo-btn" id="btnSalidaModal" onclick="seleccionarTipoAjuste('SALIDA')">
+                                        <div class="tipo-icon text-danger"><i class="bi bi-arrow-down-circle-fill"></i></div>
+                                        <div class="tipo-label text-danger">🔴 Salida (Restar)</div>
+                                        <small class="text-muted d-none d-sm-block">Merma o retiro físico</small>
                                     </div>
-                                </div>
-                            </div>
-
-                            {{-- Banner en tiempo real de equivalencia física --}}
-                            <div class="mt-2.5 p-2 bg-white rounded-2 border border-info-subtle d-flex align-items-center justify-content-between">
-                                <div class="d-flex align-items-center gap-1.5" style="font-size: 0.85rem;">
-                                    <i class="bi bi-arrow-right-circle-fill text-primary"></i>
-                                    <span class="text-secondary">Equivalencia física:</span>
-                                    <strong class="text-dark" id="txtCalculoFormula">1 paquete × 1 piezas</strong>
-                                </div>
-                                <div class="text-end">
-                                    <span class="badge bg-success bg-opacity-10 text-success border border-success-subtle fs-6 fw-bold" id="badgeTotalPiezasCalc">
-                                        = 1 Piezas
-                                    </span>
                                 </div>
                             </div>
                         </div>
+
+                        <!-- Cantidad Rápida por Defecto -->
+                        <div class="col-12 col-md-5">
+                            <label class="form-label fw-bold text-dark mb-1.5 d-flex align-items-center justify-content-between" style="font-size: 0.88rem;">
+                                <span>Cantidad a Aplicar</span>
+                                <span class="badge bg-light text-secondary border px-1.5 py-0.5 rounded-pill" style="font-size: 0.70rem;">Editable por fila</span>
+                            </label>
+                            <div class="input-group">
+                                <span class="input-group-text bg-white text-muted"><i class="bi bi-123"></i></span>
+                                <input type="number" id="inputCantidadGeneralAjuste" name="cantidad_general" class="form-control fw-bold fs-5 text-center" min="0" value="0" placeholder="0">
+                                <button type="button" class="btn btn-outline-primary fw-bold btn-sm" id="btnAplicarCantidadGeneral" title="Rellenar esta cantidad en todos los productos seleccionados">
+                                    <i class="bi bi-arrow-repeat me-1"></i>Aplicar
+                                </button>
+                            </div>
+                            <small class="text-muted d-block mt-1" style="font-size: 0.74rem;">Opcional: Si ingresas un número aquí y pulsas "Aplicar", se asignará a los seleccionados.</small>
+                        </div>
+                    </div>
+                </div>
+
+                {{-- PASO 2: SELECCIÓN DE PRODUCTOS CON BUSCADOR Y MARCAS CLARAS --}}
+                <div class="mb-3">
+                    <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-2">
+                        <label class="form-label fw-bold text-dark m-0 d-flex align-items-center gap-1.5">
+                            <span class="badge bg-primary text-white rounded-circle p-1 d-inline-flex align-items-center justify-content-center" style="width: 20px; height: 20px; font-size: 0.74rem;">2</span>
+                            <span style="font-size: 0.92rem;">Selecciona los Productos a Ajustar</span>
+                        </label>
+                        <span id="badgeConteoSeleccionadosAjuste" class="badge bg-primary px-2.5 py-1 rounded-pill fw-bold shadow-sm" style="font-size: 0.82rem;">
+                            0 seleccionados
+                        </span>
                     </div>
 
-                    {{-- Banner de proyección de stock resultante --}}
-                    <div id="boxProyeccionStock" class="p-2.5 rounded-3 mb-3 d-flex align-items-center justify-content-between" style="display: none; background: #f8fafc; border: 1px dashed #cbd5e1;">
-                        <small class="text-muted fw-semibold">Proyección de Stock:</small>
+                    <!-- Buscador en vivo multi-palabra y filtro de marca -->
+                    <div class="row g-2 mb-2">
+                        <div class="col-12 col-md-8">
+                            <div class="input-group shadow-none" style="min-height: 38px;">
+                                <span class="input-group-text bg-white border-end-0 text-muted px-2.5" style="border-radius: 8px 0 0 8px; border-color: #cbd5e1;"><i class="bi bi-search"></i></span>
+                                <input type="text" id="buscadorModalProd" class="form-control border-start-0" placeholder="Buscar por código, producto o marca (ej. codo tigre)..." style="border-radius: 0 8px 8px 0; border-color: #cbd5e1; font-size: 0.88rem;">
+                            </div>
+                        </div>
+                        <div class="col-12 col-md-4">
+                            <select id="filtroMarcaModal" class="form-select shadow-none" style="min-height: 38px; border-radius: 8px; border-color: #cbd5e1; font-size: 0.86rem;">
+                                <option value="todas">Todas las marcas</option>
+                                @php
+                                    $marcasUnicas = $productos->pluck('marca.nombre')->filter()->unique()->sort();
+                                @endphp
+                                @foreach($marcasUnicas as $mNom)
+                                    <option value="{{ strtolower($mNom) }}">🏷️ {{ $mNom }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Acciones rápidas de selección masiva -->
+                    <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-2 pb-1">
+                        <div class="d-flex gap-1.5">
+                            <button type="button" class="btn btn-sm btn-outline-primary fw-bold px-2.5 py-1 rounded-2 d-inline-flex align-items-center gap-1 shadow-none" id="btnMarcarVisiblesAjuste" style="font-size: 0.78rem;">
+                                <i class="bi bi-check-all fs-6"></i> <span>Marcar visibles</span>
+                            </button>
+                            <button type="button" class="btn btn-sm btn-outline-secondary fw-semibold px-2.5 py-1 rounded-2 d-inline-flex align-items-center gap-1 shadow-none" id="btnDesmarcarTodosAjuste" style="font-size: 0.78rem;">
+                                <i class="bi bi-x-circle"></i> <span>Desmarcar todos</span>
+                            </button>
+                        </div>
+                        <div class="text-muted small fw-semibold text-end" id="txtTotalVisiblesModal" style="font-size: 0.78rem;">
+                            Mostrando <strong class="text-dark">{{ count($productos) }}</strong> producto(s)
+                        </div>
+                    </div>
+
+                    <!-- Tabla con scroll vertical (estilo exacto de Administración Masiva de Categorías) -->
+                    <div class="tabla-scroll-masivo">
+                        <table class="table table-hover table-masiva m-0">
+                            <thead class="sticky-top">
+                                <tr>
+                                    <th style="width: 40px;" class="text-center">
+                                        <i class="bi bi-check2"></i>
+                                    </th>
+                                    <th style="width: 95px;">CÓDIGO</th>
+                                    <th>PRODUCTO</th>
+                                    <th style="width: 125px;">MARCA</th>
+                                    <th style="width: 75px;" class="text-center">STOCK</th>
+                                    <th style="width: 110px;" class="text-center">CANTIDAD</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tbodyModalProductos">
+                                @forelse($productos as $prod)
+                                @php
+                                    $nomMarca = optional($prod->marca)->nombre ?? 'Genérico';
+                                    $nomUnidad = optional($prod->unidad)->nombre ?? 'u.';
+                                @endphp
+                                <tr class="fila-prod-ajuste" 
+                                    data-id="{{ $prod->id }}" 
+                                    data-marca="{{ strtolower($nomMarca) }}" 
+                                    data-texto="{{ strtolower($prod->codigo . ' ' . $prod->nombre . ' ' . $nomMarca) }}"
+                                    onclick="toggleCheckProdAjuste(event, 'checkAjuste{{ $prod->id }}')">
+                                    <td class="text-center">
+                                        <input type="checkbox" name="productos_ids[]" value="{{ $prod->id }}" id="checkAjuste{{ $prod->id }}" class="form-check-input check-prod-ajuste" style="cursor: pointer; width: 1.15rem; height: 1.15rem;">
+                                    </td>
+                                    <td class="small fw-bold text-secondary prod-code">{{ $prod->codigo }}</td>
+                                    <td class="fw-bold text-dark prod-name">
+                                        {{ $prod->nombre }}
+                                        @if($prod->tieneUnidadSecundaria())
+                                            <small class="text-muted fw-normal d-block" style="font-size: 0.70rem;">
+                                                Empaque: {{ optional($prod->unidadSecundaria)->nombre }} (x{{ round($prod->factor_conversion) }} {{ $nomUnidad }})
+                                            </small>
+                                        @endif
+                                    </td>
+                                    <td>
+                                        <span class="badge" style="background:#e0f2fe; color:#0369a1; border:1px solid #bae6fd; font-size:0.74rem;">
+                                            <i class="bi bi-tag-fill me-1"></i>{{ $nomMarca }}
+                                        </span>
+                                    </td>
+                                    <td class="text-center small fw-bold">
+                                        <span class="badge bg-light text-dark border">{{ $prod->stock }}</span>
+                                    </td>
+                                    <td class="text-center" onclick="event.stopPropagation();">
+                                        <input type="number" 
+                                               name="cantidades[{{ $prod->id }}]" 
+                                               id="inputCantRow{{ $prod->id }}"
+                                               class="form-control form-control-sm text-center fw-bold input-cant-fila" 
+                                               min="0" 
+                                               value="0" 
+                                               placeholder="0"
+                                               style="width: 85px; margin: 0 auto; border-color: #cbd5e1;"
+                                               disabled>
+                                    </td>
+                                </tr>
+                                @empty
+                                <tr>
+                                    <td colspan="6" class="text-center py-4 text-muted">No hay productos registrados en el inventario.</td>
+                                </tr>
+                                @endforelse
+                                <tr style="height: 25px; border: none; background: transparent;">
+                                    <td colspan="6" style="border: none; padding: 10px;" class="text-center text-muted small fst-italic">
+                                        Fin de la lista de productos
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- Barra informativa inferior -->
+                    <div class="bg-light p-2 px-3 border border-top-0 rounded-bottom d-flex justify-content-between align-items-center small text-muted" style="font-size: 0.75rem;">
                         <div>
-                            <span class="text-muted small" id="txtStockAntes">Stock actual: 0</span>
-                            <i class="bi bi-arrow-right mx-1 text-primary"></i>
-                            <strong class="text-primary" id="txtStockNuevoResultante">Nuevo: 0</strong>
+                            <i class="bi bi-mouse-fill text-primary me-1"></i>
+                            Haz clic en cualquier fila para seleccionarla. Ingresa la cantidad en la columna derecha.
+                        </div>
+                        <div id="txtResumenFisicoAjuste" class="fw-bold text-primary">
+                            0 productos seleccionados
                         </div>
                     </div>
+                </div>
 
-                    {{-- 4. Motivo — OBLIGATORIO --}}
-                    <div class="mb-1">
-                        <label class="form-label-custom">
+                {{-- PASO 3: MOTIVO DEL AJUSTE (OBLIGATORIO) --}}
+                <div class="mb-2">
+                    <label class="form-label-custom d-flex justify-content-between align-items-center mb-1">
+                        <span>
+                            <span class="badge bg-primary text-white rounded-circle p-1 d-inline-flex align-items-center justify-content-center me-1" style="width: 20px; height: 20px; font-size: 0.74rem;">3</span>
                             <i class="bi bi-chat-text me-1"></i>Motivo del Ajuste *
                             <span class="text-danger ms-1">Obligatorio</span>
-                        </label>
-                        <textarea name="motivo" id="inputMotivo" rows="3"
-                            class="form-control campo-requerido"
-                            placeholder="Ej: Llegada de mercadería de fábrica, Devolución de cliente, Ajuste físico..."
-                            style="border-radius:10px; resize:none;"></textarea>
-                        <div class="msg-error" id="errorMotivo">
-                            <i class="bi bi-exclamation-circle me-1"></i>El motivo es obligatorio para registrar el ajuste.
-                        </div>
-                        <small class="text-muted mt-1 d-block">
-                            <i class="bi bi-info-circle me-1"></i>
-                            Si ingresas paquetes, el sistema guardará automáticamente cuántos paquetes y el contenido en el historial.
-                        </small>
+                        </span>
+                        <small class="text-muted fw-normal">Elige un motivo rápido o escribe uno</small>
+                    </label>
+
+                    <!-- Chips de Motivo Rápido -->
+                    <div class="d-flex flex-wrap gap-1 mb-2">
+                        <button type="button" class="btn btn-sm btn-light border text-secondary fw-semibold py-0.5 px-2 chip-motivo" onclick="setMotivoRapido('Llegada de mercadería / Fábrica')">
+                            🚚 Llegada de Mercadería / Fábrica
+                        </button>
+                        <button type="button" class="btn btn-sm btn-light border text-secondary fw-semibold py-0.5 px-2 chip-motivo" onclick="setMotivoRapido('Conteo físico / Regularización de inventario')">
+                            📋 Conteo Físico / Regularización
+                        </button>
+                        <button type="button" class="btn btn-sm btn-light border text-secondary fw-semibold py-0.5 px-2 chip-motivo" onclick="setMotivoRapido('Devolución de cliente')">
+                            ↩️ Devolución de Cliente
+                        </button>
+                        <button type="button" class="btn btn-sm btn-light border text-secondary fw-semibold py-0.5 px-2 chip-motivo" onclick="setMotivoRapido('Merma / Producto dañado o defectuoso')">
+                            ⚠️ Merma / Daño
+                        </button>
                     </div>
 
+                    <textarea name="motivo" id="inputMotivoModal" rows="2"
+                        class="form-control campo-requerido"
+                        placeholder="Describe brevemente el motivo del ajuste (ej. Llegada de mercadería de fábrica, Devolución, Conteo físico...)"
+                        style="border-radius:10px; resize:none; font-size: 0.88rem;"></textarea>
+                    <div class="msg-error" id="errorMotivoModal" style="display: none;">
+                        <i class="bi bi-exclamation-circle me-1"></i>El motivo es obligatorio para registrar el ajuste.
+                    </div>
                 </div>
 
-                {{-- Footer del modal --}}
-                <div class="modal-footer bg-light border-0 py-3 px-4">
-                    <button type="button" class="btn btn-light border fw-bold" data-bs-dismiss="modal">
-                        <i class="bi bi-x-circle me-1"></i>Cancelar
-                    </button>
-                    <button type="submit" class="btn btn-primary fw-bold px-4" id="btnGuardarAjuste">
-                        <i class="bi bi-check-circle-fill me-2"></i>Guardar Ajuste
-                    </button>
-                </div>
-            </form>
+            </div>
 
-        </div>
+            {{-- Footer del modal --}}
+            <div class="modal-footer bg-light border-0 py-3 px-4 d-flex justify-content-between align-items-center">
+                <button type="button" class="btn btn-light border fw-bold" data-bs-dismiss="modal">
+                    <i class="bi bi-x-circle me-1"></i>Cancelar
+                </button>
+                <button type="submit" class="btn btn-primary fw-bold px-4 shadow-sm" id="btnGuardarAjusteModal">
+                    <i class="bi bi-check-circle-fill me-1.5"></i>Guardar Ajuste (<span id="txtBtnGuardarCount">0</span>)
+                </button>
+            </div>
+        </form>
     </div>
 </div>
 
 {{-- Scripts --}}
-<script src="https://cdn.jsdelivr.net/npm/tom-select@2.2.2/dist/js/tom-select.complete.min.js"></script>
 <script>
 document.addEventListener('DOMContentLoaded', function () {
 
-    @php
-        $productosDict = [];
-        foreach($productos as $p) {
-            $tieneSec = $p->tieneUnidadSecundaria();
-            $productosDict[$p->id] = [
-                'id' => $p->id,
-                'codigo' => $p->codigo,
-                'nombre' => $p->nombre,
-                'stock' => intval($p->stock ?? 0),
-                'unidad_base' => optional($p->unidad)->nombre ?? 'Pieza',
-                'tiene_sec' => $tieneSec,
-                'unidad_sec' => $tieneSec ? (optional($p->unidadSecundaria)->nombre ?? 'Paquete') : 'Paquete',
-                'factor_sec' => $tieneSec ? floatval($p->factor_conversion ?? 1) : 1,
-            ];
-        }
-    @endphp
-    const productosInventario = @json($productosDict);
-    let productoActual = null;
-    let modoConteoActual = 'piezas'; // 'piezas' o 'empaque'
+    // ============================================================
+    // 1. BUSCADOR EN TIEMPO REAL SOBRE LA TABLA PRINCIPAL
+    // ============================================================
+    const buscador = document.getElementById('buscadorInventario');
+    if (buscador) {
+        buscador.addEventListener('input', function() {
+            filtrarTabla();
+        });
+    }
 
-    // =========================================
-    // 1. TomSelect para el selector de producto
-    // =========================================
-    const tomSelectProd = new TomSelect("#selectProductoModal", {
-        create: false,
-        placeholder: "Escribe para buscar un producto...",
-        sortField: { field: "text", direction: "asc" },
-        onChange: function(value) {
-            const errProd = document.getElementById('errorProducto');
-            if (!value || !productosInventario[value]) {
-                document.getElementById('cardInfoProducto').style.display = 'none';
-                document.getElementById('boxProyeccionStock').style.display = 'none';
-                productoActual = null;
+    // ============================================================
+    // 2. ORDENAMIENTO DE COLUMNAS DE LA TABLA PRINCIPAL
+    // ============================================================
+    const tabla = document.getElementById('tablaInventario');
+    if (tabla) {
+        const headers = tabla.querySelectorAll('th[data-col]');
+        let columnaActual = -1;
+        let ordenAscendente = true;
+
+        headers.forEach((header) => {
+            header.addEventListener('click', () => {
+                const index = parseInt(header.getAttribute('data-col'));
+                ordenAscendente = (columnaActual === index) ? !ordenAscendente : true;
+                columnaActual = index;
+
+                headers.forEach(h => {
+                    const icon = h.querySelector('.icono-orden');
+                    if (icon) icon.className = 'icono-orden bi bi-arrow-down-up text-muted ms-1';
+                });
+                const iconoClass = ordenAscendente ? 'bi-caret-down-fill text-primary' : 'bi-caret-up-fill text-primary';
+                const iconAct = header.querySelector('.icono-orden');
+                if (iconAct) iconAct.className = `icono-orden bi ${iconoClass} ms-1`;
+
+                const tbody = tabla.querySelector('tbody');
+                const filas = Array.from(tbody.querySelectorAll('tr.fila-movimiento'));
+
+                filas.sort((a, b) => {
+                    let valA = a.children[index]?.getAttribute('data-sort-value') ?? '';
+                    let valB = b.children[index]?.getAttribute('data-sort-value') ?? '';
+                    if (!isNaN(valA) && !isNaN(valB) && valA !== '' && valB !== '') {
+                        valA = parseFloat(valA); valB = parseFloat(valB);
+                    } else {
+                        valA = valA.toString().toLowerCase(); valB = valB.toString().toLowerCase();
+                    }
+                    if (valA < valB) return ordenAscendente ? -1 : 1;
+                    if (valA > valB) return ordenAscendente ? 1 : -1;
+                    return 0;
+                });
+
+                filas.forEach(f => tbody.appendChild(f));
+            });
+        });
+    }
+
+    // ============================================================
+    // 3. LÓGICA DEL MODAL DE AJUSTE (ESTILO ADMINISTRACIÓN MASIVA)
+    // ============================================================
+    const buscadorModal = document.getElementById('buscadorModalProd');
+    const filtroMarcaModal = document.getElementById('filtroMarcaModal');
+
+    if (buscadorModal) buscadorModal.addEventListener('input', filtrarProductosModalAjuste);
+    if (filtroMarcaModal) filtroMarcaModal.addEventListener('change', filtrarProductosModalAjuste);
+
+    // Botón Marcar Visibles en el Modal
+    const btnMarcar = document.getElementById('btnMarcarVisiblesAjuste');
+    if (btnMarcar) {
+        btnMarcar.addEventListener('click', function() {
+            const cantGeneral = document.getElementById('inputCantidadGeneralAjuste');
+            const valorGeneral = (cantGeneral && parseInt(cantGeneral.value) > 0) ? parseInt(cantGeneral.value) : 0;
+            
+            document.querySelectorAll('.fila-prod-ajuste').forEach(fila => {
+                if (fila.style.display !== 'none') {
+                    const chk = fila.querySelector('.check-prod-ajuste');
+                    if (chk) {
+                        chk.checked = true;
+                        fila.classList.add('fila-seleccionada');
+                        const inputCant = document.getElementById('inputCantRow' + chk.value);
+                        if (inputCant) {
+                            inputCant.disabled = false;
+                            if (valorGeneral > 0) {
+                                inputCant.value = valorGeneral;
+                            } else if (!inputCant.value) {
+                                inputCant.value = 0;
+                            }
+                        }
+                    }
+                }
+            });
+            actualizarConteoModalAjuste();
+        });
+    }
+
+    // Botón Desmarcar Todos en el Modal
+    const btnDesmarcar = document.getElementById('btnDesmarcarTodosAjuste');
+    if (btnDesmarcar) {
+        btnDesmarcar.addEventListener('click', function() {
+            document.querySelectorAll('.check-prod-ajuste').forEach(chk => {
+                chk.checked = false;
+                const fila = chk.closest('tr');
+                if (fila) fila.classList.remove('fila-seleccionada');
+                const inputCant = document.getElementById('inputCantRow' + chk.value);
+                if (inputCant) {
+                    inputCant.disabled = true;
+                    inputCant.classList.remove('is-invalid', 'border-danger');
+                }
+            });
+            actualizarConteoModalAjuste();
+        });
+    }
+
+    // Botón Aplicar Cantidad General a los Seleccionados
+    const btnAplicarCant = document.getElementById('btnAplicarCantidadGeneral');
+    if (btnAplicarCant) {
+        btnAplicarCant.addEventListener('click', function() {
+            const cantGeneral = document.getElementById('inputCantidadGeneralAjuste');
+            const val = cantGeneral ? parseInt(cantGeneral.value) : 0;
+            if (isNaN(val) || val <= 0) {
+                alert('Ingresa una cantidad mayor a 0 en la casilla superior para aplicar.');
+                if (cantGeneral) {
+                    cantGeneral.focus();
+                    cantGeneral.select();
+                }
                 return;
             }
-
-            if (errProd) errProd.style.display = 'none';
-            productoActual = productosInventario[value];
-
-            // Rellenar tarjeta contextual
-            document.getElementById('badgeCodigoProducto').textContent = productoActual.codigo;
-            document.getElementById('lblNombreProducto').textContent = productoActual.nombre;
-            document.getElementById('lblUnidadBase').textContent = productoActual.unidad_base;
-            document.getElementById('lblUnidadBaseNombre').textContent = `(${productoActual.unidad_base})`;
-            document.getElementById('badgeStockActual').textContent = `${productoActual.stock} ${productoActual.unidad_base}`;
-
-            // Si el producto tiene segunda unidad configurada
-            const elEmpaque = document.getElementById('lblEmpaqueConfigurado');
-            const txtEmpaque = document.getElementById('txtEmpaqueConfigurado');
-            if (productoActual.tiene_sec) {
-                txtEmpaque.textContent = `${productoActual.unidad_sec} (x${Math.round(productoActual.factor_sec)} ${productoActual.unidad_base})`;
-                elEmpaque.style.display = 'inline';
-                
-                // Actualizar nombres y factor en el bloque empaque
-                document.getElementById('lblNombreEmpaqueText').textContent = `${productoActual.unidad_sec}s`;
-                document.getElementById('lblNombreEmpaqueText2').textContent = productoActual.unidad_sec;
-                document.getElementById('txtSufijoEmpaque').textContent = `${productoActual.unidad_sec.toLowerCase()}s`;
-                document.getElementById('txtSufijoPiezas').textContent = `${productoActual.unidad_base.toLowerCase()}s c/u`;
-                document.getElementById('inputFactorAjuste').value = Math.round(productoActual.factor_sec);
-                document.getElementById('nombreEmpaqueHidden').value = productoActual.unidad_sec;
-            } else {
-                elEmpaque.style.display = 'none';
-                document.getElementById('lblNombreEmpaqueText').textContent = 'Paquetes / Cajas';
-                document.getElementById('lblNombreEmpaqueText2').textContent = 'Empaque';
-                document.getElementById('txtSufijoEmpaque').textContent = 'empaques';
-                document.getElementById('txtSufijoPiezas').textContent = `${productoActual.unidad_base.toLowerCase()}s c/u`;
-                document.getElementById('inputFactorAjuste').value = 1;
-                document.getElementById('nombreEmpaqueHidden').value = 'Paquete';
-            }
-
-            document.getElementById('cardInfoProducto').style.display = 'block';
-            recalcularEquivalenciaYProyeccion();
-        }
-    });
-
-    // Cambiar Modo de Conteo (Piezas vs Empaques)
-    window.seleccionarModoConteo = function(modo) {
-        modoConteoActual = modo;
-        document.getElementById('modoIngresoHidden').value = modo;
-
-        const btnP = document.getElementById('btnModoPiezas');
-        const btnE = document.getElementById('btnModoEmpaque');
-        const secP = document.getElementById('bloqueConteoPiezas');
-        const secE = document.getElementById('bloqueConteoEmpaque');
-
-        if (modo === 'piezas') {
-            btnP.classList.add('active');
-            btnE.classList.remove('active');
-            secP.style.display = 'block';
-            secE.style.display = 'none';
-        } else {
-            btnP.classList.remove('active');
-            btnE.classList.add('active');
-            secP.style.display = 'none';
-            secE.style.display = 'block';
-        }
-
-        recalcularEquivalenciaYProyeccion();
-    };
-
-    // Cálculo dinámico en tiempo real
-    window.recalcularEquivalenciaYProyeccion = function() {
-        if (!productoActual) return;
-
-        let totalPiezas = 0;
-        const nombreBase = productoActual.unidad_base || 'Pieza';
-        const stockAntes = productoActual.stock;
-
-        if (modoConteoActual === 'empaque') {
-            const cantEmp = parseInt(document.getElementById('inputCantEmpaques').value) || 0;
-            const factor = parseFloat(document.getElementById('inputFactorAjuste').value) || 1;
-            totalPiezas = Math.round(cantEmp * factor);
-
-            const nomEmp = document.getElementById('nombreEmpaqueHidden').value || 'paquete';
-            document.getElementById('txtCalculoFormula').textContent = `${cantEmp} ${nomEmp}(s) × ${factor} ${nombreBase.toLowerCase()}s`;
-            document.getElementById('badgeTotalPiezasCalc').textContent = `= ${totalPiezas} ${nombreBase}s`;
-        } else {
-            totalPiezas = parseInt(document.getElementById('inputCantidad').value) || 0;
-        }
-
-        const tipoAjuste = document.getElementById('tipoAjusteHidden').value;
-        let stockNuevo = 0;
-        if (tipoAjuste === 'ENTRADA') {
-            stockNuevo = stockAntes + totalPiezas;
-        } else {
-            stockNuevo = Math.max(0, stockAntes - totalPiezas);
-        }
-
-        const boxProy = document.getElementById('boxProyeccionStock');
-        if (totalPiezas > 0) {
-            document.getElementById('txtStockAntes').textContent = `Stock actual: ${stockAntes} ${nombreBase}`;
-            document.getElementById('txtStockNuevoResultante').textContent = `Nuevo Stock: ${stockNuevo} ${nombreBase}`;
-            boxProy.style.display = 'flex';
-        } else {
-            boxProy.style.display = 'none';
-        }
-    };
-
-    ['inputCantidad', 'inputCantEmpaques', 'inputFactorAjuste'].forEach(id => {
-        const el = document.getElementById(id);
-        if (el) el.addEventListener('input', recalcularEquivalenciaYProyeccion);
-    });
-
-    // =========================================
-    // 2. VALIDACIÓN DEL FORMULARIO (motivo obligatorio)
-    // =========================================
-    document.getElementById('formNuevoAjuste').addEventListener('submit', function(e) {
-        let valido = true;
-
-        // Validar Producto
-        const errProd = document.getElementById('errorProducto');
-        if (!productoActual) {
-            if (errProd) errProd.style.display = 'block';
-            valido = false;
-        } else {
-            if (errProd) errProd.style.display = 'none';
-        }
-
-        // Validar Cantidad según modo
-        if (modoConteoActual === 'piezas') {
-            const cantidad = document.getElementById('inputCantidad');
-            const errCantidad = document.getElementById('errorCantidad');
-            if (!cantidad.value || parseInt(cantidad.value) < 1) {
-                cantidad.classList.add('error');
-                errCantidad.style.display = 'block';
-                valido = false;
-            } else {
-                cantidad.classList.remove('error');
-                errCantidad.style.display = 'none';
-            }
-        } else {
-            const cantEmp = document.getElementById('inputCantEmpaques');
-            const factorEmp = document.getElementById('inputFactorAjuste');
-            if (!cantEmp.value || parseInt(cantEmp.value) < 1) {
-                cantEmp.classList.add('error');
-                valido = false;
-            } else {
-                cantEmp.classList.remove('error');
-            }
-            if (!factorEmp.value || parseFloat(factorEmp.value) < 1) {
-                factorEmp.classList.add('error');
-                valido = false;
-            } else {
-                factorEmp.classList.remove('error');
-            }
-        }
-
-        // Validar Motivo — OBLIGATORIO
-        const motivo = document.getElementById('inputMotivo');
-        const errMotivo = document.getElementById('errorMotivo');
-        if (!motivo.value.trim() || motivo.value.trim().length < 3) {
-            motivo.classList.add('error');
-            errMotivo.style.display = 'block';
-            valido = false;
-        } else {
-            motivo.classList.remove('error');
-            errMotivo.style.display = 'none';
-        }
-
-        if (!valido) {
-            e.preventDefault();
-            // Hacer scroll al primer error
-            document.querySelector('.campo-requerido.error, .error')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        }
-    });
-
-    // Limpiar errores al escribir
-    document.getElementById('inputMotivo').addEventListener('input', function() {
-        if (this.value.trim().length >= 3) {
-            this.classList.remove('error');
-            document.getElementById('errorMotivo').style.display = 'none';
-        }
-    });
-    document.getElementById('inputCantidad').addEventListener('input', function() {
-        if (this.value && parseInt(this.value) >= 1) {
-            this.classList.remove('error');
-            document.getElementById('errorCantidad').style.display = 'none';
-        }
-    });
-
-    // =========================================
-    // 3. BUSCADOR EN TIEMPO REAL
-    // =========================================
-    const buscador = document.getElementById('buscadorInventario');
-    buscador.addEventListener('input', function() {
-        filtrarTabla();
-    });
-
-    // =========================================
-    // 4. ORDENAMIENTO DE COLUMNAS
-    // =========================================
-    const tabla = document.getElementById('tablaInventario');
-    const headers = tabla.querySelectorAll('th[data-col]');
-    let columnaActual = -1;
-    let ordenAscendente = true;
-
-    headers.forEach((header) => {
-        header.addEventListener('click', () => {
-            const index = parseInt(header.getAttribute('data-col'));
-            ordenAscendente = (columnaActual === index) ? !ordenAscendente : true;
-            columnaActual = index;
-
-            headers.forEach(h => {
-                h.querySelector('.icono-orden').className = 'icono-orden bi bi-arrow-down-up text-muted ms-1';
-            });
-            const iconoClass = ordenAscendente ? 'bi-caret-down-fill text-primary' : 'bi-caret-up-fill text-primary';
-            header.querySelector('.icono-orden').className = `icono-orden bi ${iconoClass} ms-1`;
-
-            const tbody = tabla.querySelector('tbody');
-            const filas = Array.from(tbody.querySelectorAll('tr.fila-movimiento'));
-
-            filas.sort((a, b) => {
-                let valA = a.children[index]?.getAttribute('data-sort-value') ?? '';
-                let valB = b.children[index]?.getAttribute('data-sort-value') ?? '';
-                if (!isNaN(valA) && !isNaN(valB) && valA !== '' && valB !== '') {
-                    valA = parseFloat(valA); valB = parseFloat(valB);
-                } else {
-                    valA = valA.toString().toLowerCase(); valB = valB.toString().toLowerCase();
+            let modificados = 0;
+            document.querySelectorAll('.check-prod-ajuste:checked').forEach(chk => {
+                const inputCant = document.getElementById('inputCantRow' + chk.value);
+                if (inputCant) {
+                    inputCant.value = val;
+                    inputCant.classList.remove('is-invalid', 'border-danger');
+                    modificados++;
                 }
-                if (valA < valB) return ordenAscendente ? -1 : 1;
-                if (valA > valB) return ordenAscendente ? 1 : -1;
-                return 0;
             });
+            if (modificados === 0) {
+                alert('Marca primero uno o varios productos en la tabla para aplicarles esta cantidad.');
+            }
+        });
+    }
 
-            filas.forEach(f => tbody.appendChild(f));
+    // Listeners directos en checkboxes
+    document.querySelectorAll('.check-prod-ajuste').forEach(chk => {
+        chk.addEventListener('change', function() {
+            actualizarEstadoFilaAjuste('checkAjuste' + this.value);
         });
     });
 
-});
+    // Validación del formulario de ajuste al guardar
+    const formAjuste = document.getElementById('formNuevoAjuste');
+    if (formAjuste) {
+        formAjuste.addEventListener('submit', function(e) {
+            const checks = document.querySelectorAll('.check-prod-ajuste:checked');
+            if (checks.length === 0) {
+                alert('Por favor selecciona al menos un producto de la tabla para registrar el ajuste.');
+                e.preventDefault();
+                return;
+            }
 
-// =========================================
-// 5. SELECTOR DE TIPO VISUAL (Entrada/Salida)
-// =========================================
-function seleccionarTipo(tipo) {
-    document.getElementById('tipoAjusteHidden').value = tipo;
+            // Validar que ningún producto seleccionado quede con cantidad 0 o vacía
+            let tieneCeros = false;
+            let primerInvalido = null;
 
-    const btnE = document.getElementById('btnEntrada');
-    const btnS = document.getElementById('btnSalida');
+            checks.forEach(chk => {
+                const inputCant = document.getElementById('inputCantRow' + chk.value);
+                const val = inputCant ? parseInt(inputCant.value) : 0;
+                if (!val || val <= 0) {
+                    tieneCeros = true;
+                    if (inputCant) {
+                        inputCant.classList.add('is-invalid', 'border-danger');
+                        if (!primerInvalido) primerInvalido = inputCant;
+                    }
+                } else {
+                    if (inputCant) {
+                        inputCant.classList.remove('is-invalid', 'border-danger');
+                    }
+                }
+            });
 
-    if (tipo === 'ENTRADA') {
-        btnE.className = 'tipo-btn selected-entrada';
-        btnS.className = 'tipo-btn';
-    } else {
-        btnE.className = 'tipo-btn';
-        btnS.className = 'tipo-btn selected-salida';
+            if (tieneCeros) {
+                e.preventDefault();
+                alert('¡Atención! La cantidad para cada producto seleccionado debe ser mayor a 0 (no puede quedar en 0).\n\nPor favor ingresa la cantidad correcta en la fila correspondiente.');
+                if (primerInvalido) {
+                    primerInvalido.focus();
+                    primerInvalido.select();
+                    primerInvalido.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                }
+                return;
+            }
+
+            const motivo = document.getElementById('inputMotivoModal');
+            const errMotivo = document.getElementById('errorMotivoModal');
+            if (!motivo || !motivo.value.trim() || motivo.value.trim().length < 3) {
+                if (motivo) motivo.classList.add('error');
+                if (errMotivo) errMotivo.style.display = 'block';
+                e.preventDefault();
+                alert('El motivo del ajuste es obligatorio (mínimo 3 caracteres).');
+                if (motivo) motivo.focus();
+                return;
+            } else {
+                if (motivo) motivo.classList.remove('error');
+                if (errMotivo) errMotivo.style.display = 'none';
+            }
+        });
     }
 
-    if (typeof recalcularEquivalenciaYProyeccion === 'function') {
-        recalcularEquivalenciaYProyeccion();
+});
+
+// Helper de Tipo en el Modal (Entrada vs Salida)
+function seleccionarTipoAjuste(tipo) {
+    const inputHidden = document.getElementById('tipoAjusteHidden');
+    if (inputHidden) inputHidden.value = tipo;
+
+    const btnE = document.getElementById('btnEntradaModal');
+    const btnS = document.getElementById('btnSalidaModal');
+
+    if (tipo === 'ENTRADA') {
+        if (btnE) btnE.className = 'tipo-btn selected-entrada';
+        if (btnS) btnS.className = 'tipo-btn';
+    } else {
+        if (btnE) btnE.className = 'tipo-btn';
+        if (btnS) btnS.className = 'tipo-btn selected-salida';
     }
 }
 
-// =========================================
-// 6. FILTRO POR TIPO EN LA TABLA
-// =========================================
+// Alternar selección de fila en la tabla del modal
+function toggleCheckProdAjuste(event, checkId) {
+    if (event.target.tagName === 'INPUT' && (event.target.type === 'checkbox' || event.target.type === 'number')) {
+        actualizarEstadoFilaAjuste(checkId);
+        return;
+    }
+    const chk = document.getElementById(checkId);
+    if (chk) {
+        chk.checked = !chk.checked;
+        actualizarEstadoFilaAjuste(checkId);
+    }
+}
+
+function actualizarEstadoFilaAjuste(checkId) {
+    const chk = document.getElementById(checkId);
+    if (!chk) return;
+
+    const idProd = chk.value;
+    const fila = chk.closest('tr');
+    const inputCant = document.getElementById('inputCantRow' + idProd);
+    const cantGeneral = document.getElementById('inputCantidadGeneralAjuste');
+    const valorGeneral = (cantGeneral && parseInt(cantGeneral.value) > 0) ? parseInt(cantGeneral.value) : 0;
+
+    if (chk.checked) {
+        if (fila) fila.classList.add('fila-seleccionada');
+        if (inputCant) {
+            inputCant.disabled = false;
+            if (valorGeneral > 0 && (!inputCant.value || parseInt(inputCant.value) <= 0)) {
+                inputCant.value = valorGeneral;
+            } else if (!inputCant.value) {
+                inputCant.value = 0;
+            }
+            setTimeout(() => {
+                inputCant.focus();
+                inputCant.select();
+            }, 50);
+        }
+    } else {
+        if (fila) fila.classList.remove('fila-seleccionada');
+        if (inputCant) {
+            inputCant.disabled = true;
+            inputCant.classList.remove('is-invalid', 'border-danger');
+        }
+    }
+
+    actualizarConteoModalAjuste();
+}
+
+function actualizarConteoModalAjuste() {
+    const checks = document.querySelectorAll('.check-prod-ajuste:checked');
+    const count = checks.length;
+
+    const badge = document.getElementById('badgeConteoSeleccionadosAjuste');
+    const txtBtn = document.getElementById('txtBtnGuardarCount');
+    const txtResumen = document.getElementById('txtResumenFisicoAjuste');
+
+    if (badge) badge.textContent = `${count} seleccionado${count === 1 ? '' : 's'}`;
+    if (txtBtn) txtBtn.textContent = `${count} producto${count === 1 ? '' : 's'}`;
+    if (txtResumen) txtResumen.textContent = `${count} producto${count === 1 ? '' : 's'} seleccionado${count === 1 ? '' : 's'}`;
+}
+
+// Filtro en vivo en la tabla del modal (Multi-palabra y Marca)
+function filtrarProductosModalAjuste() {
+    const buscador = document.getElementById('buscadorModalProd');
+    const filtroMarca = document.getElementById('filtroMarcaModal');
+    const query = (buscador ? buscador.value : '').toLowerCase().trim();
+    const marcaFiltro = (filtroMarca ? filtroMarca.value : 'todas').toLowerCase();
+    const palabras = query.split(/\s+/).filter(Boolean);
+
+    let visibles = 0;
+    const filas = document.querySelectorAll('.fila-prod-ajuste');
+
+    filas.forEach(fila => {
+        const texto = (fila.getAttribute('data-texto') || '').toLowerCase();
+        const marcaFila = (fila.getAttribute('data-marca') || '').toLowerCase();
+
+        const matchTexto = palabras.length === 0 || palabras.every(p => texto.includes(p));
+        const matchMarca = (marcaFiltro === 'todas') || (marcaFila === marcaFiltro);
+
+        if (matchTexto && matchMarca) {
+            fila.style.display = '';
+            visibles++;
+        } else {
+            fila.style.display = 'none';
+        }
+    });
+
+    const txtVisibles = document.getElementById('txtTotalVisiblesModal');
+    if (txtVisibles) {
+        txtVisibles.innerHTML = `Mostrando <strong class="text-dark">${visibles}</strong> producto(s)`;
+    }
+}
+
+// Rellenar motivo con chip rápido
+function setMotivoRapido(texto) {
+    const input = document.getElementById('inputMotivoModal');
+    const err = document.getElementById('errorMotivoModal');
+    if (input) {
+        input.value = texto;
+        input.classList.remove('error');
+    }
+    if (err) err.style.display = 'none';
+}
+
+// Filtro por tipo en la tabla principal
 let tipoFiltroActivo = 'todos';
 
 function filtrarTipo(tipo, btn) {
@@ -955,14 +1106,16 @@ function filtrarTipo(tipo, btn) {
     filtrarTabla();
 }
 
+// Filtro rápido sobre la tabla principal
 function filtrarTabla() {
     const q = (document.getElementById('buscadorInventario')?.value ?? '').toLowerCase().trim();
+    const palabras = q.split(/\s+/).filter(Boolean);
     let visibles = 0;
 
     document.querySelectorAll('.fila-movimiento').forEach(fila => {
         const texto       = fila.textContent.toLowerCase();
         const tipoFila    = fila.dataset.tipo ?? '';
-        const okTexto     = !q || texto.includes(q);
+        const okTexto     = palabras.length === 0 || palabras.every(p => texto.includes(p));
         const okTipo      = tipoFiltroActivo === 'todos' || tipoFila === tipoFiltroActivo;
 
         if (okTexto && okTipo) {
@@ -974,8 +1127,9 @@ function filtrarTabla() {
     });
 
     const sinRes = document.getElementById('sinResultados');
-    sinRes.style.display = visibles === 0 ? '' : 'none';
-    document.getElementById('badgeTotal').textContent = visibles;
+    if (sinRes) sinRes.style.display = visibles === 0 ? '' : 'none';
+    const bTotal = document.getElementById('badgeTotal');
+    if (bTotal) bTotal.textContent = visibles;
 }
 </script>
 

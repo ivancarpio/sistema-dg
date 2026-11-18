@@ -14,7 +14,7 @@ use Illuminate\Support\Facades\Auth;
 
 class PosController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
         $productos = Producto::with(['marca', 'unidad', 'unidadSecundaria', 'categoria'])
             ->where('stock', '>', 0)
@@ -32,7 +32,83 @@ class PosController extends Controller
             ->orderBy('total_compras', 'desc')
             ->get();
 
-        return view('pos.index', compact('productos', 'categorias', 'clientes', 'clientesHistorial'));
+        $ventaRehacer = null;
+        $carritoRehacer = [];
+
+        // Rehacer venta anulada o previa: restaurar productos y precios tal cual se cobró
+        if ($request->filled('rehacer_venta')) {
+            $idVenta = intval($request->rehacer_venta);
+            $ventaRehacer = Venta::with([
+                'detalles.producto.marca', 
+                'detalles.producto.unidad', 
+                'detalles.producto.unidadSecundaria',
+                'detalles.producto.categoria',
+                'clienteRelacionado'
+            ])->find($idVenta);
+
+            if ($ventaRehacer) {
+                foreach ($ventaRehacer->detalles as $det) {
+                    $p = $det->producto;
+                    if (!$p) continue;
+
+                    $unidadMedidaDet = trim($det->unidad_medida ?? '');
+                    $factorDet = floatval($det->factor_conversion ?? 1);
+                    $nombreSec = optional($p->unidadSecundaria)->nombre;
+
+                    // Determinar si fue vendido en unidad secundaria
+                    $esSec = ($factorDet > 1) || (!empty($nombreSec) && strcasecmp($unidadMedidaDet, $nombreSec) === 0);
+                    $tipoUnidad = $esSec ? 'secundaria' : 'base';
+
+                    $unidadBase = optional($p->unidad)->nombre ?? 'Pieza';
+                    $unidadSec = $nombreSec ?? 'Paquete';
+                    $factorSec = max(1, floatval($p->factor_conversion ?? 1));
+
+                    $pVentaBase = floatval($p->precio_venta ?? 0);
+                    $pClienteBase = ($p->precio_cliente !== null && floatval($p->precio_cliente) > 0) ? floatval($p->precio_cliente) : $pVentaBase;
+                    $tienePCBase = ($p->precio_cliente !== null && floatval($p->precio_cliente) > 0);
+
+                    $pVentaSec = floatval($p->precio_venta_secundario ?? 0);
+                    $pClienteSec = ($p->precio_cliente_secundario !== null && floatval($p->precio_cliente_secundario) > 0) ? floatval($p->precio_cliente_secundario) : $pVentaSec;
+                    $tienePCSec = ($p->precio_cliente_secundario !== null && floatval($p->precio_cliente_secundario) > 0);
+
+                    $stockBase = intval($p->stock ?? 0);
+                    $stockMax = $esSec ? intval(floor($stockBase / $factorSec)) : $stockBase;
+                    $cantVendida = floatval($det->cantidad);
+
+                    $precioCobrado = floatval($det->precio_unitario);
+
+                    $carritoRehacer[] = [
+                        'key' => "{$p->id}_{$tipoUnidad}",
+                        'id' => $p->id,
+                        'codigo' => $p->codigo ?? '',
+                        'nombre' => $p->nombre,
+                        'tipoUnidad' => $tipoUnidad,
+                        'unidadMedida' => $unidadMedidaDet ?: ($esSec ? $unidadSec : $unidadBase),
+                        'factorConversion' => $esSec ? $factorSec : 1,
+                        'tieneSecundaria' => !empty($p->id_unidad_secundaria),
+                        'unidadBase' => $unidadBase,
+                        'unidadSecundaria' => $unidadSec,
+                        'factorSecundaria' => $factorSec,
+                        'precioVentaBase' => $pVentaBase,
+                        'precioClienteBase' => $pClienteBase,
+                        'tienePrecioClienteBase' => $tienePCBase,
+                        'precioVentaSecundario' => $pVentaSec,
+                        'precioClienteSecundario' => $pClienteSec,
+                        'tienePrecioClienteSec' => $tienePCSec,
+                        'stockBase' => $stockBase,
+                        'precioVenta' => $esSec ? $pVentaSec : $pVentaBase,
+                        'precioCliente' => $esSec ? $pClienteSec : $pClienteBase,
+                        'tienePrecioCliente' => $esSec ? $tienePCSec : $tienePCBase,
+                        'precio' => $precioCobrado, // Precio exacto con el que se cobró
+                        'esTarifaCliente' => ($ventaRehacer->tipo_tarifa === 'Regular'),
+                        'cantidad' => $cantVendida,
+                        'stockMaximo' => max(intval($cantVendida), $stockMax),
+                    ];
+                }
+            }
+        }
+
+        return view('pos.index', compact('productos', 'categorias', 'clientes', 'clientesHistorial', 'ventaRehacer', 'carritoRehacer'));
     }
 
     /**

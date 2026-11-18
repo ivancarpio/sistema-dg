@@ -76,10 +76,14 @@ class ReporteController extends Controller
         }
 
         if ($request->filled('buscar')) {
-            $b = $request->buscar;
-            $query->where(function ($q) use ($b) {
-                $q->where('cliente', 'LIKE', "%{$b}%")
-                  ->orWhere('numero_nota', 'LIKE', "%{$b}%");
+            $palabras = array_filter(explode(' ', trim($request->buscar)));
+            $query->where(function ($q) use ($palabras) {
+                foreach ($palabras as $p) {
+                    $q->where(function($sub) use ($p) {
+                        $sub->where('cliente', 'LIKE', "%{$p}%")
+                            ->orWhere('numero_nota', 'LIKE', "%{$p}%");
+                    });
+                }
             });
         }
 
@@ -146,10 +150,14 @@ class ReporteController extends Controller
         }
 
         if ($request->filled('buscar')) {
-            $b = $request->buscar;
-            $query->where(function ($q) use ($b) {
-                $q->where('cliente', 'LIKE', "%{$b}%")
-                  ->orWhere('numero_nota', 'LIKE', "%{$b}%");
+            $palabras = array_filter(explode(' ', trim($request->buscar)));
+            $query->where(function ($q) use ($palabras) {
+                foreach ($palabras as $p) {
+                    $q->where(function($sub) use ($p) {
+                        $sub->where('cliente', 'LIKE', "%{$p}%")
+                            ->orWhere('numero_nota', 'LIKE', "%{$p}%");
+                    });
+                }
             });
         }
 
@@ -478,10 +486,18 @@ class ReporteController extends Controller
 
         if ($request->filled('buscar')) {
             $buscar = trim($request->buscar);
-            $query->where(function($q) use ($buscar) {
-                $q->where('nombre', 'LIKE', "%{$buscar}%")
-                  ->orWhere('codigo', 'LIKE', "%{$buscar}%")
-                  ->orWhere('descripcion', 'LIKE', "%{$buscar}%");
+            $palabras = array_filter(explode(' ', $buscar));
+            $query->where(function($q) use ($palabras) {
+                foreach ($palabras as $p) {
+                    $q->where(function($sub) use ($p) {
+                        $sub->where('nombre', 'LIKE', "%{$p}%")
+                            ->orWhere('codigo', 'LIKE', "%{$p}%")
+                            ->orWhere('descripcion', 'LIKE', "%{$p}%")
+                            ->orWhereHas('marca', function($qm) use ($p) {
+                                $qm->where('nombre', 'LIKE', "%{$p}%");
+                            });
+                    });
+                }
             });
         }
 
@@ -536,9 +552,17 @@ class ReporteController extends Controller
         $filtrosDesc = [];
         if ($request->filled('buscar')) {
             $buscar = trim($request->buscar);
-            $query->where(function($q) use ($buscar) {
-                $q->where('nombre', 'LIKE', "%{$buscar}%")
-                  ->orWhere('codigo', 'LIKE', "%{$buscar}%");
+            $palabras = array_filter(explode(' ', $buscar));
+            $query->where(function($q) use ($palabras) {
+                foreach ($palabras as $p) {
+                    $q->where(function($sub) use ($p) {
+                        $sub->where('nombre', 'LIKE', "%{$p}%")
+                            ->orWhere('codigo', 'LIKE', "%{$p}%")
+                            ->orWhereHas('marca', function($qm) use ($p) {
+                                $qm->where('nombre', 'LIKE', "%{$p}%");
+                            });
+                    });
+                }
             });
             $filtrosDesc[] = "Búsqueda: '{$buscar}'";
         }

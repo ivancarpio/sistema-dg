@@ -330,6 +330,35 @@
     </div>
 @endif
 
+@if(isset($ventaRehacer) && $ventaRehacer)
+    <div class="alert alert-warning border-0 shadow-sm d-flex flex-wrap align-items-center justify-content-between mb-4 p-3 rounded-4" style="background: linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%); border-left: 5px solid #f59e0b !important;">
+        <div class="d-flex align-items-center gap-3">
+            <div class="bg-warning text-white rounded-circle d-flex align-items-center justify-content-center shadow-sm" style="width: 44px; height: 44px; font-size: 1.3rem;">
+                <i class="bi bi-arrow-repeat"></i>
+            </div>
+            <div>
+                <h6 class="fw-bold mb-0 text-dark">
+                    Rehaciendo Venta: <span class="text-primary">{{ $ventaRehacer->numero_nota ?? ('SYS-'.str_pad($ventaRehacer->id, 6, '0', STR_PAD_LEFT)) }}</span>
+                    @if($ventaRehacer->estado === 'Anulada')
+                        <span class="badge bg-danger ms-2">Anulada</span>
+                    @endif
+                </h6>
+                <small class="text-secondary">
+                    Cliente: <strong>{{ $ventaRehacer->cliente }}</strong> (Tarifa {{ $ventaRehacer->tipo_tarifa ?? 'Ocasional' }}) • Se cargaron automáticamente los <strong>{{ count($carritoRehacer) }} productos</strong> con sus precios cobrados.
+                </small>
+            </div>
+        </div>
+        <div class="d-flex align-items-center gap-2 mt-2 mt-md-0">
+            <span class="badge bg-white text-dark border px-2.5 py-1.5 shadow-sm fw-bold">
+                Total Original: <span class="text-success">Bs. {{ number_format($ventaRehacer->total, 2) }}</span>
+            </span>
+            <a href="/pos" class="btn btn-sm btn-outline-secondary fw-semibold bg-white rounded-pill px-3 shadow-sm" title="Descartar y empezar una nueva venta vacía">
+                <i class="bi bi-x-circle me-1"></i> Descartar
+            </a>
+        </div>
+    </div>
+@endif
+
 <!-- ENCABEZADO PRINCIPAL (ESTILO UNIFICADO DEL SISTEMA) -->
 <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4">
     <div class="d-flex align-items-center">
@@ -416,6 +445,8 @@
                             data-id="{{ $producto->id }}" 
                             data-codigo="{{ $producto->codigo }}"
                             data-nombre="{{ $producto->nombre }}"
+                            data-marca="{{ optional($producto->marca)->nombre ?? '' }}"
+                            data-categoria-nombre="{{ optional($producto->categoria)->nombre ?? '' }}"
                             data-stock="{{ $producto->stock }}"
                             data-categoria="{{ $producto->id_categoria }}"
                             data-unidad-base="{{ $unidadBase }}"
@@ -897,6 +928,8 @@ document.addEventListener('DOMContentLoaded', function() {
     let carrito = [];
     const POS_STORAGE_KEY = 'dg_pos_carrito_activo_v1';
     const VENTA_COMPLETADA_EXITOSA = @if(session('success_venta_id')) true @else false @endif;
+    const VENTA_REHACER = @json($ventaRehacer ?? null);
+    const CARRITO_REHACER = @json($carritoRehacer ?? []);
 
     // Elementos DOM
     const listaCarrito = document.getElementById('listaCarrito');
@@ -1035,17 +1068,22 @@ document.addEventListener('DOMContentLoaded', function() {
         actualizarPaginacion();
     };
 
-    // 1. Filtrado combinado (Buscador + Categoría) con recálculo de paginación
+    // 1. Filtrado inteligente multi-palabra (Buscador + Categoría) con recálculo de paginación
     function filtrarProductos() {
         const texto = buscador ? buscador.value.toLowerCase().trim() : '';
         const cat = filtroCat ? filtroCat.value : '';
+        const palabras = texto.split(/\s+/).filter(Boolean);
 
         productosFiltrados = Array.from(filasProductos).filter(fila => {
             const nombre = (fila.dataset.nombre || '').toLowerCase();
             const codigo = (fila.dataset.codigo || '').toLowerCase();
+            const marca = (fila.dataset.marca || '').toLowerCase();
+            const catNom = (fila.dataset.categoriaNombre || '').toLowerCase();
             const categoriaFila = fila.dataset.categoria || '';
+            const textoCompleto = `${codigo} ${nombre} ${marca} ${catNom}`;
 
-            const coincideTexto = (nombre.includes(texto) || codigo.includes(texto));
+            // Coincidencia inteligente: todas las palabras ingresadas deben estar presentes
+            const coincideTexto = palabras.length === 0 || palabras.every(p => textoCompleto.includes(p));
             const coincideCat = (cat === '' || categoriaFila === cat);
 
             return coincideTexto && coincideCat;
@@ -1733,14 +1771,16 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    // Buscador dentro del Dropdown de Clientes Regulares
+    // Buscador dentro del Dropdown de Clientes Regulares (Multi-palabra inteligente)
     const buscadorDrop = document.getElementById("buscadorRapidoClientesDrop");
     if (buscadorDrop) {
         buscadorDrop.addEventListener("input", function() {
             const q = this.value.toLowerCase().trim();
+            const palabras = q.split(/\s+/).filter(Boolean);
             document.querySelectorAll("#listaDropClientes .item-cliente-drop").forEach(item => {
                 const txt = item.textContent.toLowerCase();
-                item.style.display = (q === "" || txt.includes(q)) ? "" : "none";
+                const match = palabras.length === 0 || palabras.every(p => txt.includes(p));
+                item.style.display = match ? "" : "none";
             });
         });
     }
@@ -1779,6 +1819,37 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     function restaurarCarritoDesdeStorage() {
+        // 1. Si se solicitó rehacer una venta específica, se restaura tal como fue cobrada
+        if (VENTA_REHACER && Array.isArray(CARRITO_REHACER) && CARRITO_REHACER.length > 0) {
+            carrito = CARRITO_REHACER;
+            if (VENTA_REHACER.tipo_tarifa) {
+                cambiarTarifa(VENTA_REHACER.tipo_tarifa, false);
+            }
+            if (inputCliente) {
+                inputCliente.value = VENTA_REHACER.cliente || 'Cliente Varios';
+            }
+            if (VENTA_REHACER.id_cliente && inputIdCliente) {
+                inputIdCliente.value = VENTA_REHACER.id_cliente;
+                if (badgeCliente) {
+                    if (txtNomReg) txtNomReg.textContent = VENTA_REHACER.cliente;
+                    if (txtDetReg) txtDetReg.textContent = 'Cliente Regular Registrado';
+                    badgeCliente.style.setProperty('display', 'flex', 'important');
+                }
+            }
+            if (VENTA_REHACER.metodo_pago) {
+                const radioPago = document.querySelector(`input[name="metodo_pago"][value="${VENTA_REHACER.metodo_pago}"]`);
+                if (radioPago) {
+                    radioPago.checked = true;
+                    if (panelPorPagar) {
+                        panelPorPagar.style.display = (VENTA_REHACER.metodo_pago === 'Por Pagar') ? 'block' : 'none';
+                    }
+                }
+            }
+            renderizarCarrito();
+            guardarCarritoEnStorage();
+            return;
+        }
+
         if (VENTA_COMPLETADA_EXITOSA) {
             try {
                 localStorage.removeItem(POS_STORAGE_KEY);
@@ -2215,6 +2286,8 @@ document.addEventListener('DOMContentLoaded', function() {
                     data-id="${p.id}" 
                     data-codigo="${p.codigo || ''}" 
                     data-nombre="${p.nombre || ''}" 
+                    data-marca="${marcaNom}"
+                    data-categoria-nombre="${(p.categoria && p.categoria.nombre) ? p.categoria.nombre : ''}"
                     data-stock="${stk}" 
                     data-categoria="${p.id_categoria || ''}"
                     data-unidad-base="${unidadBase}"

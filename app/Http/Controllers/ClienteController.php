@@ -15,13 +15,19 @@ class ClienteController extends Controller
             $q->where('estado', '!=', 'Anulada');
         }]);
 
-        // Buscador
+        // Buscador Inteligente Multi-Palabra
         if ($request->filled('buscar')) {
             $b = trim($request->buscar);
-            $query->where(function ($q) use ($b) {
-                $q->where('nombre', 'LIKE', "%{$b}%")
-                  ->orWhere('telefono', 'LIKE', "%{$b}%")
-                  ->orWhere('ci_nit', 'LIKE', "%{$b}%");
+            $palabras = array_filter(explode(' ', $b));
+            $query->where(function ($q) use ($palabras) {
+                foreach ($palabras as $p) {
+                    $q->where(function($sub) use ($p) {
+                        $sub->where('nombre', 'LIKE', "%{$p}%")
+                            ->orWhere('telefono', 'LIKE', "%{$p}%")
+                            ->orWhere('ci_nit', 'LIKE', "%{$p}%")
+                            ->orWhere('direccion', 'LIKE', "%{$p}%");
+                    });
+                }
             });
         }
 
@@ -240,12 +246,16 @@ class ClienteController extends Controller
         if (empty($term)) {
             $clientes = Cliente::orderBy('nombre', 'asc')->take(10)->get();
         } else {
-            $clientes = Cliente::where('nombre', 'LIKE', "%{$term}%")
-                ->orWhere('telefono', 'LIKE', "%{$term}%")
-                ->orWhere('ci_nit', 'LIKE', "%{$term}%")
-                ->orderBy('nombre', 'asc')
-                ->take(15)
-                ->get();
+            $palabras = array_filter(explode(' ', $term));
+            $query = Cliente::query();
+            foreach ($palabras as $p) {
+                $query->where(function($sub) use ($p) {
+                    $sub->where('nombre', 'LIKE', "%{$p}%")
+                        ->orWhere('telefono', 'LIKE', "%{$p}%")
+                        ->orWhere('ci_nit', 'LIKE', "%{$p}%");
+                });
+            }
+            $clientes = $query->orderBy('nombre', 'asc')->take(15)->get();
         }
 
         return response()->json($clientes);

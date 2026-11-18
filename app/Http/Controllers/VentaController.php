@@ -23,9 +23,18 @@ class VentaController extends Controller
         // --- FILTROS ---
         if ($request->filled('buscar')) {
             $buscar = trim($request->buscar);
-            $query->where(function($q) use ($buscar) {
-                $q->where('cliente', 'LIKE', "%{$buscar}%")
-                  ->orWhere('numero_nota', 'LIKE', "%{$buscar}%");
+            $palabras = array_filter(explode(' ', $buscar));
+            $query->where(function($q) use ($palabras) {
+                foreach ($palabras as $p) {
+                    $q->where(function($sub) use ($p) {
+                        $sub->where('cliente', 'LIKE', "%{$p}%")
+                            ->orWhere('numero_nota', 'LIKE', "%{$p}%")
+                            ->orWhereHas('detalles.producto', function($qp) use ($p) {
+                                $qp->where('nombre', 'LIKE', "%{$p}%")
+                                   ->orWhere('codigo', 'LIKE', "%{$p}%");
+                            });
+                    });
+                }
             });
         }
         if ($request->filled('fecha')) {
@@ -161,7 +170,10 @@ class VentaController extends Controller
                 
                 if ($producto) {
                     $stockAnterior = intval($producto->stock ?? 0);
-                    $cantidadDevuelta = intval($detalle->cantidad);
+                    $factor = (!empty($detalle->factor_conversion) && floatval($detalle->factor_conversion) > 0)
+                        ? floatval($detalle->factor_conversion)
+                        : 1.0;
+                    $cantidadDevuelta = intval(ceil(floatval($detalle->cantidad) * $factor));
                     $stockNuevo = $stockAnterior + $cantidadDevuelta;
 
                     // A. Devolvemos el stock físico al módulo de Productos
@@ -169,13 +181,14 @@ class VentaController extends Controller
                     $producto->save();
                     
                     // B. Registramos la auditoría en el módulo de Inventario (Kardex de Devolución)
+                    $textoUnidad = !empty($detalle->unidad_medida) ? " ({$detalle->cantidad} {$detalle->unidad_medida})" : "";
                     $movimiento = new Movimiento();
                     $movimiento->id_producto    = $producto->id;
                     $movimiento->tipo           = 'Devolución';
                     $movimiento->cantidad       = $cantidadDevuelta;
                     $movimiento->stock_anterior = $stockAnterior;
                     $movimiento->stock_nuevo    = $stockNuevo;
-                    $movimiento->motivo         = 'Devolución por Anulación #' . ($venta->numero_nota ?? ('SYS-'.str_pad($venta->id, 6, '0', STR_PAD_LEFT))) . ' (Motivo: ' . $motivoTexto . ')';
+                    $movimiento->motivo         = 'Devolución por Anulación #' . ($venta->numero_nota ?? ('SYS-'.str_pad($venta->id, 6, '0', STR_PAD_LEFT))) . $textoUnidad . ' (Motivo: ' . $motivoTexto . ')';
                     $movimiento->id_usuario     = $usuarioId;
                     $movimiento->fecha          = now();
                     $movimiento->save();
@@ -190,7 +203,7 @@ class VentaController extends Controller
             $venta->save();
 
             DB::commit();
-            return back()->with('success', 'Venta anulada correctamente. Stock devuelto al inventario y bitácora de anulación registrada.');
+            return back()->with('success', 'Venta anulada correctamente. Stock devuelto al inventario y bitácora de anulación registrada.')->with('anulada_id', $venta->id);
 
         } catch (\Exception $e) {
             DB::rollBack();

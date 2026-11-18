@@ -1157,13 +1157,14 @@ document.addEventListener('DOMContentLoaded', function() {
     function filtrarProductosMasivo() {
         const query = buscadorMasivo ? buscadorMasivo.value.toLowerCase().trim() : '';
         const catFiltro = filtroCatMasivo ? filtroCatMasivo.value : 'todos';
+        const palabras = query.split(/\s+/).filter(Boolean);
         let visibles = 0;
 
         filasMasivas.forEach(fila => {
-            const texto = fila.getAttribute('data-texto') || '';
+            const texto = (fila.getAttribute('data-texto') || '').toLowerCase();
             const catId = fila.getAttribute('data-cat') || '0';
 
-            const matchTexto = (query === '' || texto.includes(query));
+            const matchTexto = palabras.length === 0 || palabras.every(p => texto.includes(p));
             let matchCat = true;
             if (catFiltro === 'sin_cat') {
                 matchCat = (catId === '0' || catId === '');

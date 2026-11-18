@@ -52,8 +52,15 @@
 
 <!-- ALERTAS -->
 @if(session('success'))
-    <div class="alert alert-success alert-dismissible fade show shadow-sm mb-4">
-        <i class="bi bi-check-circle-fill me-2"></i>{{ session('success') }}
+    <div class="alert alert-success alert-dismissible fade show shadow-sm mb-4 d-flex flex-wrap align-items-center justify-content-between gap-2">
+        <div>
+            <i class="bi bi-check-circle-fill me-2"></i>{{ session('success') }}
+        </div>
+        @if(session('anulada_id'))
+            <a href="/pos?rehacer_venta={{ session('anulada_id') }}" class="btn btn-sm btn-primary text-white fw-bold shadow-sm rounded-pill px-3">
+                <i class="bi bi-arrow-repeat me-1"></i> Rehacer esta Venta en Caja Ahora
+            </a>
+        @endif
         <button class="btn-close" data-bs-dismiss="alert"></button>
     </div>
 @endif
@@ -370,19 +377,26 @@
                                         <i class="bi bi-file-earmark-pdf"></i> PDF
                                     </a>
 
-                                    <!-- Botón Anular con Modal -->
-                                    @if(!$esAnulada && auth()->check() && auth()->user()->tienePermiso('anular_ventas'))
-                                    <button type="button" 
-                                            class="btn btn-sm btn-outline-warning fw-bold rounded-pill px-3 btn-abrir-modal-anular" 
-                                            data-bs-toggle="modal" 
-                                            data-bs-target="#modalAnularVenta"
-                                            data-id="{{ $venta->id }}"
-                                            data-nota="{{ $venta->numero_nota ?? ('SYS-'.str_pad($venta->id, 6, '0', STR_PAD_LEFT)) }}"
-                                            data-cliente="{{ $venta->cliente }}"
-                                            data-total="{{ number_format($venta->total, 2) }}"
-                                            title="Anular venta y registrar motivo">
-                                        <i class="bi bi-x-octagon-fill"></i> Anular
-                                    </button>
+                                    <!-- Botón Rehacer Venta (Únicamente visible en ventas anuladas) -->
+                                    @if($esAnulada)
+                                        <a href="/pos?rehacer_venta={{ $venta->id }}" class="btn btn-sm btn-outline-primary fw-bold rounded-pill px-3 d-inline-flex align-items-center gap-1 shadow-sm" title="Rehacer esta venta anulada en caja (cargar productos y precios automáticamente)">
+                                            <i class="bi bi-arrow-repeat"></i> Rehacer Venta
+                                        </a>
+                                    @else
+                                        <!-- Botón Anular con Modal (Para notas activas / completadas) -->
+                                        @if(auth()->check() && auth()->user()->tienePermiso('anular_ventas'))
+                                        <button type="button" 
+                                                class="btn btn-sm btn-outline-warning fw-bold rounded-pill px-3 btn-abrir-modal-anular" 
+                                                data-bs-toggle="modal" 
+                                                data-bs-target="#modalAnularVenta"
+                                                data-id="{{ $venta->id }}"
+                                                data-nota="{{ $venta->numero_nota ?? ('SYS-'.str_pad($venta->id, 6, '0', STR_PAD_LEFT)) }}"
+                                                data-cliente="{{ $venta->cliente }}"
+                                                data-total="{{ number_format($venta->total, 2) }}"
+                                                title="Anular venta y registrar motivo">
+                                            <i class="bi bi-x-octagon-fill"></i> Anular
+                                        </button>
+                                        @endif
                                     @endif
                                 </div>
                             </td>
@@ -742,17 +756,19 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
 
-    // 3. Buscador en tiempo real de compradores frecuentes
+    // 3. Buscador en tiempo real de compradores frecuentes (Multi-palabra inteligente)
     const buscadorComp = document.getElementById('buscadorCompradores');
     if (buscadorComp) {
         buscadorComp.addEventListener('input', function() {
             const query = this.value.toLowerCase().trim();
+            const palabras = query.split(/\s+/).filter(Boolean);
             const filas = document.querySelectorAll('#tablaCompradores .fila-comprador');
             let visibles = 0;
 
             filas.forEach(f => {
                 const nombre = f.querySelector('.nombre-comprador')?.textContent.toLowerCase() || '';
-                if (query === '' || nombre.includes(query)) {
+                const match = palabras.length === 0 || palabras.every(p => nombre.includes(p));
+                if (match) {
                     f.style.display = '';
                     visibles++;
                 } else {

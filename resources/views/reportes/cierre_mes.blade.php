@@ -869,14 +869,16 @@ function filtrarEstado(estado, btn) {
 
 function filtrarTabla() {
     const q = (document.getElementById('buscadorProductos')?.value || '').toLowerCase().trim();
+    const palabras = q.split(/\s+/).filter(Boolean);
     let visibles = 0;
 
     document.querySelectorAll('.fila-producto').forEach(fila => {
-        const codigo = fila.dataset.codigo || '';
-        const nombre = fila.dataset.nombre || '';
+        const codigo = (fila.dataset.codigo || '').toLowerCase();
+        const nombre = (fila.dataset.nombre || '').toLowerCase();
         const estado = fila.dataset.estado || '';
+        const textoFila = `${codigo} ${nombre}`;
 
-        const coincideTexto = !q || codigo.includes(q) || nombre.includes(q);
+        const coincideTexto = palabras.length === 0 || palabras.every(p => textoFila.includes(p));
         const coincideEstado = (estadoFiltroActivo === 'todos') || (estado === estadoFiltroActivo);
 
         if (coincideTexto && coincideEstado) {
