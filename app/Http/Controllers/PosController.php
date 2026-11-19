@@ -9,6 +9,9 @@ use App\Models\DetalleVenta;
 use App\Models\Movimiento;
 use App\Models\Categoria;
 use App\Models\Cliente;
+use App\Models\ArqueoCaja;
+use App\Models\PagoVenta;
+use App\Models\MovimientoCaja;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
 
@@ -43,7 +46,8 @@ class PosController extends Controller
                 'detalles.producto.unidad', 
                 'detalles.producto.unidadSecundaria',
                 'detalles.producto.categoria',
-                'clienteRelacionado'
+                'clienteRelacionado',
+                'pagos'
             ])->find($idVenta);
 
             if ($ventaRehacer) {
@@ -108,7 +112,9 @@ class PosController extends Controller
             }
         }
 
-        return view('pos.index', compact('productos', 'categorias', 'clientes', 'clientesHistorial', 'ventaRehacer', 'carritoRehacer'));
+        $arqueoActivo = ArqueoCaja::sesionActiva();
+
+        return view('pos.index', compact('productos', 'categorias', 'clientes', 'clientesHistorial', 'ventaRehacer', 'carritoRehacer', 'arqueoActivo'));
     }
 
     /**
@@ -145,6 +151,18 @@ class PosController extends Controller
         DB::beginTransaction();
 
         try {
+            // 1. Obtener sesión activa de arqueo de caja (o abrir una automática si no existía)
+            $arqueoActivo = ArqueoCaja::sesionActiva();
+            if (!$arqueoActivo) {
+                $arqueoActivo = ArqueoCaja::create([
+                    'id_usuario'     => Auth::id() ?? 1,
+                    'fecha_apertura' => now(),
+                    'monto_inicial'  => 0.00,
+                    'estado'         => 'abierto',
+                    'observaciones'  => 'Sesión iniciada automáticamente desde POS',
+                ]);
+            }
+
             $totalVenta = floatval($request->total_venta);
             $metodoPago = $request->metodo_pago;
 
@@ -183,8 +201,15 @@ class PosController extends Controller
                 }
             }
 
+            // Detección de Venta Rehecha (Trazabilidad)
+            $ventaOrigen = null;
+            if ($request->filled('venta_origen_id')) {
+                $ventaOrigen = Venta::with(['pagos'])->find($request->venta_origen_id);
+            }
+
             // Registrar venta
             $venta = new Venta();
+            $venta->venta_origen_id = $ventaOrigen ? $ventaOrigen->id : null;
             $venta->id_cliente      = $idCliente;
             $venta->cliente         = $request->cliente;
             $venta->tipo_tarifa     = $request->input('tipo_tarifa', 'Ocasional');
@@ -193,7 +218,14 @@ class PosController extends Controller
             $venta->monto_pagado    = $montoPagado;
             $venta->saldo_pendiente = $saldoPendiente;
             $venta->id_usuario      = Auth::id() ?? 1;
-            $venta->fecha           = now();
+
+            // Si es venta rehecha y no cambió el total o fue crédito sin cobro previo, conservar fecha original
+            if ($ventaOrigen && ($ventaOrigen->total == $totalVenta || floatval($ventaOrigen->monto_pagado ?? 0) == 0)) {
+                $venta->fecha = $ventaOrigen->fecha ?: now();
+            } else {
+                $venta->fecha = now();
+            }
+
             $venta->total           = $totalVenta;
             $venta->numero_nota     = $numeroFinal;
             $venta->estado          = $estado;
@@ -223,7 +255,6 @@ class PosController extends Controller
                 $producto = Producto::find($idProducto);
                 if ($producto) {
                     $stockAnterior = intval($producto->stock ?? 0);
-                    // Las unidades físicas a descontar equivalen a cantidad vendida * factor_conversion
                     $unidadesFisicas = intval(ceil($cant * $factor));
                     $stockNuevo = max(0, $stockAnterior - $unidadesFisicas);
 
@@ -239,17 +270,119 @@ class PosController extends Controller
                     $movimiento->cantidad       = $unidadesFisicas;
                     $movimiento->stock_anterior = $stockAnterior;
                     $movimiento->stock_nuevo    = $stockNuevo;
-                    $movimiento->motivo         = 'Venta en POS #' . $numeroFinal . $textoUnidad;
+                    $movimiento->motivo         = 'Venta en POS #' . $numeroFinal . $textoUnidad . ($ventaOrigen ? ' (Rehecha de #' . ($ventaOrigen->numero_nota ?? $ventaOrigen->id) . ')' : '');
                     $movimiento->fecha          = now();
                     $movimiento->save();
+                }
+            }
+
+            // GESTIÓN DE COBRO Y ARQUEO (REGLAS CONTABLES)
+            $mensajeDiferencia = "";
+
+            if ($ventaOrigen && floatval($ventaOrigen->monto_pagado ?? 0) > 0) {
+                // La venta original YA había sido pagada en su momento
+                $pagadoAnterior = floatval($ventaOrigen->monto_pagado);
+                $diferencia = round($totalVenta - $pagadoAnterior, 2);
+
+                if ($diferencia > 0) {
+                    // ESCENARIO B: El total SUBIÓ (el cliente paga la diferencia hoy)
+                    $metodoDif = $request->input('metodo_diferencia', $metodoPago);
+                    PagoVenta::create([
+                        'id_venta'       => $venta->id,
+                        'arqueo_caja_id' => $arqueoActivo->id,
+                        'id_cliente'     => $idCliente,
+                        'id_usuario'     => Auth::id() ?? 1,
+                        'monto'          => $diferencia,
+                        'metodo_pago'    => $metodoDif,
+                        'referencia'     => $request->input('referencia_diferencia', null),
+                        'observacion'    => "Diferencia por venta rehecha #{$ventaOrigen->numero_nota} (+Bs. " . number_format($diferencia, 2) . ")",
+                        'fecha'          => now(),
+                    ]);
+
+                    if ($metodoDif === 'QR') {
+                        $arqueoActivo->increment('total_qr_sistema', $diferencia);
+                    } else {
+                        $arqueoActivo->increment('total_efectivo_sistema', $diferencia);
+                    }
+
+                    $mensajeDiferencia = " | Se cobró la diferencia de +Bs. " . number_format($diferencia, 2) . " mediante " . $metodoDif;
+
+                } elseif ($diferencia < 0) {
+                    // ESCENARIO C: El total BAJÓ (hay dinero a favor del cliente)
+                    $sobrante = abs($diferencia);
+                    $resolucion = $request->input('resolucion_diferencia', 'saldo_favor');
+
+                    if ($resolucion === 'devolucion_efectivo') {
+                        // Devolución en efectivo de caja de hoy
+                        MovimientoCaja::create([
+                            'arqueo_caja_id' => $arqueoActivo->id,
+                            'id_usuario'     => Auth::id() ?? 1,
+                            'id_venta'       => $venta->id,
+                            'tipo'           => 'egreso_devolucion',
+                            'metodo_pago'    => 'Efectivo',
+                            'monto'          => $sobrante,
+                            'motivo'         => "Devolución por corrección de Nota #{$ventaOrigen->numero_nota} (rehecha en #{$numeroFinal})",
+                            'fecha'          => now(),
+                        ]);
+
+                        $arqueoActivo->increment('total_egresos', $sobrante);
+                        $mensajeDiferencia = " | Se registró egreso en caja de -Bs. " . number_format($sobrante, 2) . " por devolución física al cliente";
+
+                    } else {
+                        // Dejar como saldo a favor (crédito en cuenta)
+                        if ($idCliente) {
+                            $cliObj = Cliente::find($idCliente);
+                            if ($cliObj) {
+                                $cliObj->increment('saldo_favor', $sobrante);
+                            }
+                        }
+                        $mensajeDiferencia = " | Se abonaron Bs. " . number_format($sobrante, 2) . " como saldo a favor del cliente";
+                    }
+                }
+            } else {
+                // Venta normal directa o venta rehecha de una no pagada
+                if ($metodoPago === 'Efectivo' || $metodoPago === 'QR') {
+                    PagoVenta::create([
+                        'id_venta'       => $venta->id,
+                        'arqueo_caja_id' => $arqueoActivo->id,
+                        'id_cliente'     => $idCliente,
+                        'id_usuario'     => Auth::id() ?? 1,
+                        'monto'          => $montoPagado,
+                        'metodo_pago'    => $metodoPago,
+                        'observacion'    => 'Cobro POS Nota #' . $numeroFinal,
+                        'fecha'          => now(),
+                    ]);
+
+                    if ($metodoPago === 'QR') {
+                        $arqueoActivo->increment('total_qr_sistema', $montoPagado);
+                    } else {
+                        $arqueoActivo->increment('total_efectivo_sistema', $montoPagado);
+                    }
+                } elseif ($metodoPago === 'Por Pagar' && $montoAdelanto > 0) {
+                    PagoVenta::create([
+                        'id_venta'       => $venta->id,
+                        'arqueo_caja_id' => $arqueoActivo->id,
+                        'id_cliente'     => $idCliente,
+                        'id_usuario'     => Auth::id() ?? 1,
+                        'monto'          => $montoAdelanto,
+                        'metodo_pago'    => $metodoAdelanto,
+                        'observacion'    => 'Adelanto en Nota #' . $numeroFinal,
+                        'fecha'          => now(),
+                    ]);
+
+                    if ($metodoAdelanto === 'QR') {
+                        $arqueoActivo->increment('total_qr_sistema', $montoAdelanto);
+                    } else {
+                        $arqueoActivo->increment('total_efectivo_sistema', $montoAdelanto);
+                    }
                 }
             }
 
             DB::commit();
 
             $mensaje = ($metodoPago === 'Por Pagar' && $saldoPendiente > 0)
-                ? '¡Venta Por Pagar registrada! Adelanto: Bs. ' . number_format($montoPagado, 2) . ' | Saldo Pendiente: Bs. ' . number_format($saldoPendiente, 2)
-                : '¡Venta cobrada con éxito!';
+                ? '¡Venta Por Pagar registrada! Adelanto: Bs. ' . number_format($montoPagado, 2) . ' | Saldo Pendiente: Bs. ' . number_format($saldoPendiente, 2) . $mensajeDiferencia
+                : '¡Venta cobrada con éxito!' . $mensajeDiferencia;
 
             return redirect('/pos')
                 ->with('success_venta_id', $venta->id)

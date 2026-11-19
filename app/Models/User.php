@@ -123,4 +123,14 @@ class User extends Authenticatable
             ],
         ];
     }
+
+    public function arqueosCaja()
+    {
+        return $this->hasMany(ArqueoCaja::class, 'id_usuario');
+    }
+
+    public function movimientosCaja()
+    {
+        return $this->hasMany(MovimientoCaja::class, 'id_usuario');
+    }
 }

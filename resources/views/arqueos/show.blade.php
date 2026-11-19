@@ -38,6 +38,32 @@
     .consolidado-item { display: flex; align-items: center; justify-content: space-between; padding: 10px 14px; background: #fff; border: 1px solid #e2e8f0; border-radius: 8px; margin-bottom: 6px; transition: background 0.15s; }
     .consolidado-item:hover { background: #f8faff; }
 
+    /* Estilos claros y visibles para las pestañas de navegación */
+    #arqueoTabs .nav-link {
+        color: #475569 !important;
+        background-color: #f8fafc !important;
+        border: 1.5px solid #cbd5e1 !important;
+        border-bottom: none !important;
+        border-radius: 10px 10px 0 0 !important;
+        padding: 10px 22px !important;
+        font-weight: 700 !important;
+        font-size: 0.90rem !important;
+        margin-right: 6px !important;
+        transition: all 0.2s ease !important;
+    }
+    #arqueoTabs .nav-link:hover {
+        color: #0284c7 !important;
+        background-color: #f0f9ff !important;
+        border-color: #93c5fd !important;
+    }
+    #arqueoTabs .nav-link.active {
+        color: #0369a1 !important;
+        background-color: #ffffff !important;
+        border-color: #38bdf8 !important;
+        border-bottom: 2px solid #ffffff !important;
+        box-shadow: 0 -3px 10px rgba(2, 132, 199, 0.12) !important;
+    }
+
     @media print {
         .no-print { display: none !important; }
         .card { box-shadow: none !important; border: 1px solid #cbd5e1 !important; margin-bottom: 12px !important; }
@@ -161,7 +187,7 @@
             <div>
                 <div class="total-label">Efectivo cobrado</div>
                 <div class="total-value text-success">Bs. {{ number_format($arqueo->total_efectivo, 2) }}</div>
-                <small class="text-muted">{{ $arqueo->ventas->where('metodo_pago', 'Efectivo')->count() }} ventas · contar los billetes</small>
+                <small class="text-muted">{{ $arqueo->ventas->filter(fn($v) => strtolower($v->metodo_cobro_real) === 'efectivo')->count() }} ventas · contar los billetes</small>
             </div>
         </div>
     </div>
@@ -173,7 +199,7 @@
             <div>
                 <div class="total-label">QR / Transferencia</div>
                 <div class="total-value text-primary">Bs. {{ number_format($arqueo->total_qr, 2) }}</div>
-                <small class="text-muted">{{ $arqueo->ventas->where('metodo_pago', 'QR')->count() }} ventas · verificar en banco</small>
+                <small class="text-muted">{{ $arqueo->ventas->filter(fn($v) => strtolower($v->metodo_cobro_real) === 'qr')->count() }} ventas · verificar en banco</small>
             </div>
         </div>
     </div>
@@ -266,14 +292,29 @@
                                 </td>
                                 <td class="fw-bold text-success">Bs. {{ number_format($venta->total, 2) }}</td>
                                 <td>
-                                    @if(strtolower($venta->metodo_pago) == 'efectivo')
-                                        <span class="badge-efectivo"><i class="bi bi-cash me-1"></i>Efectivo</span>
-                                    @elseif(strtolower($venta->metodo_pago) == 'qr')
-                                        <span class="badge-qr"><i class="bi bi-qr-code me-1"></i>QR</span>
-                                    @else
+                                    @php
+                                        $metodoCobro = $venta->metodo_cobro_real;
+                                        $saldoPend = floatval($venta->saldo_pendiente ?? 0);
+                                        $estaAlDia = $saldoPend <= 0;
+                                    @endphp
+                                    @if(!$estaAlDia)
                                         <span class="badge bg-warning text-dark border"><i class="bi bi-clock-history me-1"></i>Por Pagar</span>
-                                        @if(($venta->saldo_pendiente ?? 0) > 0)
-                                            <small class="text-danger fw-bold d-block" style="font-size:0.75rem;">Debe: Bs. {{ number_format($venta->saldo_pendiente, 2) }}</small>
+                                        <small class="text-danger fw-bold d-block mt-0.5" style="font-size:0.75rem;">Debe: Bs. {{ number_format($saldoPend, 2) }}</small>
+                                        @if(($venta->monto_pagado ?? 0) > 0)
+                                            <small class="text-muted d-block" style="font-size:0.70rem;">Abonado: Bs. {{ number_format($venta->monto_pagado, 2) }}</small>
+                                        @endif
+                                    @else
+                                        @if(strtolower($metodoCobro) === 'qr')
+                                            <span class="badge-qr"><i class="bi bi-qr-code me-1"></i>QR</span>
+                                        @elseif(strtolower($metodoCobro) === 'efectivo')
+                                            <span class="badge-efectivo"><i class="bi bi-cash me-1"></i>Efectivo</span>
+                                        @else
+                                            <span class="badge bg-info text-dark border"><i class="bi bi-wallet2 me-1"></i>{{ $metodoCobro }}</span>
+                                        @endif
+                                        @if($venta->metodo_pago === 'Por Pagar')
+                                            <small class="text-success fw-bold d-block mt-0.5" style="font-size:0.72rem;">
+                                                <i class="bi bi-check2-circle"></i> Al día (Saldado)
+                                            </small>
                                         @endif
                                     @endif
                                 </td>

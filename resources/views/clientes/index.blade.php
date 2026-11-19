@@ -189,9 +189,14 @@
         </div>
     </div>
     
-    <button class="btn btn-primary fw-bold shadow-sm px-4 py-2" style="border-radius: 10px;" data-bs-toggle="modal" data-bs-target="#modalNuevoCliente">
-        <i class="bi bi-person-plus-fill me-1"></i> + Nuevo Cliente
-    </button>
+    <div class="d-flex gap-2">
+        <button class="btn btn-outline-primary fw-bold shadow-sm px-3 py-2" style="border-radius: 10px;" data-bs-toggle="modal" data-bs-target="#modalLogGlobalCobros">
+            <i class="bi bi-clock-history me-1"></i> Auditoría / Log de Cobros
+        </button>
+        <button class="btn btn-primary fw-bold shadow-sm px-4 py-2" style="border-radius: 10px;" data-bs-toggle="modal" data-bs-target="#modalNuevoCliente">
+            <i class="bi bi-person-plus-fill me-1"></i> + Nuevo Cliente
+        </button>
+    </div>
 </div>
 
 <!-- STATS CARDS -->
@@ -371,6 +376,30 @@
                                 <i class="bi bi-check-circle-fill me-1"></i>Al Día
                             </span>
                         @endif
+
+                        @php
+                            $ultimoCobroCli = $cli->pagos->first();
+                        @endphp
+
+                        @if($ultimoCobroCli)
+                            <div class="mt-1 d-flex flex-column align-items-center">
+                                <span class="badge bg-light text-dark border d-inline-flex align-items-center gap-1 px-2 py-1 shadow-xs" style="font-size: 0.72rem; cursor: pointer;" data-bs-toggle="modal" data-bs-target="#modalLogCobros{{ $cli->id }}" title="Click para ver el detalle del cobro registrado por {{ $ultimoCobroCli->usuario->name ?? 'Usuario' }}">
+                                    <i class="bi bi-person-check-fill text-success"></i>
+                                    <span>Cobró: <strong class="text-primary">{{ Str::words($ultimoCobroCli->usuario->name ?? 'Sistema', 2, '') }}</strong></span>
+                                </span>
+                                <span class="text-muted mt-0.5" style="font-size: 0.68rem;">
+                                    {{ \Carbon\Carbon::parse($ultimoCobroCli->fecha)->format('d/m/Y H:i') }} &bull; <strong class="text-success">Bs. {{ number_format($ultimoCobroCli->monto, 2) }}</strong>
+                                </span>
+                            </div>
+                        @endif
+
+                        @if(($cli->saldo_favor ?? 0) > 0)
+                            <div class="mt-1">
+                                <span class="badge bg-primary bg-opacity-10 text-primary border border-primary-subtle px-2 py-1 fw-bold" style="font-size: 0.74rem;">
+                                    <i class="bi bi-wallet2 me-1"></i>A Favor: Bs. {{ number_format($cli->saldo_favor, 2) }}
+                                </span>
+                            </div>
+                        @endif
                     </td>
 
                     <!-- Acciones -->
@@ -382,7 +411,11 @@
                             </button>
                             @endif
 
-                            <a href="/clientes/{{ $cli->id }}" class="btn-action-icon btn-action-view" title="Ver Historial y Estado de Cuenta">
+                            <button type="button" class="btn-action-icon" style="color: #0284c7; background: #e0f2fe; border: 1px solid #bae6fd;" data-bs-toggle="modal" data-bs-target="#modalLogCobros{{ $cli->id }}" title="Ver Log y Auditoría de Cobros de {{ $cli->nombre }} ({{ $cli->pagos->count() }} pagos)">
+                                <i class="bi bi-clock-history"></i>
+                            </button>
+
+                            <a href="/clientes/{{ $cli->id }}" class="btn-action-icon btn-action-view" title="Ver Ficha y Estado de Cuenta">
                                 <i class="bi bi-eye"></i>
                             </a>
                             <button type="button" class="btn-action-icon btn-action-edit" data-bs-toggle="modal" data-bs-target="#modalEditarCliente{{ $cli->id }}" title="Editar datos">
@@ -627,7 +660,222 @@
         </div>
     </div>
     @endif
+
+    <!-- MODAL LOG / AUDITORÍA DE COBROS DEL CLIENTE -->
+    <div class="modal fade" id="modalLogCobros{{ $cli->id }}" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-lg">
+            <div class="modal-content border-0 shadow-lg rounded-4 overflow-hidden">
+                <div class="modal-header bg-light border-bottom p-3">
+                    <div class="d-flex align-items-center gap-2">
+                        <div class="bg-primary bg-opacity-10 text-primary p-2 rounded-circle">
+                            <i class="bi bi-clock-history fs-4"></i>
+                        </div>
+                        <div>
+                            <h5 class="fw-bold m-0 text-dark">Log de Cobros — {{ $cli->nombre }}</h5>
+                            <small class="text-muted">Registro de auditoría de cobros y abonos realizados a este cliente</small>
+                        </div>
+                    </div>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+
+                <div class="modal-body p-4">
+                    <div class="row g-2 mb-3">
+                        <div class="col-6 col-md-4">
+                            <div class="p-2.5 rounded-3 bg-light border text-center">
+                                <small class="text-muted d-block" style="font-size:0.74rem;">Total Cobrado en Abonos</small>
+                                <span class="fw-bold text-success fs-5">Bs. {{ number_format($cli->pagos->sum('monto'), 2) }}</span>
+                            </div>
+                        </div>
+                        <div class="col-6 col-md-4">
+                            <div class="p-2.5 rounded-3 bg-light border text-center">
+                                <small class="text-muted d-block" style="font-size:0.74rem;">Cobros Registrados</small>
+                                <span class="fw-bold text-dark fs-5">{{ $cli->pagos->count() }} pago(s)</span>
+                            </div>
+                        </div>
+                        <div class="col-12 col-md-4">
+                            <div class="p-2.5 rounded-3 bg-light border text-center">
+                                <small class="text-muted d-block" style="font-size:0.74rem;">Estado Actual</small>
+                                <span class="fw-bold {{ $cli->saldo_pendiente_total > 0 ? 'text-danger' : 'text-success' }} fs-5">
+                                    {{ $cli->saldo_pendiente_total > 0 ? 'Debe: Bs. ' . number_format($cli->saldo_pendiente_total, 2) : '✔ Al Día (Bs. 0.00)' }}
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="table-responsive rounded-3 border">
+                        <table class="table table-hover align-middle mb-0" style="font-size: 0.86rem;">
+                            <thead class="bg-light text-secondary text-uppercase fw-bold" style="font-size: 0.75rem;">
+                                <tr>
+                                    <th class="ps-3 py-2.5">Fecha y Hora</th>
+                                    <th>Nº Nota</th>
+                                    <th class="text-end">Monto Cobrado</th>
+                                    <th>Método</th>
+                                    <th>Cajero Responsable</th>
+                                    <th class="pe-3">Observación</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @forelse($cli->pagos as $pago)
+                                <tr>
+                                    <td class="ps-3 fw-semibold text-dark" style="white-space: nowrap;">
+                                        <i class="bi bi-calendar-event me-1 text-muted"></i>{{ \Carbon\Carbon::parse($pago->fecha)->format('d/m/Y H:i') }}
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-light text-dark border fw-bold">
+                                            {{ $pago->venta->numero_nota ?? ('SYS-' . ($pago->id_venta ?? 'N/A')) }}
+                                        </span>
+                                    </td>
+                                    <td class="text-end fw-bold text-success fs-6" style="white-space: nowrap;">
+                                        Bs. {{ number_format($pago->monto, 2) }}
+                                    </td>
+                                    <td>
+                                        @if($pago->metodo_pago === 'QR')
+                                            <span class="badge bg-primary bg-opacity-10 text-primary border border-primary-subtle px-2 py-1 fw-bold"><i class="bi bi-qr-code me-1"></i>QR</span>
+                                        @else
+                                            <span class="badge bg-success bg-opacity-10 text-success border border-success-subtle px-2 py-1 fw-bold"><i class="bi bi-cash me-1"></i>Efectivo</span>
+                                        @endif
+                                    </td>
+                                    <td>
+                                        <div class="d-flex align-items-center gap-1.5">
+                                            <div class="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center fw-bold" style="width:24px; height:24px; font-size:0.7rem; flex-shrink: 0;">
+                                                {{ strtoupper(substr($pago->usuario->name ?? 'U', 0, 1)) }}
+                                            </div>
+                                            <div>
+                                                <span class="fw-bold text-dark d-block" style="line-height: 1.1;">{{ $pago->usuario->name ?? 'Sistema' }}</span>
+                                                <small class="text-muted" style="font-size:0.70rem;">{{ $pago->usuario->rol ?? 'Cajero' }}</small>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td class="pe-3 text-muted small">
+                                        {{ $pago->observacion ?: 'Cobro de saldo pendiente' }}
+                                    </td>
+                                </tr>
+                                @empty
+                                <tr>
+                                    <td colspan="6" class="text-center py-4 text-muted">
+                                        <i class="bi bi-info-circle fs-3 d-block mb-1 text-secondary opacity-50"></i>
+                                        No se han registrado cobros o abonos posteriores para este cliente aún.
+                                    </td>
+                                </tr>
+                                @endforelse
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div class="modal-footer bg-light border-0 p-3">
+                    <a href="/clientes/{{ $cli->id }}" class="btn btn-outline-primary btn-sm fw-bold">
+                        <i class="bi bi-eye me-1"></i> Ver Ficha Completa del Cliente
+                    </a>
+                    <button type="button" class="btn btn-secondary btn-sm fw-bold px-3" data-bs-dismiss="modal">Cerrar</button>
+                </div>
+            </div>
+        </div>
+    </div>
 @endforeach
+
+<!-- MODAL AUDITORÍA / LOG GLOBAL DE COBROS -->
+<div class="modal fade" id="modalLogGlobalCobros" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-xl">
+        <div class="modal-content border-0 shadow-lg rounded-4 overflow-hidden">
+            <div class="modal-header bg-light border-bottom p-3">
+                <div class="d-flex align-items-center gap-2">
+                    <div class="bg-primary bg-opacity-10 text-primary p-2.5 rounded-circle">
+                        <i class="bi bi-journal-check fs-3"></i>
+                    </div>
+                    <div>
+                        <h5 class="fw-bold m-0 text-dark">Auditoría / Log Global de Cobros</h5>
+                        <small class="text-muted">Historial completo de pagos y cobros de clientes con identificación de cajero</small>
+                    </div>
+                </div>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+
+            <div class="modal-body p-4">
+                <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+                    <div class="small text-muted">
+                        Mostrando los últimos <strong>{{ $ultimosCobrosGlobales->count() }}</strong> cobros registrados en el sistema.
+                    </div>
+                    <span class="badge bg-success bg-opacity-10 text-success border border-success-subtle px-3 py-1.5 fw-bold fs-6">
+                        Total Cobrado Registrado: Bs. {{ number_format($ultimosCobrosGlobales->sum('monto'), 2) }}
+                    </span>
+                </div>
+
+                <div class="table-responsive rounded-3 border" style="max-height: 480px; overflow-y: auto;">
+                    <table class="table table-hover align-middle mb-0" style="font-size: 0.86rem;">
+                        <thead class="bg-light text-secondary text-uppercase fw-bold sticky-top" style="font-size: 0.75rem; z-index: 2;">
+                            <tr>
+                                <th class="ps-3 py-2.5">Fecha y Hora</th>
+                                <th>Cliente</th>
+                                <th>Nº Nota</th>
+                                <th class="text-end">Monto Cobrado</th>
+                                <th>Método</th>
+                                <th>Cajero que Registró el Cobro</th>
+                                <th class="pe-3">Observación</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @forelse($ultimosCobrosGlobales as $cg)
+                            <tr>
+                                <td class="ps-3 fw-semibold text-dark" style="white-space: nowrap;">
+                                    <i class="bi bi-calendar2-check me-1 text-primary"></i>
+                                    {{ \Carbon\Carbon::parse($cg->fecha)->format('d/m/Y H:i') }}
+                                </td>
+                                <td>
+                                    <div class="fw-bold text-dark">{{ $cg->cliente->nombre ?? 'Cliente Varios' }}</div>
+                                    @if(optional($cg->cliente)->telefono)
+                                        <small class="text-muted"><i class="bi bi-telephone me-1"></i>{{ $cg->cliente->telefono }}</small>
+                                    @endif
+                                </td>
+                                <td>
+                                    <span class="badge bg-light text-dark border fw-bold">
+                                        {{ $cg->venta->numero_nota ?? ('SYS-' . ($cg->id_venta ?? 'N/A')) }}
+                                    </span>
+                                </td>
+                                <td class="text-end fw-bold text-success fs-6" style="white-space: nowrap;">
+                                    Bs. {{ number_format($cg->monto, 2) }}
+                                </td>
+                                <td>
+                                    @if($cg->metodo_pago === 'QR')
+                                        <span class="badge bg-primary bg-opacity-10 text-primary border border-primary-subtle px-2 py-1 fw-bold"><i class="bi bi-qr-code me-1"></i>QR</span>
+                                    @else
+                                        <span class="badge bg-success bg-opacity-10 text-success border border-success-subtle px-2 py-1 fw-bold"><i class="bi bi-cash me-1"></i>Efectivo</span>
+                                    @endif
+                                </td>
+                                <td>
+                                    <div class="d-flex align-items-center gap-1.5">
+                                        <div class="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center fw-bold" style="width:26px; height:26px; font-size:0.72rem; flex-shrink: 0;">
+                                            {{ strtoupper(substr($cg->usuario->name ?? 'U', 0, 1)) }}
+                                        </div>
+                                        <div>
+                                            <span class="fw-bold text-dark d-block" style="line-height: 1.1;">{{ $cg->usuario->name ?? 'Sistema' }}</span>
+                                            <small class="text-muted" style="font-size: 0.70rem;">{{ $cg->usuario->rol ?? 'Cajero' }}</small>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td class="pe-3 text-muted small">
+                                    {{ $cg->observacion ?: 'Cobro de saldo pendiente' }}
+                                </td>
+                            </tr>
+                            @empty
+                            <tr>
+                                <td colspan="7" class="text-center py-5 text-muted">
+                                    <i class="bi bi-inbox fs-1 d-block mb-2 text-muted"></i>
+                                    No se han registrado cobros de saldo o abonos aún.
+                                </td>
+                            </tr>
+                            @endforelse
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="modal-footer bg-light border-0 p-3">
+                <button type="button" class="btn btn-secondary fw-bold px-4" data-bs-dismiss="modal">Cerrar</button>
+            </div>
+        </div>
+    </div>
+</div>
 
 @if(request('nuevo_nombre'))
 <script>

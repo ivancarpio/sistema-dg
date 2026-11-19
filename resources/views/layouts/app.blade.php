@@ -99,7 +99,7 @@
             body.sidebar-collapsed .active-indicator-dot {
                 display: none !important;
             }
-            body.sidebar-collapsed .nav-link {
+            body.sidebar-collapsed .sidebar-custom .nav-link {
                 justify-content: center;
                 padding: 10px 8px;
                 margin: 4px 8px;
@@ -286,7 +286,7 @@
         }
 
         /* Enlaces del Menú (Inspirados en Figma SaaS) */
-        .nav-link {
+        .sidebar-custom .nav-link {
             color: rgba(255, 255, 255, 0.72);
             transition: all 0.22s cubic-bezier(0.4, 0, 0.2, 1);
             border-radius: 14px;
@@ -299,26 +299,26 @@
             text-decoration: none;
             position: relative;
         }
-        .nav-link:hover {
+        .sidebar-custom .nav-link:hover {
             color: #ffffff;
             background-color: rgba(255, 255, 255, 0.07);
             transform: translateX(2px);
         }
-        .nav-link.active {
+        .sidebar-custom .nav-link.active {
             background-color: #e0f2fe !important;
             color: #0369a1 !important;
             font-weight: 700;
             box-shadow: 0 4px 14px rgba(2, 132, 199, 0.22);
         }
-        .nav-link.active .nav-icon-box {
+        .sidebar-custom .nav-link.active .nav-icon-box {
             background: linear-gradient(135deg, #0284c7 0%, #0ea5e9 100%);
             color: #ffffff;
             box-shadow: 0 2px 8px rgba(2, 132, 199, 0.4);
         }
-        .nav-link.active .nav-title {
+        .sidebar-custom .nav-link.active .nav-title {
             color: #0369a1 !important;
         }
-        .nav-link.active .nav-subtitle {
+        .sidebar-custom .nav-link.active .nav-subtitle {
             color: #0284c7 !important;
             opacity: 0.9;
         }
@@ -337,9 +337,39 @@
             flex-shrink: 0;
             margin-right: 12px;
         }
-        .nav-link:hover .nav-icon-box {
+        .sidebar-custom .nav-link:hover .nav-icon-box {
             background: rgba(56, 189, 248, 0.18);
             color: #ffffff;
+        }
+
+        /* Estilos universales nítidos y legibles para Pestañas (Tabs y Pills) en páginas de contenido */
+        .main-content .nav-tabs .nav-link,
+        .main-content .nav-pills .nav-link,
+        .tab-content-container .nav-tabs .nav-link,
+        .tab-content-container .nav-pills .nav-link {
+            color: #475569 !important;
+            background-color: #f8fafc;
+            border: 1px solid #cbd5e1;
+            font-weight: 600;
+            transition: all 0.2s ease;
+        }
+        .main-content .nav-tabs .nav-link:hover,
+        .main-content .nav-pills .nav-link:hover,
+        .tab-content-container .nav-tabs .nav-link:hover,
+        .tab-content-container .nav-pills .nav-link:hover {
+            color: #0284c7 !important;
+            background-color: #f0f9ff;
+            border-color: #93c5fd;
+        }
+        .main-content .nav-tabs .nav-link.active,
+        .main-content .nav-pills .nav-link.active,
+        .tab-content-container .nav-tabs .nav-link.active,
+        .tab-content-container .nav-pills .nav-link.active {
+            color: #0369a1 !important;
+            background-color: #e0f2fe !important;
+            border-color: #38bdf8 !important;
+            font-weight: 700;
+            box-shadow: 0 2px 6px rgba(2, 132, 199, 0.15);
         }
 
         .nav-title {

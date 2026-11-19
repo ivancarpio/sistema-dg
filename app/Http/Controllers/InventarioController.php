@@ -105,8 +105,9 @@ class InventarioController extends Controller
 
         $movimientos = $query->orderBy('fecha', 'desc')->orderBy('id', 'desc')->get(); 
         $productos = Producto::with(['marca', 'unidad', 'unidadSecundaria'])->orderBy('nombre', 'asc')->get();
+        $fechaFiltro = $fechaDesde;
 
-        return view('inventario.index', compact('movimientos', 'productos', 'fechaDesde', 'fechaHasta', 'verTodo', 'subtituloPeriodo'));
+        return view('inventario.index', compact('movimientos', 'productos', 'fechaDesde', 'fechaHasta', 'verTodo', 'subtituloPeriodo', 'fechaFiltro'));
     }
 
     public function store(Request $request)

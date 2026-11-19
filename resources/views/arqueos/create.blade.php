@@ -150,7 +150,7 @@
                                     📱 QR
                                 </option>
                                 <option value="Por Pagar" {{ request('metodo_pago') == 'Por Pagar' ? 'selected' : '' }}>
-                                    ⏳ Por Pagar
+                                    ⏳ Solo con deuda
                                 </option>
                             </select>
                         </div>
@@ -196,10 +196,13 @@
                             <tbody>
                                 @forelse($ventasPendientes as $venta)
                                 @php
-    $montoEnCaja = $venta->monto_pagado !== null ? floatval($venta->monto_pagado) : floatval($venta->total);
-    $canalDinero = $venta->metodo_pago === 'Por Pagar' ? ($venta->metodo_adelanto ?? 'Efectivo') : $venta->metodo_pago;
-@endphp
-<tr class="fila-venta"
+                                    $metodoCobro = $venta->metodo_cobro_real;
+                                    $saldoPend = floatval($venta->saldo_pendiente ?? 0);
+                                    $estaAlDia = $saldoPend <= 0;
+                                    $montoEnCaja = $venta->monto_pagado !== null ? floatval($venta->monto_pagado) : floatval($venta->total);
+                                    $canalDinero = strtolower($metodoCobro) === 'qr' ? 'qr' : 'efectivo';
+                                @endphp
+                                <tr class="fila-venta"
                                     data-id="{{ $venta->id }}"
                                     data-total="{{ $montoEnCaja }}"
                                     data-metodo="{{ $canalDinero }}"
@@ -225,20 +228,32 @@
                                         Bs. {{ number_format($venta->total, 2) }}
                                     </td>
                                     <td>
-                                        @if(strtolower($venta->metodo_pago) == 'efectivo')
-                                            <span class="badge-efectivo">
-                                                <i class="bi bi-cash me-1"></i>Efectivo
-                                            </span>
-                                        @elseif(strtolower($venta->metodo_pago) == 'qr')
-                                            <span class="badge-qr">
-                                                <i class="bi bi-qr-code me-1"></i>QR
-                                            </span>
-                                        @else
+                                        @if(!$estaAlDia)
                                             <span class="badge bg-warning text-dark border">
                                                 <i class="bi bi-clock-history me-1"></i>Por Pagar
                                             </span>
-                                            @if(($venta->saldo_pendiente ?? 0) > 0)
-                                                <small class="text-danger fw-bold d-block" style="font-size:0.75rem;">Debe: Bs. {{ number_format($venta->saldo_pendiente, 2) }}</small>
+                                            <small class="text-danger fw-bold d-block mt-0.5" style="font-size:0.75rem;">Debe: Bs. {{ number_format($saldoPend, 2) }}</small>
+                                            @if(($venta->monto_pagado ?? 0) > 0)
+                                                <small class="text-muted d-block" style="font-size:0.70rem;">Abonado: Bs. {{ number_format($venta->monto_pagado, 2) }}</small>
+                                            @endif
+                                        @else
+                                            @if(strtolower($metodoCobro) === 'qr')
+                                                <span class="badge-qr">
+                                                    <i class="bi bi-qr-code me-1"></i>QR
+                                                </span>
+                                            @elseif(strtolower($metodoCobro) === 'efectivo')
+                                                <span class="badge-efectivo">
+                                                    <i class="bi bi-cash me-1"></i>Efectivo
+                                                </span>
+                                            @else
+                                                <span class="badge bg-info text-dark border">
+                                                    <i class="bi bi-wallet2 me-1"></i>{{ $metodoCobro }}
+                                                </span>
+                                            @endif
+                                            @if($venta->metodo_pago === 'Por Pagar')
+                                                <small class="text-success fw-bold d-block mt-0.5" style="font-size:0.72rem;">
+                                                    <i class="bi bi-check2-circle"></i> Al día (Saldado)
+                                                </small>
                                             @endif
                                         @endif
                                     </td>

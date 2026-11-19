@@ -18,7 +18,7 @@ class VentaController extends Controller
     // 1. Mostrar el historial de ventas y análisis de compradores
     public function index(Request $request)
     {
-        $query = Venta::with(['usuario', 'usuarioAnulacion']);
+        $query = Venta::with(['usuario', 'usuarioAnulacion', 'pagos', 'ventaOrigen']);
 
         // --- FILTROS ---
         if ($request->filled('buscar')) {
@@ -253,15 +253,25 @@ class VentaController extends Controller
             }
             $venta->save();
 
+            $arqueoActivo = \App\Models\ArqueoCaja::sesionActiva();
             \App\Models\PagoVenta::create([
-                'id_venta'    => $venta->id,
-                'id_cliente'  => $venta->id_cliente,
-                'id_usuario'  => auth()->id() ?? 1,
-                'monto'       => $abono,
-                'metodo_pago' => $request->metodo_pago,
-                'observacion' => $request->observacion ? trim($request->observacion) : 'Cobro de saldo pendiente',
-                'fecha'       => now(),
+                'id_venta'       => $venta->id,
+                'arqueo_caja_id' => $arqueoActivo?->id,
+                'id_cliente'     => $venta->id_cliente,
+                'id_usuario'     => auth()->id() ?? 1,
+                'monto'          => $abono,
+                'metodo_pago'    => $request->metodo_pago,
+                'observacion'    => $request->observacion ? trim($request->observacion) : 'Cobro de saldo pendiente',
+                'fecha'          => now(),
             ]);
+
+            if ($arqueoActivo) {
+                if ($request->metodo_pago === 'QR') {
+                    $arqueoActivo->increment('total_qr_sistema', $abono);
+                } else {
+                    $arqueoActivo->increment('total_efectivo_sistema', $abono);
+                }
+            }
 
             DB::commit();
 

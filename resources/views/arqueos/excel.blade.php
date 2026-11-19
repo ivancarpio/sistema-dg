@@ -53,6 +53,16 @@
     </tr>
 
     @foreach($arqueo->ventas as $venta)
+        @php
+            $metodoCobro = $venta->metodo_cobro_real;
+            $saldoPend = floatval($venta->saldo_pendiente ?? 0);
+            $estaAlDia = $saldoPend <= 0;
+            if (!$estaAlDia) {
+                $textoMetodo = 'Por Pagar (Debe Bs. ' . number_format($saldoPend, 2) . ')';
+            } else {
+                $textoMetodo = $metodoCobro . ($venta->metodo_pago === 'Por Pagar' ? ' (Al día)' : '');
+            }
+        @endphp
         @if($venta->detalles->count() > 0)
             @foreach($venta->detalles as $idx => $det)
             <tr>
@@ -66,7 +76,7 @@
                 <td>{{ optional($det->producto)->nombre ?? 'Producto eliminado' }}</td>
                 <td style="text-align: center;">{{ number_format($det->cantidad, 0) }}</td>
                 @if($idx === 0)
-                    <td>{{ $venta->metodo_pago }}</td>
+                    <td>{{ $textoMetodo }}</td>
                     <td style="text-align: right; font-weight: bold;">Bs. {{ number_format($venta->total, 2) }}</td>
                 @else
                     <td></td><td></td>
@@ -80,7 +90,7 @@
             <td>{{ $venta->cliente ?? 'Cliente Ocasional' }}</td>
             <td>—</td>
             <td style="text-align: center;">—</td>
-            <td>{{ $venta->metodo_pago }}</td>
+            <td>{{ $textoMetodo }}</td>
             <td style="text-align: right; font-weight: bold;">Bs. {{ number_format($venta->total, 2) }}</td>
         </tr>
         @endif

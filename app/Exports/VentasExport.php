@@ -31,13 +31,25 @@ class VentasExport implements FromView, WithTitle, WithStyles, ShouldAutoSize
         } else {
             $totEf = 0; $totQr = 0; $totPorPagar = 0;
             foreach ($this->ventas as $v) {
-                $cobrado = $v->monto_pagado !== null ? floatval($v->monto_pagado) : floatval($v->total);
-                if ($v->metodo_pago === 'Efectivo') $totEf += $cobrado;
-                elseif ($v->metodo_pago === 'QR') $totQr += $cobrado;
-                elseif ($v->metodo_pago === 'Por Pagar') {
-                    $totPorPagar += floatval($v->saldo_pendiente ?? 0);
-                    if ($v->metodo_adelanto === 'QR') $totQr += $cobrado;
-                    else $totEf += $cobrado;
+                if ($v->estado === 'Anulada') continue;
+                $totPorPagar += floatval($v->saldo_pendiente ?? 0);
+
+                $pagos = $v->relationLoaded('pagos') ? $v->pagos : $v->pagos()->get();
+                if ($pagos->isNotEmpty()) {
+                    foreach ($pagos as $p) {
+                        if (strtolower($p->metodo_pago) === 'qr') {
+                            $totQr += floatval($p->monto);
+                        } else {
+                            $totEf += floatval($p->monto);
+                        }
+                    }
+                } else {
+                    $cobrado = $v->monto_pagado !== null ? floatval($v->monto_pagado) : floatval($v->total);
+                    if (strtolower($v->metodo_pago) === 'qr' || strtolower($v->metodo_adelanto ?? '') === 'qr') {
+                        $totQr += $cobrado;
+                    } elseif (strtolower($v->metodo_pago) === 'efectivo' || strtolower($v->metodo_adelanto ?? '') === 'efectivo') {
+                        $totEf += $cobrado;
+                    }
                 }
             }
             $this->totales = [

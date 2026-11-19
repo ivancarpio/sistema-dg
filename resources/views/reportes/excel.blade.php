@@ -47,7 +47,13 @@
                 <td>{{ number_format($detalle->cantidad, 0) }}</td>
                 <td>{{ number_format($detalle->precio_unitario, 2) }}</td>
                 @if($i === 0)
-                    <td>{{ $venta->metodo_pago }}</td>
+                    @php
+                        $saldoPend = floatval($venta->saldo_pendiente ?? 0);
+                        $metodoTexto = $saldoPend > 0 
+                            ? 'Por Pagar (Debe Bs. ' . number_format($saldoPend, 2) . ')'
+                            : $venta->metodo_cobro_real . ($venta->metodo_pago === 'Por Pagar' ? ' (Al día)' : '');
+                    @endphp
+                    <td>{{ $metodoTexto }}</td>
                     <td>{{ number_format($venta->total, 2) }}</td>
                     <td>{{ optional($venta->usuario)->name ?? 'Cajero' }}</td>
                     <td>{{ $venta->estado }}</td>
@@ -69,7 +75,13 @@
             <td>—</td>
             <td>—</td>
             <td>—</td>
-            <td>{{ $venta->metodo_pago }}</td>
+            @php
+                $saldoPend = floatval($venta->saldo_pendiente ?? 0);
+                $metodoTexto = $saldoPend > 0 
+                    ? 'Por Pagar (Debe Bs. ' . number_format($saldoPend, 2) . ')'
+                    : $venta->metodo_cobro_real . ($venta->metodo_pago === 'Por Pagar' ? ' (Al día)' : '');
+            @endphp
+            <td>{{ $metodoTexto }}</td>
             <td>{{ number_format($venta->total, 2) }}</td>
             <td>{{ optional($venta->usuario)->name ?? 'Cajero' }}</td>
             <td>{{ $venta->estado }}</td>

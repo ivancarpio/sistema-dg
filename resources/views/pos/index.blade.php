@@ -371,6 +371,17 @@
         </div>
     </div>
     <div class="d-flex align-items-center gap-2">
+        @if(isset($arqueoActivo) && $arqueoActivo)
+            <a href="/arqueos/sesion" class="badge bg-success bg-opacity-10 text-success border border-success-subtle px-3 py-2 rounded-3 shadow-sm d-flex align-items-center text-decoration-none" style="font-size: 0.85rem;" title="Ver turno de caja activo en vivo">
+                <i class="bi bi-record-circle-fill text-success me-1.5"></i> Caja Abierta · Turno #{{ $arqueoActivo->id }}
+                <span class="ms-1.5 text-dark fw-bold">(Gaveta: Bs. {{ number_format($arqueoActivo->efectivo_esperado, 2) }})</span>
+            </a>
+        @else
+            <a href="/arqueos/sesion" class="badge bg-warning bg-opacity-10 text-warning border border-warning-subtle px-3 py-2 rounded-3 shadow-sm d-flex align-items-center text-decoration-none" style="font-size: 0.85rem;" title="Abrir turno de caja">
+                <i class="bi bi-exclamation-circle-fill text-warning me-1.5"></i> Sin Turno Abierto
+                <span class="ms-1.5 text-primary fw-bold">[ Abrir Caja ]</span>
+            </a>
+        @endif
         <span class="badge bg-white text-dark border px-3 py-2 rounded-3 shadow-sm d-flex align-items-center" style="font-size: 0.85rem;">
             <i class="bi bi-person-badge-fill text-primary me-2 fs-6"></i> Cajero:&nbsp;<strong class="text-primary">{{ optional(auth()->user())->name ?? 'Usuario' }}</strong>
         </span>
@@ -661,6 +672,10 @@
                     
                     <!-- Inputs ocultos para enviar los productos -->
                     <input type="hidden" name="total_venta" id="inputTotalVenta" value="0">
+                    <input type="hidden" name="venta_origen_id" id="inputVentaOrigenId" value="{{ isset($ventaRehacer) && $ventaRehacer ? $ventaRehacer->id : '' }}">
+                    <input type="hidden" name="resolucion_diferencia" id="inputResolucionDiferencia" value="">
+                    <input type="hidden" name="metodo_diferencia" id="inputMetodoDiferencia" value="">
+                    <input type="hidden" name="referencia_diferencia" id="inputReferenciaDiferencia" value="">
                     <div id="inputsOcultosCarrito"></div>
 
                     <!-- CAMPO 1: Nº DE TALONARIO / NOTA FÍSICA -->
@@ -922,6 +937,106 @@
     </div>
 </div>
 
+<!-- ============================================== -->
+<!-- MODAL DE RESOLUCIÓN DE DIFERENCIAS (REHACER)  -->
+<!-- ============================================== -->
+<div class="modal fade" id="modalDiferenciaRehacer" tabindex="-1" aria-hidden="true" data-bs-backdrop="static">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg rounded-4 overflow-hidden">
+            <div class="modal-header bg-warning bg-opacity-25 border-0 py-3 px-4">
+                <h6 class="modal-title fw-bold text-dark m-0 d-flex align-items-center gap-2">
+                    <i class="bi bi-arrow-repeat text-warning fs-5"></i>
+                    <span id="tituloModalDiferencia">Ajuste por Venta Rehecha</span>
+                </h6>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body p-4 text-start">
+                <div class="p-3 rounded-3 mb-3 border bg-light">
+                    <div class="d-flex justify-content-between mb-1 text-muted small">
+                        <span>Total Pagado Originalmente:</span>
+                        <strong class="text-dark" id="txtOrigModalDif">Bs. 0.00</strong>
+                    </div>
+                    <div class="d-flex justify-content-between mb-1 text-muted small">
+                        <span>Nuevo Total Corregido:</span>
+                        <strong class="text-dark" id="txtNuevoModalDif">Bs. 0.00</strong>
+                    </div>
+                    <hr class="my-2">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <span class="fw-bold" id="lblResultadoDif">Diferencia:</span>
+                        <span class="fs-4 fw-bold" id="txtMontoResultadoDif">Bs. 0.00</span>
+                    </div>
+                </div>
+
+                <!-- PANEL CASO C: El total BAJÓ (A favor del cliente) -->
+                <div id="panelCasoBaja" style="display: none;">
+                    <p class="small text-muted mb-2 fw-semibold">
+                        <i class="bi bi-info-circle text-primary me-1"></i>
+                        Como el cliente pagó de más en la primera venta, selecciona cómo resolver la diferencia a su favor:
+                    </p>
+
+                    <div class="list-group gap-2 mb-3">
+                        <label class="list-group-item list-group-item-action d-flex align-items-center gap-3 rounded-3 border p-3 cursor-pointer">
+                            <input class="form-check-input flex-shrink-0 fs-5 mt-0" type="radio" name="opt_resolucion" value="saldo_favor" checked>
+                            <div>
+                                <strong class="d-block text-dark fw-bold">
+                                    <i class="bi bi-wallet2 text-success me-1"></i> Acreditar como Saldo a Favor del Cliente
+                                </strong>
+                                <small class="text-muted" style="font-size:0.75rem;">
+                                    El monto queda como crédito a favor del cliente para descontar en futuras compras. No sale dinero físico de la caja de hoy.
+                                </small>
+                            </div>
+                        </label>
+                        <label class="list-group-item list-group-item-action d-flex align-items-center gap-3 rounded-3 border p-3 cursor-pointer">
+                            <input class="form-check-input flex-shrink-0 fs-5 mt-0" type="radio" name="opt_resolucion" value="devolucion_efectivo">
+                            <div>
+                                <strong class="d-block text-dark fw-bold">
+                                    <i class="bi bi-cash-stack text-danger me-1"></i> Devolución en Efectivo de Caja
+                                </strong>
+                                <small class="text-muted" style="font-size:0.75rem;">
+                                    Entregar el dinero físico en efectivo al cliente. Se registrará un egreso de caja en el turno de hoy para que tu gaveta cuadre exacta.
+                                </small>
+                            </div>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- PANEL CASO B: El total SUBIÓ (El cliente paga la diferencia) -->
+                <div id="panelCasoSube" style="display: none;">
+                    <p class="small text-muted mb-2 fw-semibold">
+                        <i class="bi bi-info-circle text-primary me-1"></i>
+                        El nuevo pedido tiene mayor valor. ¿Cómo abonará el cliente los <span id="txtDiferenciaPagarSpan" class="fw-bold text-success">Bs. 0.00</span> restantes?
+                    </p>
+
+                    <div class="row g-2 mb-3">
+                        <div class="col-6">
+                            <input type="radio" class="btn-check" name="opt_metodo_dif" id="opt_dif_efectivo" value="Efectivo" checked>
+                            <label class="btn btn-outline-success w-100 py-3 fw-bold rounded-3" for="opt_dif_efectivo">
+                                <i class="bi bi-cash-coin fs-4 d-block mb-1"></i>
+                                Efectivo
+                            </label>
+                        </div>
+                        <div class="col-6">
+                            <input type="radio" class="btn-check" name="opt_metodo_dif" id="opt_dif_qr" value="QR">
+                            <label class="btn btn-outline-primary w-100 py-3 fw-bold rounded-3" for="opt_dif_qr">
+                                <i class="bi bi-qr-code-scan fs-4 d-block mb-1"></i>
+                                QR Simple
+                            </label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer bg-light border-0 py-3 px-4 justify-content-between">
+                <button type="button" class="btn btn-outline-secondary px-3" data-bs-dismiss="modal">
+                    Cancelar
+                </button>
+                <button type="button" class="btn btn-primary px-4 fw-bold rounded-pill shadow-sm" id="btnConfirmarResolucionDiferencia">
+                    <i class="bi bi-check2-circle me-1"></i> Confirmar y Finalizar Venta
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <!-- JAVASCRIPT DEL CARRITO Y COBRO INTELIGENTE -->
 <script>
 document.addEventListener('DOMContentLoaded', function() {
@@ -1157,6 +1272,8 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
+    let resolucionDiferenciaConfirmada = false;
+
     if (formVenta) {
         formVenta.addEventListener('submit', function(e) {
             if (carrito.length === 0) {
@@ -1164,8 +1281,87 @@ document.addEventListener('DOMContentLoaded', function() {
                 alert('El carrito está vacío. Agrega al menos un producto antes de cobrar.');
                 return;
             }
+
+            // Si es venta rehecha y no se ha confirmado la resolución de la diferencia
+            if (VENTA_REHACER && !resolucionDiferenciaConfirmada) {
+                const origPagado = parseFloat(VENTA_REHACER.monto_pagado || 0);
+                const nuevoTotal = parseFloat(inputTotalVenta.value) || 0;
+                const diff = Math.round((nuevoTotal - origPagado) * 100) / 100;
+
+                // Solo si la venta original YA había sido pagada y hay diferencia real
+                if (origPagado > 0 && Math.abs(diff) > 0.01) {
+                    e.preventDefault();
+                    abrirModalResolucionDiferencia(origPagado, nuevoTotal, diff);
+                    return;
+                }
+            }
+
             // Al cobrar se limpia el almacenamiento para que la próxima venta inicie limpia
             localStorage.removeItem(POS_STORAGE_KEY);
+        });
+    }
+
+    function abrirModalResolucionDiferencia(origPagado, nuevoTotal, diff) {
+        const modalEl = document.getElementById('modalDiferenciaRehacer');
+        if (!modalEl || typeof bootstrap === 'undefined') return;
+
+        document.getElementById('txtOrigModalDif').textContent = `Bs. ${origPagado.toFixed(2)}`;
+        document.getElementById('txtNuevoModalDif').textContent = `Bs. ${nuevoTotal.toFixed(2)}`;
+        
+        const panelBaja = document.getElementById('panelCasoBaja');
+        const panelSube = document.getElementById('panelCasoSube');
+        const lblRes = document.getElementById('lblResultadoDif');
+        const txtRes = document.getElementById('txtMontoResultadoDif');
+        const titulo = document.getElementById('tituloModalDiferencia');
+
+        if (diff < 0) {
+            // El total BAJÓ: dinero a favor del cliente
+            const sobrante = Math.abs(diff);
+            titulo.innerHTML = '<i class="bi bi-wallet2 text-success fs-5"></i> Diferencia a Favor del Cliente';
+            lblRes.textContent = 'Monto a favor del cliente:';
+            lblRes.className = 'fw-bold text-success';
+            txtRes.textContent = `Bs. ${sobrante.toFixed(2)}`;
+            txtRes.className = 'fs-4 fw-bold text-success';
+
+            panelBaja.style.display = 'block';
+            panelSube.style.display = 'none';
+        } else {
+            // El total SUBIÓ: cliente debe pagar la diferencia
+            titulo.innerHTML = '<i class="bi bi-cash-coin text-danger fs-5"></i> Diferencia Adicional por Cobrar';
+            lblRes.textContent = 'Monto adicional a pagar:';
+            lblRes.className = 'fw-bold text-danger';
+            txtRes.textContent = `+Bs. ${diff.toFixed(2)}`;
+            txtRes.className = 'fs-4 fw-bold text-danger';
+
+            document.getElementById('txtDiferenciaPagarSpan').textContent = `Bs. ${diff.toFixed(2)}`;
+            panelBaja.style.display = 'none';
+            panelSube.style.display = 'block';
+        }
+
+        const m = bootstrap.Modal.getOrCreateInstance(modalEl);
+        m.show();
+    }
+
+    const btnConfirmarDif = document.getElementById('btnConfirmarResolucionDiferencia');
+    if (btnConfirmarDif) {
+        btnConfirmarDif.addEventListener('click', function() {
+            const nuevoTotal = parseFloat(inputTotalVenta.value) || 0;
+            const origPagado = parseFloat(VENTA_REHACER.monto_pagado || 0);
+            const diff = Math.round((nuevoTotal - origPagado) * 100) / 100;
+
+            if (diff < 0) {
+                // Caso baja: leer opción elegida
+                const opt = document.querySelector('input[name="opt_resolucion"]:checked');
+                document.getElementById('inputResolucionDiferencia').value = opt ? opt.value : 'saldo_favor';
+            } else if (diff > 0) {
+                // Caso sube: leer método de pago de la diferencia
+                const opt = document.querySelector('input[name="opt_metodo_dif"]:checked');
+                document.getElementById('inputMetodoDiferencia').value = opt ? opt.value : 'Efectivo';
+            }
+
+            resolucionDiferenciaConfirmada = true;
+            localStorage.removeItem(POS_STORAGE_KEY);
+            formVenta.submit();
         });
     }
 

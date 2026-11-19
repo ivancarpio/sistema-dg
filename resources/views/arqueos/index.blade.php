@@ -65,9 +65,14 @@
             <small class="text-muted">Cuadre de efectivo y pagos QR de la ferretería</small>
         </div>
     </div>
-    <a href="/arqueos/crear" class="btn btn-primary fw-bold shadow-sm px-4">
-        <i class="bi bi-plus-circle-fill me-2"></i>Crear nuevo arqueo
-    </a>
+    <div class="d-flex align-items-center gap-2">
+        <a href="/arqueos/sesion" class="btn btn-outline-primary fw-bold shadow-sm px-3 rounded-pill">
+            <i class="bi bi-record-circle text-danger me-1"></i> Control de Turno en Vivo
+        </a>
+        <a href="/arqueos/crear" class="btn btn-primary fw-bold shadow-sm px-4 rounded-pill">
+            <i class="bi bi-plus-circle-fill me-2"></i>Crear nuevo arqueo
+        </a>
+    </div>
 </div>
 
 {{-- ===== PANEL DE CONTROL ===== --}}

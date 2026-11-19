@@ -97,6 +97,10 @@ Route::middleware(['auth'])->group(function () {
     // ============================================================
     Route::middleware(['permiso:arqueos'])->group(function () {
         Route::get('/arqueos', [ArqueoController::class, 'index']);
+        Route::get('/arqueos/sesion', [ArqueoController::class, 'sesionActual'])->name('arqueos.sesion');
+        Route::post('/arqueos/abrir', [ArqueoController::class, 'abrirCaja'])->name('arqueos.abrir');
+        Route::post('/arqueos/cerrar', [ArqueoController::class, 'cerrarCaja'])->name('arqueos.cerrar');
+        Route::post('/arqueos/movimiento', [ArqueoController::class, 'registrarMovimiento'])->name('arqueos.movimiento');
         Route::get('/arqueos/crear', [ArqueoController::class, 'create']);
         Route::post('/arqueos', [ArqueoController::class, 'store']);
         Route::get('/arqueos/{id}', [ArqueoController::class, 'show']);

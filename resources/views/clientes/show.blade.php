@@ -27,6 +27,28 @@
         flex-shrink: 0;
     }
 
+    /* Estilos claros y visibles para las pestañas de navegación */
+    #pills-tab .nav-link {
+        color: #475569 !important;
+        background-color: #f8fafc !important;
+        border: 1.5px solid #cbd5e1 !important;
+        border-radius: 12px !important;
+        font-weight: 700 !important;
+        font-size: 0.92rem !important;
+        transition: all 0.2s ease !important;
+    }
+    #pills-tab .nav-link:hover {
+        color: #0284c7 !important;
+        background-color: #f0f9ff !important;
+        border-color: #93c5fd !important;
+    }
+    #pills-tab .nav-link.active {
+        color: #0369a1 !important;
+        background-color: #e0f2fe !important;
+        border-color: #38bdf8 !important;
+        box-shadow: 0 4px 12px rgba(2, 132, 199, 0.18) !important;
+    }
+
     .modal-content-clean {
         background-color: #ffffff !important;
         border: none !important;

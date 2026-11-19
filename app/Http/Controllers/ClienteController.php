@@ -11,9 +11,16 @@ class ClienteController extends Controller
 {
     public function index(Request $request)
     {
-        $query = Cliente::with(['ventas' => function ($q) {
-            $q->where('estado', '!=', 'Anulada');
-        }]);
+        $query = Cliente::with([
+            'ventas' => function ($q) {
+                $q->where('estado', '!=', 'Anulada');
+            },
+            'pagos' => function ($q) {
+                $q->orderBy('fecha', 'desc');
+            },
+            'pagos.usuario',
+            'pagos.venta'
+        ]);
 
         // Buscador Inteligente Multi-Palabra
         if ($request->filled('buscar')) {
@@ -48,12 +55,19 @@ class ClienteController extends Controller
             }
         }
 
+        // Historial global de cobros para auditoría
+        $ultimosCobrosGlobales = \App\Models\PagoVenta::with(['cliente', 'usuario', 'venta'])
+            ->orderBy('fecha', 'desc')
+            ->take(150)
+            ->get();
+
         return view('clientes.index', compact(
             'clientes',
             'totalClientes',
             'clientesConDeuda',
             'totalDeudaPorCobrar',
-            'totalCompradoHistorico'
+            'totalCompradoHistorico',
+            'ultimosCobrosGlobales'
         ));
     }
 
@@ -209,15 +223,25 @@ class ClienteController extends Controller
                 }
                 $v->save();
 
+                $arqueoActivo = \App\Models\ArqueoCaja::sesionActiva();
                 \App\Models\PagoVenta::create([
-                    'id_venta'    => $v->id,
-                    'id_cliente'  => $cliente->id,
-                    'id_usuario'  => auth()->id() ?? 1,
-                    'monto'       => $pagoNota,
-                    'metodo_pago' => $request->metodo_pago,
-                    'observacion' => $request->observacion ? trim($request->observacion) : 'Abono a cuenta de cliente',
-                    'fecha'       => now(),
+                    'id_venta'       => $v->id,
+                    'arqueo_caja_id' => $arqueoActivo?->id,
+                    'id_cliente'     => $cliente->id,
+                    'id_usuario'     => auth()->id() ?? 1,
+                    'monto'          => $pagoNota,
+                    'metodo_pago'    => $request->metodo_pago,
+                    'observacion'    => $request->observacion ? trim($request->observacion) : 'Abono a cuenta de cliente',
+                    'fecha'          => now(),
                 ]);
+
+                if ($arqueoActivo) {
+                    if ($request->metodo_pago === 'QR') {
+                        $arqueoActivo->increment('total_qr_sistema', $pagoNota);
+                    } else {
+                        $arqueoActivo->increment('total_efectivo_sistema', $pagoNota);
+                    }
+                }
 
                 $montoRestante = round($montoRestante - $pagoNota, 2);
             }

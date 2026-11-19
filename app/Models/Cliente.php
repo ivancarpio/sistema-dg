@@ -17,7 +17,12 @@ class Cliente extends Model
         'ci_nit',
         'direccion',
         'email',
+        'saldo_favor',
         'notas',
+    ];
+
+    protected $casts = [
+        'saldo_favor' => 'decimal:2',
     ];
 
     public function ventas()

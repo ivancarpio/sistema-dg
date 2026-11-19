@@ -836,7 +836,7 @@
 
                 <div class="pt-2 border-top d-flex flex-wrap justify-content-between align-items-center text-muted small" style="font-size: 0.74rem;">
                     <span><i class="bi bi-cursor-fill me-1 text-primary"></i>Haz clic en cualquier puesto para ver detalles</span>
-                    <strong class="text-dark">Total: Bs. {{ number_format($totalMontoTopClientes, 2) }}</strong>
+                    <strong class="text-dark" title="Suma de compras de estos 10 clientes principales en el mes">Subtotal Top 10: Bs. {{ number_format($totalMontoTopClientes, 2) }} <span class="text-muted fw-normal">({{ round(($totalMontoTopClientes / ($ventasMes > 0 ? $ventasMes : 1)) * 100, 1) }}%)</span></strong>
                 </div>
             </div>
         </div>

@@ -145,11 +145,93 @@
 .campo-requerido.error { border-color: #ef4444 !important; box-shadow: 0 0 0 3px rgba(239,68,68,0.1) !important; }
 .msg-error { color: #dc2626; font-size: 0.78rem; font-weight: 600; margin-top: 4px; }
 
-/* Responsive adjustments */
+/* Responsive Móvil para Modal Nuevo Ajuste — Idéntico a Administración Masiva de Categorías */
 @media (max-width: 767.98px) {
+    #modalNuevoAjuste .modal-dialog {
+        margin: 0.5rem auto !important;
+        max-width: 96% !important;
+    }
+    #modalNuevoAjuste .modal-header-custom {
+        padding: 12px 14px !important;
+    }
+    #modalNuevoAjuste .modal-header-custom h5 {
+        font-size: 1rem !important;
+    }
+    #modalNuevoAjuste .modal-body {
+        padding: 12px !important;
+    }
+    #modalNuevoAjuste .paso-1-card {
+        padding: 10px 12px !important;
+        margin-bottom: 10px !important;
+    }
+    #modalNuevoAjuste .tipo-btn {
+        padding: 8px 4px !important;
+    }
+    #modalNuevoAjuste .tipo-btn .tipo-icon {
+        font-size: 1.15rem !important;
+        margin-bottom: 0 !important;
+    }
+    #modalNuevoAjuste .tipo-btn .tipo-label {
+        font-size: 0.74rem !important;
+    }
+
+    /* Tabla con scroll exactamente igual a Administración Masiva de Categorías */
     .tabla-scroll-masivo {
-        height: 280px !important;
-        max-height: 280px !important;
+        height: 320px !important;
+        max-height: 320px !important;
+    }
+    .table-masiva th {
+        padding: 6px 6px !important;
+        font-size: 0.72rem !important;
+        letter-spacing: 0.2px !important;
+    }
+    .table-masiva td {
+        padding: 7px 6px !important;
+        font-size: 0.80rem !important;
+        line-height: 1.25 !important;
+    }
+    .table-masiva .prod-code {
+        font-size: 0.72rem !important;
+        white-space: nowrap !important;
+    }
+    .table-masiva .prod-name {
+        font-size: 0.82rem !important;
+        line-height: 1.25 !important;
+        font-weight: 700 !important;
+    }
+    .table-masiva .prod-empaque {
+        font-size: 0.65rem !important;
+        line-height: 1.2 !important;
+    }
+    .table-masiva .marca-badge {
+        font-size: 0.68rem !important;
+        padding: 2px 5px !important;
+        white-space: normal !important;
+        display: inline-block !important;
+        max-width: 90px !important;
+        line-height: 1.2 !important;
+    }
+    .table-masiva .badge-stock {
+        font-size: 0.70rem !important;
+        padding: 2px 5px !important;
+    }
+    .table-masiva .input-cant-fila {
+        width: 60px !important;
+        height: 28px !important;
+        font-size: 0.82rem !important;
+        padding: 2px 4px !important;
+    }
+    .table-masiva .form-check-input {
+        width: 1.1rem !important;
+        height: 1.1rem !important;
+    }
+
+    #modalNuevoAjuste .modal-footer {
+        padding: 10px 14px !important;
+    }
+    #modalNuevoAjuste .modal-footer .btn {
+        font-size: 0.86rem !important;
+        padding: 8px 14px !important;
     }
 }
 </style>
@@ -231,16 +313,18 @@
     </div>
 </div>
 
-{{-- ===== FILTROS Y BÚSQUEDA AVANZADA (SIN DESBORDAMIENTO EN PC NI MÓVIL) ===== --}}
+{{-- ===== FILTROS Y BÚSQUEDA AVANZADA ===== --}}
 <div class="card p-3 mb-4 shadow-sm border-0 bg-white">
-    <form action="/inventario" method="GET" class="row g-2 align-items-end">
-        <!-- Buscador rápido inteligente -->
-        <div class="col-12 col-md-4 col-xl-3">
+    <form action="/inventario" method="GET" class="row g-2 align-items-end" id="formFiltroInventario">
+        <input type="hidden" name="tipo" id="inputHiddenTipo" value="{{ request('tipo') }}">
+
+        <!-- Única barra de búsqueda inteligente -->
+        <div class="col-12 col-md-5 col-xl-4">
             <label class="form-label small fw-bold text-muted mb-1">Buscar Producto, Motivo o Marca</label>
             <div class="input-group">
                 <span class="input-group-text bg-light text-muted border-end-0"><i class="bi bi-search"></i></span>
-                <input type="text" name="buscar" class="form-control border-start-0 bg-light" 
-                       placeholder="Ej. Tubo, Tigre, Ajuste..." value="{{ request('buscar') }}">
+                <input type="text" name="buscar" id="inputBuscarInventario" class="form-control border-start-0 bg-light" 
+                       placeholder="Buscar por código, producto, marca, motivo..." value="{{ request('buscar') }}" autocomplete="off">
             </div>
         </div>
 
@@ -262,19 +346,8 @@
                    value="{{ $verTodo ? '' : ($fechaHasta ?? now()->toDateString()) }}">
         </div>
 
-        <!-- Tipo de Movimiento -->
-        <div class="col-12 col-md-4 col-xl-2">
-            <label class="form-label small fw-bold text-muted mb-1">Tipo de Movimiento</label>
-            <select name="tipo" class="form-select bg-light">
-                <option value="">Todos los tipos</option>
-                <option value="Entrada" {{ request('tipo') == 'Entrada' ? 'selected' : '' }}>🟢 Entradas</option>
-                <option value="Salida" {{ request('tipo') == 'Salida' ? 'selected' : '' }}>🔴 Salidas</option>
-                <option value="Devolucion" {{ request('tipo') == 'Devolucion' ? 'selected' : '' }}>🟣 Devoluciones</option>
-            </select>
-        </div>
-
-        <!-- Botones de Acción y Presets Rápidos (Alineados en una sola fila compacta) -->
-        <div class="col-12 col-md-12 col-xl-3">
+        <!-- Botones de Acción y Presets Rápidos -->
+        <div class="col-12 col-md-5 col-xl-4">
             <div class="d-flex align-items-center gap-1.5 w-100 flex-nowrap" style="height: 38px;">
                 <button type="submit" class="btn btn-primary text-white fw-bold shadow-sm d-flex align-items-center justify-content-center px-3" style="height: 38px; white-space: nowrap; flex-shrink: 0;">
                     <i class="bi bi-funnel-fill me-1"></i> Filtrar
@@ -298,42 +371,36 @@
 {{-- ===== TARJETA PRINCIPAL CON TABLA ===== --}}
 <div class="card">
 
-    {{-- Cabecera con buscador y filtros --}}
+    {{-- Cabecera con selector exclusivo de Tipo de Movimiento por botones --}}
     <div class="card-header bg-white border-0 py-3">
-        <div class="row g-2 align-items-center">
-            <div class="col-md-5">
+        <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-3">
+            <div>
                 <h6 class="fw-bold m-0 text-dark">
                     <i class="bi bi-list-ul me-2 text-primary"></i>Historial de Movimientos
                     <span class="badge bg-primary ms-1" id="badgeTotal">{{ $totalMovimientos }}</span>
                 </h6>
                 <small class="text-muted">Mostrando: <strong class="text-dark">{{ $subtituloPeriodo }}</strong> • Cada día nuevo inicia en 0</small>
             </div>
-            <div class="col-md-4">
-                {{-- Buscador en tiempo real sobre la tabla --}}
-                <div class="input-group">
-                    <span class="input-group-text bg-light border-end-0"><i class="bi bi-search text-muted"></i></span>
-                    <input type="text" id="buscadorInventario"
-                        class="form-control border-start-0 bg-light"
-                        placeholder="Filtro rápido en pantalla...">
-                </div>
-            </div>
-            <div class="col-md-3">
-                {{-- Filtro rápido por tipo --}}
-                <div class="btn-group w-100" role="group">
-                    <button type="button" class="btn btn-sm btn-outline-secondary active"
+            <div>
+                {{-- Selector exclusivo por tipo de movimiento mediante botones --}}
+                @php
+                    $tipoActual = strtolower(request('tipo', 'todos'));
+                @endphp
+                <div class="btn-group shadow-xs" role="group" id="grupoBotonesTipo">
+                    <button type="button" class="btn btn-sm btn-filtro-tipo {{ ($tipoActual === 'todos' || empty($tipoActual)) ? 'btn-secondary text-white fw-bold active' : 'btn-outline-secondary' }}"
                         onclick="filtrarTipo('todos', this)">
                         Todos
                     </button>
-                    <button type="button" class="btn btn-sm btn-outline-success"
+                    <button type="button" class="btn btn-sm btn-filtro-tipo {{ $tipoActual === 'entrada' ? 'btn-success text-white fw-bold active' : 'btn-outline-success' }}"
                         onclick="filtrarTipo('entrada', this)">
                         <i class="bi bi-arrow-up"></i> Entradas
                     </button>
-                    <button type="button" class="btn btn-sm btn-outline-danger"
+                    <button type="button" class="btn btn-sm btn-filtro-tipo {{ $tipoActual === 'salida' ? 'btn-danger text-white fw-bold active' : 'btn-outline-danger' }}"
                         onclick="filtrarTipo('salida', this)">
                         <i class="bi bi-arrow-down"></i> Salidas
                     </button>
-                    <button type="button" class="btn btn-sm"
-                        style="color: #6d28d9; border: 1px solid #c4b5fd;"
+                    <button type="button" class="btn btn-sm btn-filtro-tipo {{ $tipoActual === 'devolucion' ? 'text-white fw-bold active' : '' }}"
+                        style="{{ $tipoActual === 'devolucion' ? 'background-color: #7c3aed; border-color: #7c3aed;' : 'color: #6d28d9; border: 1px solid #c4b5fd;' }}"
                         onclick="filtrarTipo('devolucion', this)">
                         <i class="bi bi-arrow-counterclockwise"></i> Devoluc.
                     </button>
@@ -480,7 +547,10 @@
                             <i class="bi bi-calendar2-check fs-1 d-block mb-2 text-primary opacity-50"></i>
                             <h6 class="fw-bold mb-1 text-dark">No hay movimientos registrados para este período</h6>
                             <small class="text-muted d-block mb-3">
-                                @if(!$verTodo && $fechaFiltro === now()->toDateString())
+                                @php
+                                    $esFiltroHoy = (!$verTodo && ($fechaDesde ?? ($fechaFiltro ?? null)) === now()->toDateString() && ($fechaHasta ?? now()->toDateString()) === now()->toDateString());
+                                @endphp
+                                @if($esFiltroHoy)
                                     El día de hoy aún no tiene ingresos ni salidas de mercadería registradas.
                                 @else
                                     No se encontraron movimientos para los filtros o fecha seleccionada.
@@ -609,7 +679,7 @@
                                     $marcasUnicas = $productos->pluck('marca.nombre')->filter()->unique()->sort();
                                 @endphp
                                 @foreach($marcasUnicas as $mNom)
-                                    <option value="{{ strtolower($mNom) }}">🏷️ {{ $mNom }}</option>
+                                    <option value="{{ strtolower($mNom) }}">{{ $mNom }}</option>
                                 @endforeach
                             </select>
                         </div>
@@ -635,14 +705,14 @@
                         <table class="table table-hover table-masiva m-0">
                             <thead class="sticky-top">
                                 <tr>
-                                    <th style="width: 40px;" class="text-center">
+                                    <th style="width: 35px;" class="text-center">
                                         <i class="bi bi-check2"></i>
                                     </th>
-                                    <th style="width: 95px;">CÓDIGO</th>
+                                    <th style="width: 85px;">CÓDIGO</th>
                                     <th>PRODUCTO</th>
-                                    <th style="width: 125px;">MARCA</th>
-                                    <th style="width: 75px;" class="text-center">STOCK</th>
-                                    <th style="width: 110px;" class="text-center">CANTIDAD</th>
+                                    <th style="width: 105px;">MARCA</th>
+                                    <th style="width: 60px;" class="text-center">STOCK</th>
+                                    <th style="width: 85px;" class="text-center">CANTIDAD</th>
                                 </tr>
                             </thead>
                             <tbody id="tbodyModalProductos">
@@ -663,18 +733,18 @@
                                     <td class="fw-bold text-dark prod-name">
                                         {{ $prod->nombre }}
                                         @if($prod->tieneUnidadSecundaria())
-                                            <small class="text-muted fw-normal d-block" style="font-size: 0.70rem;">
+                                            <small class="text-muted fw-normal d-block prod-empaque" style="font-size: 0.70rem;">
                                                 Empaque: {{ optional($prod->unidadSecundaria)->nombre }} (x{{ round($prod->factor_conversion) }} {{ $nomUnidad }})
                                             </small>
                                         @endif
                                     </td>
                                     <td>
-                                        <span class="badge" style="background:#e0f2fe; color:#0369a1; border:1px solid #bae6fd; font-size:0.74rem;">
-                                            <i class="bi bi-tag-fill me-1"></i>{{ $nomMarca }}
+                                        <span class="badge marca-badge" style="background:#f1f5f9; color:#334155; border:1px solid #cbd5e1; font-size:0.75rem; font-weight:600;">
+                                            {{ $nomMarca }}
                                         </span>
                                     </td>
                                     <td class="text-center small fw-bold">
-                                        <span class="badge bg-light text-dark border">{{ $prod->stock }}</span>
+                                        <span class="badge bg-light text-dark border badge-stock">{{ $prod->stock }}</span>
                                     </td>
                                     <td class="text-center" onclick="event.stopPropagation();">
                                         <input type="number" 
@@ -832,50 +902,80 @@ document.addEventListener('DOMContentLoaded', function () {
     if (buscadorModal) buscadorModal.addEventListener('input', filtrarProductosModalAjuste);
     if (filtroMarcaModal) filtroMarcaModal.addEventListener('change', filtrarProductosModalAjuste);
 
-    // Botón Marcar Visibles en el Modal
+    // Función ultrarrápida para actualizar contadores sin escanear el DOM
+    function actualizarConteoModalAjusteDirecto(count) {
+        const badge = document.getElementById('badgeConteoSeleccionadosAjuste');
+        const txtBtn = document.getElementById('txtBtnGuardarCount');
+        const txtResumen = document.getElementById('txtResumenFisicoAjuste');
+
+        const texto = `${count} seleccionado${count === 1 ? '' : 's'}`;
+        if (badge) badge.textContent = texto;
+        if (txtBtn) txtBtn.textContent = `${count} producto${count === 1 ? '' : 's'}`;
+        if (txtResumen) txtResumen.textContent = `${count} producto${count === 1 ? '' : 's'} seleccionado${count === 1 ? '' : 's'}`;
+    }
+
+    // Botón Marcar Visibles en el Modal (Optimizado: Acceso directo a celdas sin cuelgues)
     const btnMarcar = document.getElementById('btnMarcarVisiblesAjuste');
     if (btnMarcar) {
         btnMarcar.addEventListener('click', function() {
+            const tbody = document.getElementById('tbodyModalProductos');
+            if (!tbody) return;
+
             const cantGeneral = document.getElementById('inputCantidadGeneralAjuste');
             const valorGeneral = (cantGeneral && parseInt(cantGeneral.value) > 0) ? parseInt(cantGeneral.value) : 0;
             
-            document.querySelectorAll('.fila-prod-ajuste').forEach(fila => {
-                if (fila.style.display !== 'none') {
-                    const chk = fila.querySelector('.check-prod-ajuste');
-                    if (chk) {
-                        chk.checked = true;
-                        fila.classList.add('fila-seleccionada');
-                        const inputCant = document.getElementById('inputCantRow' + chk.value);
-                        if (inputCant) {
-                            inputCant.disabled = false;
-                            if (valorGeneral > 0) {
-                                inputCant.value = valorGeneral;
-                            } else if (!inputCant.value) {
-                                inputCant.value = 0;
-                            }
-                        }
+            const rows = tbody.rows;
+            let totalChecked = 0;
+
+            for (let i = 0; i < rows.length; i++) {
+                const row = rows[i];
+                if (row.style.display === 'none') {
+                    const chkH = row.cells[0]?.firstElementChild;
+                    if (chkH && chkH.checked) totalChecked++;
+                    continue;
+                }
+
+                row.classList.add('fila-seleccionada');
+                const chk = row.cells[0]?.firstElementChild;
+                if (chk) chk.checked = true;
+
+                const inputCant = row.cells[5]?.firstElementChild;
+                if (inputCant) {
+                    inputCant.disabled = false;
+                    if (valorGeneral > 0) {
+                        inputCant.value = valorGeneral;
+                    } else if (!inputCant.value || parseInt(inputCant.value) <= 0) {
+                        inputCant.value = 0;
                     }
                 }
-            });
-            actualizarConteoModalAjuste();
+                totalChecked++;
+            }
+
+            actualizarConteoModalAjusteDirecto(totalChecked);
         });
     }
 
-    // Botón Desmarcar Todos en el Modal
+    // Botón Desmarcar Todos en el Modal (Instantáneo: sólo itera filas seleccionadas)
     const btnDesmarcar = document.getElementById('btnDesmarcarTodosAjuste');
     if (btnDesmarcar) {
         btnDesmarcar.addEventListener('click', function() {
-            document.querySelectorAll('.check-prod-ajuste').forEach(chk => {
-                chk.checked = false;
-                const fila = chk.closest('tr');
-                if (fila) fila.classList.remove('fila-seleccionada');
-                const inputCant = document.getElementById('inputCantRow' + chk.value);
+            const tbody = document.getElementById('tbodyModalProductos');
+            if (!tbody) return;
+
+            const seleccionados = tbody.querySelectorAll('.fila-seleccionada');
+            for (let i = 0; i < seleccionados.length; i++) {
+                const row = seleccionados[i];
+                row.classList.remove('fila-seleccionada');
+                const chk = row.cells[0]?.firstElementChild;
+                if (chk) chk.checked = false;
+                const inputCant = row.cells[5]?.firstElementChild;
                 if (inputCant) {
                     inputCant.disabled = true;
                     inputCant.classList.remove('is-invalid', 'border-danger');
                 }
-            });
-            actualizarConteoModalAjuste();
+            }
+
+            actualizarConteoModalAjusteDirecto(0);
         });
     }
 
@@ -1096,27 +1196,61 @@ function setMotivoRapido(texto) {
     if (err) err.style.display = 'none';
 }
 
-// Filtro por tipo en la tabla principal
-let tipoFiltroActivo = 'todos';
+// Filtro exclusivo por tipo de movimiento mediante botones
+let tipoFiltroActivo = '{{ strtolower(request('tipo', 'todos')) ?: 'todos' }}';
 
 function filtrarTipo(tipo, btn) {
     tipoFiltroActivo = tipo;
-    btn.closest('.btn-group').querySelectorAll('.btn').forEach(b => b.classList.remove('active'));
-    btn.classList.add('active');
+    
+    // Resetear clases de todos los botones de tipo
+    document.querySelectorAll('.btn-filtro-tipo').forEach(b => {
+        b.classList.remove('active', 'text-white', 'fw-bold', 'btn-secondary', 'btn-success', 'btn-danger');
+        const txt = b.textContent.trim().toLowerCase();
+        if (txt.includes('todos')) b.className = 'btn btn-sm btn-filtro-tipo btn-outline-secondary';
+        else if (txt.includes('entradas')) b.className = 'btn btn-sm btn-filtro-tipo btn-outline-success';
+        else if (txt.includes('salidas')) b.className = 'btn btn-sm btn-filtro-tipo btn-outline-danger';
+        else if (txt.includes('devoluc')) {
+            b.className = 'btn btn-sm btn-filtro-tipo';
+            b.style.color = '#6d28d9';
+            b.style.borderColor = '#c4b5fd';
+            b.style.backgroundColor = '';
+        }
+    });
+
+    // Activar el botón seleccionado
+    if (btn) {
+        btn.classList.add('active', 'text-white', 'fw-bold');
+        if (tipo === 'todos') btn.classList.add('btn-secondary');
+        else if (tipo === 'entrada') btn.classList.add('btn-success');
+        else if (tipo === 'salida') btn.classList.add('btn-danger');
+        else if (tipo === 'devolucion') {
+            btn.style.backgroundColor = '#7c3aed';
+            btn.style.borderColor = '#7c3aed';
+            btn.style.color = '#ffffff';
+        }
+    }
+
+    // Guardar en el input hidden para conservar el filtro si se recarga o envía el formulario
+    const hiddenTipo = document.getElementById('inputHiddenTipo');
+    if (hiddenTipo) hiddenTipo.value = (tipo === 'todos') ? '' : tipo;
+
     filtrarTabla();
 }
 
-// Filtro rápido sobre la tabla principal
+// Filtro instantáneo usando el buscador único superior
 function filtrarTabla() {
-    const q = (document.getElementById('buscadorInventario')?.value ?? '').toLowerCase().trim();
+    const inputBuscar = document.getElementById('inputBuscarInventario');
+    const q = (inputBuscar?.value ?? '').toLowerCase().trim();
     const palabras = q.split(/\s+/).filter(Boolean);
     let visibles = 0;
 
-    document.querySelectorAll('.fila-movimiento').forEach(fila => {
-        const texto       = fila.textContent.toLowerCase();
-        const tipoFila    = fila.dataset.tipo ?? '';
-        const okTexto     = palabras.length === 0 || palabras.every(p => texto.includes(p));
-        const okTipo      = tipoFiltroActivo === 'todos' || tipoFila === tipoFiltroActivo;
+    const filas = document.querySelectorAll('.fila-movimiento');
+    for (let i = 0; i < filas.length; i++) {
+        const fila = filas[i];
+        const texto    = fila.textContent.toLowerCase();
+        const tipoFila = (fila.dataset.tipo ?? '').toLowerCase();
+        const okTexto  = palabras.length === 0 || palabras.every(p => texto.includes(p));
+        const okTipo   = tipoFiltroActivo === 'todos' || tipoFila === tipoFiltroActivo;
 
         if (okTexto && okTipo) {
             fila.style.display = '';
@@ -1124,13 +1258,21 @@ function filtrarTabla() {
         } else {
             fila.style.display = 'none';
         }
-    });
+    }
 
     const sinRes = document.getElementById('sinResultados');
     if (sinRes) sinRes.style.display = visibles === 0 ? '' : 'none';
     const bTotal = document.getElementById('badgeTotal');
     if (bTotal) bTotal.textContent = visibles;
 }
+
+// Conectar buscador único superior para filtrado dinámico en pantalla
+document.addEventListener('DOMContentLoaded', function() {
+    const inputBuscar = document.getElementById('inputBuscarInventario');
+    if (inputBuscar) {
+        inputBuscar.addEventListener('input', filtrarTabla);
+    }
+});
 </script>
 
 @endsection

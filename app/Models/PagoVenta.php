@@ -13,13 +13,20 @@ class PagoVenta extends Model
 
     protected $fillable = [
         'id_venta',
+        'arqueo_caja_id',
         'id_cliente',
         'id_usuario',
         'monto',
         'metodo_pago',
+        'referencia',
         'observacion',
         'fecha',
     ];
+
+    public function arqueo()
+    {
+        return $this->belongsTo(ArqueoCaja::class, 'arqueo_caja_id');
+    }
 
     public function venta()
     {

@@ -22,6 +22,41 @@
         border-bottom: 3px solid #0284c7;
         background-color: transparent;
     }
+    @media (max-width: 767.98px) {
+        .nav-tabs-custom {
+            display: flex !important;
+            flex-wrap: nowrap !important;
+            overflow-x: auto !important;
+            overflow-y: hidden !important;
+            -webkit-overflow-scrolling: touch !important;
+            gap: 6px !important;
+            border-bottom: 2px solid #e2e8f0 !important;
+            padding-bottom: 6px !important;
+            scrollbar-width: none !important;
+        }
+        .nav-tabs-custom::-webkit-scrollbar {
+            display: none !important;
+        }
+        .nav-tabs-custom .nav-item {
+            flex-shrink: 0 !important;
+        }
+        .nav-tabs-custom .nav-link {
+            padding: 8px 14px !important;
+            font-size: 0.84rem !important;
+            white-space: nowrap !important;
+            border-radius: 8px 8px 0 0 !important;
+            background-color: #f8fafc !important;
+            border: 1px solid #e2e8f0 !important;
+            border-bottom: none !important;
+        }
+        .nav-tabs-custom .nav-link.active {
+            background-color: #ffffff !important;
+            color: #0284c7 !important;
+            border-color: #0284c7 #0284c7 #ffffff !important;
+            border-top: 2px solid #0284c7 !important;
+            box-shadow: 0 -2px 6px rgba(2, 132, 199, 0.08) !important;
+        }
+    }
     .table-config th {
         background-color: #f8fafc !important;
         font-size: 0.8rem;
@@ -224,7 +259,7 @@
 <div class="card border-0 shadow-sm rounded-4 overflow-hidden mb-4">
     
     <!-- PESTAÑAS DE NAVEGACIÓN -->
-    <div class="card-header bg-white pt-3 pb-0 px-4 border-0">
+    <div class="card-header bg-white pt-3 pb-0 px-3 px-md-4 border-0">
         <ul class="nav nav-tabs nav-tabs-custom" id="configTabs" role="tablist">
             <li class="nav-item" role="presentation">
                 <button class="nav-link active" id="categorias-tab" data-bs-toggle="tab" data-bs-target="#tab-categorias" type="button" role="tab">
@@ -255,7 +290,7 @@
     </div>
 
     <!-- CONTENIDO DE LAS PESTAÑAS -->
-    <div class="card-body bg-light p-4">
+    <div class="card-body bg-light p-3 p-md-4">
         <div class="tab-content" id="configTabsContent">
             
             <!-- ======================================================== -->
@@ -264,13 +299,13 @@
             <div class="tab-pane fade show active" id="tab-categorias" role="tabpanel">
                 
                 <!-- Barra superior de Categorías con botón Masivo -->
-                <div class="d-flex justify-content-between align-items-center mb-4 p-3 bg-white rounded-3 shadow-sm border">
+                <div class="d-flex flex-column flex-sm-row justify-content-between align-items-start align-items-sm-center gap-3 mb-4 p-3 bg-white rounded-3 shadow-sm border">
                     <div>
                         <h6 class="fw-bold m-0 text-dark"><i class="bi bi-diagram-3-fill text-primary me-2"></i> Organización por Categorías</h6>
-                        <small class="text-muted">Crea grupos y asigna productos de forma individual o masiva</small>
+                        <small class="text-muted d-block mt-0.5">Crea grupos y asigna productos de forma individual o masiva</small>
                     </div>
-                    <button type="button" class="btn btn-primary fw-bold shadow-sm px-3 py-2" data-bs-toggle="modal" data-bs-target="#modalAsignacionMasiva">
-                        <i class="bi bi-grid-3x3-gap-fill me-1"></i> Administración Masiva de Categorías
+                    <button type="button" class="btn btn-primary fw-bold shadow-sm px-4 py-2 text-nowrap flex-shrink-0" style="width: auto; max-width: 100%; border-radius: 10px;" data-bs-toggle="modal" data-bs-target="#modalAsignacionMasiva">
+                        <i class="bi bi-grid-3x3-gap-fill me-1"></i> Administración de Categorías
                     </button>
                 </div>
 

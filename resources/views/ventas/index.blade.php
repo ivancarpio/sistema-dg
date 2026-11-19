@@ -157,11 +157,11 @@
     <div class="tab-pane fade show active" id="tab-notas" role="tabpanel">
         
         <!-- PANEL DE FILTROS LIMPIO E INTUITIVO -->
-        <div class="card p-3 mb-4">
-            <form action="/ventas" method="GET" class="row g-2 align-items-center">
+        <div class="card p-3 mb-4 shadow-sm border-0 bg-white">
+            <form action="/ventas" method="GET" class="row g-2 align-items-end">
                 
                 <!-- Buscador rápido -->
-                <div class="col-md-3">
+                <div class="col-12 col-sm-6 col-md-3 col-xl-3">
                     <label class="form-label small fw-bold text-muted mb-1">Buscar por Nota o Cliente</label>
                     <div class="input-group">
                         <span class="input-group-text bg-light text-muted border-end-0"><i class="bi bi-search"></i></span>
@@ -170,7 +170,7 @@
                 </div>
 
                 <!-- Fecha específica -->
-                <div class="col-md-3">
+                <div class="col-6 col-sm-6 col-md-2 col-xl-2">
                     <label class="form-label small fw-bold text-muted mb-1">Fecha</label>
                     <div class="input-group">
                         <span class="input-group-text bg-light text-muted border-end-0"><i class="bi bi-calendar-event"></i></span>
@@ -179,7 +179,7 @@
                 </div>
 
                 <!-- Cajero responsable -->
-                <div class="col-md-2">
+                <div class="col-6 col-sm-6 col-md-2 col-xl-2">
                     <label class="form-label small fw-bold text-muted mb-1">Cajero</label>
                     <div class="input-group">
                         <span class="input-group-text bg-light text-muted border-end-0"><i class="bi bi-person-badge"></i></span>
@@ -194,8 +194,8 @@
                     </div>
                 </div>
 
-                <!-- Selector de Tipo / Estado (Sin interruptores confusos) -->
-                <div class="col-md-2">
+                <!-- Selector de Tipo / Estado -->
+                <div class="col-12 col-sm-6 col-md-3 col-xl-3">
                     <label class="form-label small fw-bold text-muted mb-1">Tipo / Estado de Nota</label>
                     <select name="filtro_tipo" class="form-select bg-light">
                         <option value="">Todas las notas</option>
@@ -215,13 +215,15 @@
                 </div>
 
                 <!-- Botones Filtrar y Limpiar -->
-                <div class="col-md-2 d-flex align-items-end gap-1 pt-4">
-                    <button type="submit" class="btn btn-primary text-white w-100 fw-bold shadow-sm" style="height: 38px;">
-                        <i class="bi bi-funnel-fill me-1"></i> Filtrar
-                    </button>
-                    <a href="/ventas" class="btn btn-light border text-muted" title="Limpiar todos los filtros" style="height: 38px;">
-                        <i class="bi bi-arrow-clockwise"></i>
-                    </a>
+                <div class="col-12 col-md-2 col-xl-2">
+                    <div class="d-flex align-items-center gap-1.5 w-100" style="height: 38px;">
+                        <button type="submit" class="btn btn-primary text-white flex-grow-1 fw-bold shadow-sm d-flex align-items-center justify-content-center px-2 text-nowrap" style="height: 38px; min-width: 0;">
+                            <i class="bi bi-funnel-fill me-1"></i> <span>Filtrar</span>
+                        </button>
+                        <a href="/ventas" class="btn btn-outline-secondary d-flex align-items-center justify-content-center px-2.5 flex-shrink-0 shadow-sm" title="Limpiar todos los filtros" style="height: 38px; width: 38px;">
+                            <i class="bi bi-arrow-clockwise fs-6"></i>
+                        </a>
+                    </div>
                 </div>
 
                 <!-- Mantener orden al filtrar -->
@@ -347,8 +349,13 @@
                                         <i class="bi bi-check-circle-fill me-1"></i> Completada
                                     </span>
                                     <div class="small text-muted" style="font-size: 0.72rem;">
-                                        Método: {{ $venta->metodo_pago }}
+                                        Método: {{ $venta->metodo_cobro_real }}{{ $venta->metodo_pago === 'Por Pagar' ? ' (Saldado)' : '' }}
                                     </div>
+                                    @if($venta->venta_origen_id)
+                                        <div class="small text-primary fw-semibold" style="font-size: 0.70rem;">
+                                            <i class="bi bi-arrow-repeat me-0.5"></i> Corregida de #{{ optional($venta->ventaOrigen)->numero_nota ?? ('SYS-'.$venta->venta_origen_id) }}
+                                        </div>
+                                    @endif
                                 @endif
                             </td>
 
