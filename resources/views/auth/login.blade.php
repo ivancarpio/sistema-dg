@@ -3,8 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Iniciar Sesión | Distribuidora Guadalupe - Sistema DG</title>
+    <title>Iniciar Sesión | {{ \App\Models\Configuracion::get('nombre_empresa', 'Distribuidora Guadalupe') }} - Sistema DG</title>
     
+    <!-- Favicon Oficial con Cache Buster -->
+    <link rel="icon" type="image/png" href="{{ asset('img/logo.png') }}?v={{ \App\Models\Configuracion::get('logo_version', 1) }}">
+    <link rel="shortcut icon" type="image/png" href="{{ asset('img/logo.png') }}?v={{ \App\Models\Configuracion::get('logo_version', 1) }}">
+    <link rel="apple-touch-icon" href="{{ asset('img/logo.png') }}?v={{ \App\Models\Configuracion::get('logo_version', 1) }}">
+
     <!-- Bootstrap 5 & Icons -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
@@ -254,7 +259,7 @@
                 
                 {{-- Logo visible en pantallas móviles pequeñas --}}
                 <div class="d-md-none text-center mb-3">
-                    <img src="{{ asset('img/logo.png') }}?v={{ \App\Models\Configuracion::get('logo_version', 1) }}" alt="Distribuidora Guadalupe" style="max-height: 60px; object-fit: contain;">
+                    <img src="{{ asset('img/logo.png') }}?v={{ \App\Models\Configuracion::get('logo_version', 1) }}" alt="{{ \App\Models\Configuracion::get('nombre_empresa', 'Distribuidora Guadalupe') }}" style="max-height: 60px; object-fit: contain;">
                 </div>
 
                 <div class="mb-4">
@@ -344,7 +349,7 @@
 
                 {{-- Tarjeta Blanca con el Logo Oficial --}}
                 <div class="logo-hero-card">
-                    <img src="{{ asset('img/logo.png') }}?v={{ \App\Models\Configuracion::get('logo_version', 1) }}" alt="Distribuidora Guadalupe" class="logo-hero-img">
+                    <img src="{{ asset('img/logo.png') }}?v={{ \App\Models\Configuracion::get('logo_version', 1) }}" alt="{{ \App\Models\Configuracion::get('nombre_empresa', 'Distribuidora Guadalupe') }}" class="logo-hero-img">
                 </div>
 
                 <h4 class="fw-bold text-white mb-1" style="letter-spacing: 0.5px;">Sistema Comercial DG</h4>

@@ -3,8 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Sistema DG - Distribuidora Guadalupe</title>
-    <link rel="icon" href="{{ asset('img/logo.png') }}" type="image/png">
+    <title>{{ \App\Models\Configuracion::get('nombre_empresa', 'Distribuidora Guadalupe') }} - Sistema DG</title>
+    <!-- Favicon Oficial con Cache Buster -->
+    <link rel="icon" type="image/png" href="{{ asset('img/logo.png') }}?v={{ \App\Models\Configuracion::get('logo_version', 1) }}">
+    <link rel="shortcut icon" type="image/png" href="{{ asset('img/logo.png') }}?v={{ \App\Models\Configuracion::get('logo_version', 1) }}">
+    <link rel="apple-touch-icon" href="{{ asset('img/logo.png') }}?v={{ \App\Models\Configuracion::get('logo_version', 1) }}">
     
     <!-- FUENTES EJECUTIVAS SAAS (PLUS JAKARTA SANS) -->
     <link rel="preconnect" href="https://fonts.googleapis.com">

@@ -345,11 +345,29 @@ class ConfiguracionController extends Controller
         // Fallback estándar si GD no procesó la imagen
         if (!$procesadoConGd) {
             $file->move($imgDir, 'logo.png');
-            copy($logoPngPath, $logoWhitePath);
+            @copy($logoPngPath, $logoWhitePath);
         }
+
+        // Actualizar favicon.ico con el nuevo logo
+        @copy($logoPngPath, public_path('favicon.ico'));
+
+        // Guardar copia persistente en storage/app/public/img
+        try {
+            $storageImgDir = storage_path('app/public/img');
+            if (!file_exists($storageImgDir)) {
+                @mkdir($storageImgDir, 0755, true);
+            }
+            @copy($logoPngPath, $storageImgDir . DIRECTORY_SEPARATOR . 'logo.png');
+            @copy($logoWhitePath, $storageImgDir . DIRECTORY_SEPARATOR . 'logo_white.png');
+        } catch (\Throwable $e) {}
 
         // Actualizar versión de caché para forzar refresco inmediato en los navegadores
         Configuracion::set('logo_version', time(), 'Versión de caché del logo');
+
+        // Limpiar caché de vistas compiladas
+        try {
+            \Illuminate\Support\Facades\Artisan::call('view:clear');
+        } catch (\Throwable $e) {}
 
         return back()->with('success', '¡Logo oficial actualizado con éxito! Se aplicará automáticamente en notas de venta, login, barra lateral y en todo el sistema.');
     }
