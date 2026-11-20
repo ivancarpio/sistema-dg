@@ -154,12 +154,151 @@
         border-color: #0284c7;
         box-shadow: 0 0 0 3px rgba(2, 132, 199, 0.15);
     }
+
+    /* ===== RESPONSIVE MÓVIL — Clientes ===== */
+    @media (max-width: 767.98px) {
+        .header-clientes {
+            flex-direction: column !important;
+            align-items: stretch !important;
+            gap: 12px !important;
+        }
+        .header-cli-left h3 {
+            font-size: 1.1rem !important;
+        }
+        .header-cli-left small {
+            font-size: 0.72rem !important;
+        }
+        .header-cli-icon {
+            width: 36px !important;
+            height: 36px !important;
+            padding: 0 !important;
+            display: inline-flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            border-radius: 8px !important;
+            margin-right: 8px !important;
+        }
+        .header-cli-icon i {
+            font-size: 1.25rem !important;
+        }
+        .header-cli-actions {
+            width: 100% !important;
+            display: grid !important;
+            grid-template-columns: 1fr 1fr !important;
+            gap: 8px !important;
+        }
+        .header-cli-actions .btn {
+            width: 100% !important;
+            padding: 8px 6px !important;
+            font-size: 0.78rem !important;
+            border-radius: 10px !important;
+            display: flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            text-align: center !important;
+            white-space: nowrap !important;
+        }
+
+        /* Stat cards en vertical para que nunca se corten los montos ni títulos */
+        .stat-card-cli {
+            flex-direction: column !important;
+            align-items: flex-start !important;
+            gap: 4px !important;
+            padding: 10px 10px !important;
+            min-height: 94px !important;
+            border-radius: 12px !important;
+        }
+        .stat-icon-cli {
+            width: 28px !important;
+            height: 28px !important;
+            font-size: 0.85rem !important;
+            border-radius: 7px !important;
+            margin-bottom: 2px !important;
+        }
+        .stat-lbl-cli {
+            font-size: 0.64rem !important;
+            font-weight: 800 !important;
+            letter-spacing: 0.2px !important;
+            line-height: 1.2 !important;
+            margin-bottom: 1px !important;
+            white-space: nowrap !important;
+            overflow: hidden !important;
+            text-overflow: ellipsis !important;
+            width: 100% !important;
+        }
+        .stat-val-cli {
+            font-size: 1.05rem !important;
+            font-weight: 800 !important;
+            letter-spacing: -0.3px !important;
+            line-height: 1.15 !important;
+            width: 100% !important;
+            white-space: nowrap !important;
+            overflow: hidden !important;
+            text-overflow: ellipsis !important;
+        }
+        .stat-card-cli small {
+            font-size: 0.65rem !important;
+            margin-top: 1px !important;
+            display: block !important;
+        }
+
+        /* Buscador de clientes */
+        .cliente-card.p-3.mb-4 {
+            padding: 10px 12px !important;
+        }
+        .cliente-card.p-3.mb-4 .input-group,
+        .cliente-card.p-3.mb-4 select,
+        .cliente-card.p-3.mb-4 .btn {
+            height: 36px !important;
+            font-size: 0.82rem !important;
+        }
+        .search-btn-left {
+            padding: 0 10px !important;
+        }
+
+        /* Tabla de clientes compacta */
+        .table-custom-header th {
+            padding: 7px 6px !important;
+            font-size: 0.65rem !important;
+            letter-spacing: 0.3px !important;
+        }
+        .table-custom td {
+            padding: 6px 6px !important;
+            font-size: 0.78rem !important;
+        }
+        .avatar-cli {
+            width: 26px !important;
+            height: 26px !important;
+            font-size: 0.75rem !important;
+            border-radius: 6px !important;
+            margin-right: 6px !important;
+        }
+        .table-custom td a.fw-bold {
+            font-size: 0.80rem !important;
+            line-height: 1.25 !important;
+        }
+        .table-custom td small {
+            font-size: 0.68rem !important;
+        }
+        .table-custom td .badge {
+            font-size: 0.70rem !important;
+            padding: 2px 6px !important;
+        }
+        .table-custom td .fs-6 {
+            font-size: 0.80rem !important;
+        }
+        .btn-action-icon {
+            width: 28px !important;
+            height: 28px !important;
+            font-size: 0.78rem !important;
+        }
+    }
 </style>
 
 <!-- ENCABEZADO -->
-<div class="d-flex justify-content-between align-items-center mb-4">
-    <div class="d-flex align-items-center">
-        <div class="bg-primary bg-opacity-10 p-3 rounded-3 me-3 text-primary">
+<div class="d-flex justify-content-between align-items-center mb-4 header-clientes">
+    <div class="d-flex align-items-center header-cli-left">
+        <div class="bg-primary bg-opacity-10 p-3 rounded-3 me-3 text-primary header-cli-icon">
             <i class="bi bi-person-lines-fill fs-2"></i>
         </div>
         <div>
@@ -168,12 +307,12 @@
         </div>
     </div>
     
-    <div class="d-flex gap-2">
+    <div class="d-flex gap-2 header-cli-actions">
         <button class="btn btn-outline-primary fw-bold shadow-sm px-3 py-2" style="border-radius: 10px;" data-bs-toggle="modal" data-bs-target="#modalLogGlobalCobros">
-            <i class="bi bi-clock-history me-1"></i> Auditoría / Log de Cobros
+            <i class="bi bi-clock-history me-1"></i> <span>Auditoría<span class="d-none d-sm-inline"> / Log</span></span>
         </button>
         <button class="btn btn-primary fw-bold shadow-sm px-4 py-2" style="border-radius: 10px;" data-bs-toggle="modal" data-bs-target="#modalNuevoCliente">
-            <i class="bi bi-person-plus-fill me-1"></i> + Nuevo Cliente
+            <i class="bi bi-person-plus-fill me-1"></i> <span>+ Nuevo Cliente</span>
         </button>
     </div>
 </div>

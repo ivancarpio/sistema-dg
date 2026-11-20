@@ -38,12 +38,115 @@
         display: inline-flex; align-items: center; justify-content: center;
         font-size: 0.75rem; font-weight: 800; color: #fff;
     }
+
+    /* ===== RESPONSIVE MÓVIL — Arqueo de Caja ===== */
+    @media (max-width: 767.98px) {
+        .header-arqueos {
+            flex-direction: column !important;
+            align-items: stretch !important;
+            gap: 12px !important;
+        }
+        .header-arq-left h3 {
+            font-size: 1.1rem !important;
+        }
+        .header-arq-left small {
+            font-size: 0.72rem !important;
+        }
+        .header-arq-icon {
+            width: 36px !important;
+            height: 36px !important;
+            padding: 0 !important;
+            display: inline-flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            border-radius: 8px !important;
+            margin-right: 8px !important;
+        }
+        .header-arq-icon i {
+            font-size: 1.25rem !important;
+        }
+        .header-arq-actions {
+            width: 100% !important;
+            display: grid !important;
+            grid-template-columns: 1fr 1fr !important;
+            gap: 8px !important;
+        }
+        .header-arq-actions .btn {
+            width: 100% !important;
+            padding: 8px 6px !important;
+            font-size: 0.78rem !important;
+            border-radius: 10px !important;
+            display: flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            text-align: center !important;
+            white-space: nowrap !important;
+        }
+
+        /* Panel de control y tarjetas estadísticas */
+        .stat-card {
+            padding: 10px 10px !important;
+            min-height: 86px !important;
+            border-radius: 10px !important;
+        }
+        .stat-label {
+            font-size: 0.64rem !important;
+            letter-spacing: 0.2px !important;
+            line-height: 1.2 !important;
+            margin-bottom: 2px !important;
+            white-space: nowrap !important;
+            overflow: hidden !important;
+            text-overflow: ellipsis !important;
+        }
+        .stat-value {
+            font-size: 1.05rem !important;
+            font-weight: 800 !important;
+            margin-top: 2px !important;
+            letter-spacing: -0.3px !important;
+            line-height: 1.15 !important;
+            width: 100% !important;
+            white-space: nowrap !important;
+            overflow: hidden !important;
+            text-overflow: ellipsis !important;
+        }
+
+        /* Tabla de arqueos */
+        .table-custom-header th {
+            padding: 7px 6px !important;
+            font-size: 0.65rem !important;
+            letter-spacing: 0.3px !important;
+        }
+        .table-custom td {
+            padding: 6px 6px !important;
+            font-size: 0.78rem !important;
+        }
+        .table-custom td .fw-bold {
+            font-size: 0.80rem !important;
+            line-height: 1.25 !important;
+        }
+        .table-custom td small {
+            font-size: 0.68rem !important;
+        }
+        .user-avatar {
+            width: 24px !important;
+            height: 24px !important;
+            font-size: 0.65rem !important;
+        }
+        .table-custom td .badge {
+            font-size: 0.70rem !important;
+            padding: 2px 6px !important;
+        }
+        .table-custom td .btn-sm {
+            padding: 3px 8px !important;
+            font-size: 0.74rem !important;
+        }
+    }
 </style>
 
 {{-- ===== ENCABEZADO ===== --}}
-<div class="d-flex justify-content-between align-items-center mb-4">
-    <div class="d-flex align-items-center">
-        <div class="bg-primary bg-opacity-10 p-2 rounded me-3 text-primary">
+<div class="d-flex justify-content-between align-items-center mb-4 header-arqueos">
+    <div class="d-flex align-items-center header-arq-left">
+        <div class="bg-primary bg-opacity-10 p-2 rounded me-3 text-primary header-arq-icon">
             <i class="bi bi-safe2-fill fs-3"></i>
         </div>
         <div>
@@ -51,12 +154,12 @@
             <small class="text-muted">Cuadre de efectivo y pagos QR de la ferretería</small>
         </div>
     </div>
-    <div class="d-flex align-items-center gap-2">
+    <div class="d-flex align-items-center gap-2 header-arq-actions">
         <a href="/arqueos/sesion" class="btn btn-outline-primary fw-bold shadow-sm px-3 rounded-pill">
-            <i class="bi bi-record-circle text-danger me-1"></i> Control de Turno en Vivo
+            <i class="bi bi-record-circle text-danger me-1"></i> <span><span class="d-none d-sm-inline">Control de </span>Turno en Vivo</span>
         </a>
         <a href="/arqueos/crear" class="btn btn-primary fw-bold shadow-sm px-4 rounded-pill">
-            <i class="bi bi-plus-circle-fill me-2"></i>Crear nuevo arqueo
+            <i class="bi bi-plus-circle-fill me-1"></i> <span><span class="d-none d-sm-inline">Crear </span>Nuevo Arqueo</span>
         </a>
     </div>
 </div>

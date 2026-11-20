@@ -99,7 +99,7 @@
         .header-productos {
             flex-direction: column;
             align-items: stretch;
-            gap: 12px;
+            gap: 10px;
         }
         .header-prod-left {
             width: 100%;
@@ -114,32 +114,89 @@
         .header-prod-actions .btn {
             width: 100%;
             justify-content: center;
-            padding: 8px 10px !important;
-            font-size: 0.88rem;
+            padding: 7px 8px !important;
+            font-size: 0.82rem;
         }
+        /* Encabezado más compacto */
+        .header-prod-left h3 { font-size: 1.1rem !important; }
+        .header-prod-left small { font-size: 0.72rem !important; }
+
+        /* Stat cards compactas */
         .stat-card-prod {
-            padding: 12px 10px;
-            gap: 10px;
-            border-radius: 12px;
+            padding: 10px 10px;
+            gap: 8px;
+            border-radius: 10px;
         }
         .stat-icon-prod {
-            width: 38px;
-            height: 38px;
-            border-radius: 9px;
-            font-size: 1.15rem;
+            width: 32px;
+            height: 32px;
+            border-radius: 8px;
+            font-size: 1rem;
         }
         .stat-val-prod {
-            font-size: 1.15rem;
+            font-size: 1rem;
         }
         .stat-val-valor {
-            font-size: 0.95rem;
+            font-size: 0.85rem;
             letter-spacing: -0.3px;
         }
         .stat-lbl-prod {
-            font-size: 0.68rem;
+            font-size: 0.62rem;
             letter-spacing: 0.2px;
-            margin-bottom: 2px;
+            margin-bottom: 1px;
         }
+
+        /* Nombre y precios en tabla más compactos y cómodos para scroll */
+        .prod-nombre { 
+            font-size: 0.78rem !important; 
+            font-weight: 700 !important;
+            line-height: 1.25 !important;
+            margin-bottom: 2px !important;
+        }
+        .col-nombre .bg-primary.bg-opacity-10 {
+            width: 24px !important;
+            height: 24px !important;
+            padding: 0 !important;
+            margin-right: 6px !important;
+            border-radius: 6px !important;
+            display: inline-flex !important;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+        .col-nombre .bi-box { font-size: 0.8rem !important; }
+        .sub-info-prod { font-size: 0.68rem !important; }
+        .sub-info-prod .badge { font-size: 0.64rem !important; padding: 1px 4px !important; }
+        .prod-codigo { font-size: 0.70rem !important; padding: 1.5px 5px !important; border-radius: 4px !important; }
+        .prod-precio { font-size: 0.82rem !important; }
+        .prod-precio-cliente { font-size: 0.80rem !important; }
+        .prod-costo { font-size: 0.74rem !important; }
+        .badge-precio-cliente { font-size: 0.62rem !important; padding: 1px 5px !important; }
+        .col-stock .badge { font-size: 0.70rem !important; padding: 2px 6px !important; }
+        .btn-action-prod { width: 28px !important; height: 28px !important; font-size: 0.78rem !important; }
+
+        /* Tabla más compacta */
+        .table-custom-header th {
+            padding: 8px 6px !important;
+            font-size: 0.65rem !important;
+            letter-spacing: 0.3px !important;
+        }
+        .table-custom td {
+            padding: 6px 6px !important;
+            font-size: 0.78rem !important;
+        }
+
+        /* Barra de búsqueda y filtros compactos en móvil */
+        .prod-card.p-3 { padding: 10px 12px !important; margin-bottom: 12px !important; }
+        .prod-card .row.g-3 { --bs-gutter-y: 0.5rem !important; --bs-gutter-x: 0.5rem !important; }
+        .prod-card .input-group,
+        .prod-card .form-select,
+        .prod-card .btn-outline-secondary {
+            height: 36px !important;
+            font-size: 0.82rem !important;
+        }
+        .search-btn-left { padding: 0 12px !important; font-size: 0.85rem !important; }
+        .search-input { font-size: 0.82rem !important; }
     }
 
     /* Tabla */

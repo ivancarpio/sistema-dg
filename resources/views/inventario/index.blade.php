@@ -145,8 +145,74 @@
 .campo-requerido.error { border-color: #ef4444 !important; box-shadow: 0 0 0 3px rgba(239,68,68,0.1) !important; }
 .msg-error { color: #dc2626; font-size: 0.78rem; font-weight: 600; margin-top: 4px; }
 
-/* Responsive Móvil para Modal Nuevo Ajuste — Idéntico a Administración Masiva de Categorías */
+/* Responsive Móvil para Modal Nuevo Ajuste y Tabla Principal de Inventario */
 @media (max-width: 767.98px) {
+    /* Tabla Principal de Movimientos compacta para móvil */
+    .table-custom-header th {
+        padding: 8px 6px !important;
+        font-size: 0.65rem !important;
+        letter-spacing: 0.3px !important;
+    }
+    .table-custom td {
+        padding: 6px 6px !important;
+        font-size: 0.78rem !important;
+    }
+    .table-custom td .fw-bold.text-dark {
+        font-size: 0.80rem !important;
+        line-height: 1.25 !important;
+        font-weight: 700 !important;
+    }
+    .table-custom td .fw-semibold.text-dark {
+        font-size: 0.78rem !important;
+        line-height: 1.2 !important;
+    }
+    .table-custom td small {
+        font-size: 0.68rem !important;
+    }
+    .badge-entrada, .badge-salida, .badge-devolucion {
+        padding: 2px 7px !important;
+        font-size: 0.70rem !important;
+        border-radius: 12px !important;
+    }
+    .btn-filtro-tipo {
+        padding: 4px 7px !important;
+        font-size: 0.72rem !important;
+    }
+    .card-header.py-3 {
+        padding: 10px 12px !important;
+    }
+    .card-header h6 {
+        font-size: 0.88rem !important;
+    }
+    .card-header small {
+        font-size: 0.68rem !important;
+    }
+
+    /* Stat cards superiores en móvil */
+    .stat-inv {
+        padding: 10px 12px !important;
+        border-radius: 10px !important;
+    }
+    .stat-inv .stat-num {
+        font-size: 1.15rem !important;
+    }
+    .stat-inv .stat-lbl {
+        font-size: 0.65rem !important;
+        margin-bottom: 2px !important;
+    }
+
+    /* Barra de filtros de fecha y buscador */
+    .card.p-3.mb-4 {
+        padding: 10px 12px !important;
+        margin-bottom: 12px !important;
+    }
+    .card.p-3.mb-4 .input-group-text,
+    .card.p-3.mb-4 .form-control,
+    .card.p-3.mb-4 .btn {
+        height: 36px !important;
+        font-size: 0.82rem !important;
+    }
+
     #modalNuevoAjuste .modal-dialog {
         margin: 0.5rem auto !important;
         max-width: 96% !important;
@@ -234,12 +300,117 @@
         padding: 8px 14px !important;
     }
 }
+
+/* ===== RESPONSIVE MÓVIL — Inventario ===== */
+@media (max-width: 767.98px) {
+    /* Encabezado: título y botón a la par en la misma fila sin cortar descripción */
+    .header-inventario {
+        flex-direction: row !important;
+        align-items: center !important;
+        justify-content: space-between !important;
+        gap: 10px !important;
+        margin-bottom: 1rem !important;
+    }
+    .header-inv-left {
+        min-width: 0 !important;
+        flex: 1 1 auto !important;
+    }
+    .header-inv-left h3 {
+        font-size: 1.05rem !important;
+        line-height: 1.2 !important;
+        margin-bottom: 2px !important;
+    }
+    .header-inv-left small {
+        font-size: 0.70rem !important;
+        line-height: 1.25 !important;
+        display: block !important;
+        white-space: normal !important;
+        word-break: normal !important;
+        color: #64748b !important;
+    }
+    .header-inv-icon {
+        width: 36px !important;
+        height: 36px !important;
+        padding: 0 !important;
+        display: inline-flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        border-radius: 8px !important;
+        flex-shrink: 0 !important;
+    }
+    .header-inv-icon i {
+        font-size: 1.25rem !important;
+    }
+    .header-btn-ajuste {
+        flex-shrink: 0 !important;
+        white-space: nowrap !important;
+        font-size: 0.78rem !important;
+        padding: 7px 12px !important;
+        border-radius: 8px !important;
+        display: inline-flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+    }
+
+    /* Stat cards inventario */
+    .stat-inv {
+        padding: 10px 12px !important;
+        border-radius: 10px !important;
+    }
+    .stat-inv .stat-num {
+        font-size: 1.2rem !important;
+    }
+    .stat-inv .stat-lbl {
+        font-size: 0.62rem !important;
+    }
+    .stat-inv small {
+        font-size: 0.68rem !important;
+    }
+
+    /* Tabla del historial */
+    .table-custom-header th {
+        padding: 8px 6px !important;
+        font-size: 0.65rem !important;
+    }
+    .table-custom td {
+        padding: 8px 6px !important;
+        font-size: 0.8rem !important;
+    }
+
+    /* Encabezado de la tarjeta de historial */
+    .card-header h6 { font-size: 0.9rem !important; }
+    .card-header small { font-size: 0.7rem !important; }
+
+    /* Botones de filtro de tipo adaptados al 100% de ancho sin espacios vacíos */
+    .wrapper-botones-tipo {
+        width: 100% !important;
+        margin-top: 4px !important;
+    }
+    #grupoBotonesTipo {
+        width: 100% !important;
+        display: flex !important;
+    }
+    #grupoBotonesTipo .btn {
+        flex: 1 1 25% !important;
+        font-size: 0.74rem !important;
+        padding: 6px 2px !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        text-align: center !important;
+        white-space: nowrap !important;
+    }
+    #grupoBotonesTipo .btn i {
+        margin-right: 2px !important;
+        font-size: 0.72rem !important;
+    }
+}
 </style>
 
 {{-- ===== ENCABEZADO ===== --}}
-<div class="d-flex justify-content-between align-items-center mb-4">
-    <div class="d-flex align-items-center gap-3">
-        <div class="bg-info bg-opacity-10 p-2 rounded text-info">
+<div class="d-flex justify-content-between align-items-center gap-2 mb-4 header-inventario">
+    <div class="d-flex align-items-center gap-2 header-inv-left">
+        <div class="bg-info bg-opacity-10 p-2 rounded text-info header-inv-icon">
             <i class="bi bi-diagram-3-fill fs-3"></i>
         </div>
         <div>
@@ -247,8 +418,8 @@
             <small class="text-muted">Historial de entradas, salidas y ajustes de stock</small>
         </div>
     </div>
-    <button class="btn btn-primary fw-bold shadow-sm px-4" data-bs-toggle="modal" data-bs-target="#modalNuevoAjuste">
-        <i class="bi bi-plus-circle-fill me-2"></i>Nuevo Ajuste
+    <button class="btn btn-primary fw-bold shadow-sm px-3 py-2 header-btn-ajuste" data-bs-toggle="modal" data-bs-target="#modalNuevoAjuste">
+        <i class="bi bi-plus-circle-fill me-1"></i>Nuevo Ajuste
     </button>
 </div>
 
@@ -367,12 +538,12 @@
                 </h6>
                 <small class="text-muted">Mostrando: <strong class="text-dark">{{ $subtituloPeriodo }}</strong> • Cada día nuevo inicia en 0</small>
             </div>
-            <div>
+            <div class="wrapper-botones-tipo">
                 {{-- Selector exclusivo por tipo de movimiento mediante botones --}}
                 @php
                     $tipoActual = strtolower(request('tipo', 'todos'));
                 @endphp
-                <div class="btn-group shadow-xs" role="group" id="grupoBotonesTipo">
+                <div class="btn-group shadow-xs w-100" role="group" id="grupoBotonesTipo">
                     <button type="button" class="btn btn-sm btn-filtro-tipo {{ ($tipoActual === 'todos' || empty($tipoActual)) ? 'btn-secondary text-white fw-bold active' : 'btn-outline-secondary' }}"
                         onclick="filtrarTipo('todos', this)">
                         Todos

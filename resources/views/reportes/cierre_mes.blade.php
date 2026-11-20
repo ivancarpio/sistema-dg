@@ -134,21 +134,146 @@
         padding: 12px 14px;
         font-size: 0.85rem;
     }
+
+/* ===== RESPONSIVE MÓVIL — Cierre de Mes ===== */
+@media (max-width: 767.98px) {
+    /* Encabezado principal más compacto */
+    h3.fw-bold { font-size: 1.1rem !important; }
+    .d-flex.flex-wrap.justify-content-between.align-items-center.gap-3 small { font-size: 0.7rem !important; }
+
+    /* Botones del encabezado */
+    .d-flex.flex-wrap.gap-2 .btn {
+        font-size: 0.78rem !important;
+        padding: 5px 10px !important;
+    }
+
+    /* Stat cards cierre */
+    .metric-cierre {
+        padding: 10px 12px !important;
+        border-radius: 10px !important;
+    }
+    .metric-cierre .label {
+        font-size: 0.6rem !important;
+    }
+    .metric-cierre .value {
+        font-size: 1.15rem !important;
+        margin-top: 2px !important;
+    }
+    .metric-cierre small {
+        font-size: 0.65rem !important;
+    }
+
+    /* Barra de progreso y botones marcar/desmarcar */
+    #btnMarcarTodos, #btnDesmarcarTodos {
+        font-size: 0.75rem !important;
+        padding: 4px 8px !important;
+    }
+    #btnMarcarTodos span, #btnDesmarcarTodos span {
+        display: none;
+    }
+
+    /* Encabezado de la tabla del cuadre */
+    .card-header-cuadre {
+        padding: 12px 14px !important;
+    }
+    .card-header-cuadre h6 { 
+        font-size: 0.88rem !important; 
+    }
+    .banner-formula-cuadre {
+        font-size: 0.72rem !important;
+        padding: 7px 10px !important;
+        margin-top: 8px !important;
+        line-height: 1.3 !important;
+    }
+    #badgeMostrados {
+        font-size: 0.70rem !important;
+        padding: 3px 8px !important;
+    }
+
+    /* Tabla del cuadre compacta para móvil */
+    .tabla-cierre thead th {
+        padding: 7px 6px !important;
+        font-size: 0.65rem !important;
+        letter-spacing: 0.3px !important;
+    }
+    .tabla-cierre td {
+        padding: 6px 6px !important;
+        font-size: 0.78rem !important;
+    }
+    .col-prod-cierre {
+        font-size: 0.80rem !important;
+        font-weight: 700 !important;
+        line-height: 1.25 !important;
+    }
+    .badge-codigo-cierre {
+        font-size: 0.70rem !important;
+        padding: 1.5px 5px !important;
+    }
+    .btn-check-ok {
+        font-size: 0.70rem !important;
+        padding: 3px 6px !important;
+    }
+    .btn-check-ok .label-ok { display: inline-block !important; }
+
+    /* Filtros cierre */
+    .card-body.py-3 .row.g-3 .col-md-3,
+    .card-body.py-3 .row.g-3 .col-md-5,
+    .card-body.py-3 .row.g-3 .col-md-4 {
+        width: 100% !important;
+    }
+
+    /* Encabezado y 3 botones juntos en móvil */
+    .header-cierre-wrap {
+        flex-direction: column !important;
+        align-items: stretch !important;
+        gap: 12px !important;
+    }
+    .header-cierre-title h3 {
+        font-size: 1.1rem !important;
+    }
+    .header-cierre-title small {
+        font-size: 0.72rem !important;
+    }
+    .header-cierre-icon {
+        width: 36px !important;
+        height: 36px !important;
+        padding: 0 !important;
+        display: inline-flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        border-radius: 8px !important;
+        margin-right: 8px !important;
+    }
+    .header-cierre-icon i {
+        font-size: 1.25rem !important;
+    }
+    .header-cierre-actions {
+        width: 100% !important;
+        display: grid !important;
+        grid-template-columns: repeat(3, 1fr) !important;
+        gap: 6px !important;
+    }
+    .btn-cierre-action {
+        width: 100% !important;
+        padding: 8px 4px !important;
+        font-size: 0.74rem !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        text-align: center !important;
+        white-space: nowrap !important;
+        border-radius: 8px !important;
+    }
+}
 </style>
 
-{{-- ===== NAVEGACIÓN Y TÍTULO ===== --}}
-<div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4">
-    <div class="d-flex align-items-center">
-        <div class="bg-primary bg-opacity-10 p-2 rounded me-3 text-primary">
+{{-- ===== ENCABEZADO ===== --}}
+<div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4 header-cierre-wrap">
+    <div class="d-flex align-items-center header-cierre-title">
+        <div class="bg-primary bg-opacity-10 p-2 rounded me-3 text-primary header-cierre-icon">
             <i class="bi bi-calendar2-check-fill fs-3"></i>
         </div>
         <div>
-            <nav aria-label="breadcrumb">
-                <ol class="breadcrumb mb-0" style="font-size:0.8rem;">
-                    <li class="breadcrumb-item"><a href="/reportes" class="text-muted text-decoration-none">Reportes</a></li>
-                    <li class="breadcrumb-item active">Cierre de Mes</li>
-                </ol>
-            </nav>
             <div class="d-flex align-items-center gap-2">
                 <h3 class="fw-bold m-0 text-dark">Auditoría y Cierre de Mes</h3>
                 @if($cierreActual && $cierreActual->isCerrado())
@@ -165,28 +290,28 @@
         </div>
     </div>
     
-    <div class="d-flex flex-wrap gap-2">
-        <a href="/reportes" class="btn btn-outline-secondary fw-bold">
-            <i class="bi bi-arrow-left me-1"></i> Volver a Reportes
+    <div class="header-cierre-actions d-flex flex-wrap gap-2">
+        <a href="/reportes" class="btn btn-outline-secondary fw-bold btn-cierre-action">
+            <i class="bi bi-arrow-left me-1"></i> <span>Volver<span class="d-none d-md-inline"> a Reportes</span></span>
         </a>
         
         {{-- Botón Exportar Excel --}}
         <a href="/reportes/cierre-mes/excel?mes={{ $mesSeleccionado }}" id="btnExportarExcel"
-           class="btn fw-bold shadow-sm px-3 text-white"
+           class="btn fw-bold shadow-sm px-3 text-white btn-cierre-action"
            style="background-color: #16a34a; border-radius: 8px;">
-            <i class="bi bi-file-earmark-excel-fill me-1"></i> Exportar a Excel
+            <i class="bi bi-file-earmark-excel-fill me-1"></i> <span>Exportar<span class="d-none d-md-inline"> a Excel</span></span>
         </a>
 
         {{-- Botón Cerrar Mes (Rojo destacado) o Badge de Mes Cerrado --}}
         @if($cierreActual && $cierreActual->isCerrado())
             @if(Auth::user() && Auth::user()->rol === 'admin')
-                <button type="button" class="btn btn-outline-danger fw-bold shadow-sm px-3" data-bs-toggle="modal" data-bs-target="#modalReabrirMes">
-                    <i class="bi bi-unlock-fill me-1"></i> Reabrir Mes (Admin)
+                <button type="button" class="btn btn-outline-danger fw-bold shadow-sm px-3 btn-cierre-action" data-bs-toggle="modal" data-bs-target="#modalReabrirMes">
+                    <i class="bi bi-unlock-fill me-1"></i> <span>Reabrir<span class="d-none d-md-inline"> Mes</span></span>
                 </button>
             @endif
         @else
-            <button type="button" class="btn btn-danger fw-bold shadow-sm px-4" data-bs-toggle="modal" data-bs-target="#modalConfirmarCierreMes">
-                <i class="bi bi-lock-fill me-1"></i> Cerrar Mes Oficial
+            <button type="button" class="btn btn-danger fw-bold shadow-sm px-3 btn-cierre-action" data-bs-toggle="modal" data-bs-target="#modalConfirmarCierreMes">
+                <i class="bi bi-lock-fill me-1"></i> <span>Cerrar Mes<span class="d-none d-md-inline"> Oficial</span></span>
             </button>
         @endif
     </div>
@@ -334,36 +459,45 @@
 
 {{-- ===== TABLA PRINCIPAL DE CUADRE (COLORES PROFESIONALES) ===== --}}
 <div class="card mb-4">
-    <div class="card-header bg-white py-3 border-0 d-flex justify-content-between align-items-center">
-        <div>
-            <h6 class="fw-bold m-0 text-dark">
-                <i class="bi bi-table me-2 text-primary"></i> Cuadre de Cantidades Físicas
+    <div class="card-header bg-white py-3 border-0 card-header-cuadre">
+        <div class="d-flex flex-wrap justify-content-between align-items-center gap-2">
+            <h6 class="fw-bold m-0 text-dark d-flex align-items-center">
+                <i class="bi bi-table me-2 text-primary fs-5"></i> Cuadre de Cantidades Físicas
             </h6>
-            <small class="text-muted">
-                Fórmula de cuadre: <strong>CANTIDAD ANTERIOR</strong> (stock inicial) - <strong>VENTAS</strong> (del período) = <strong>TOTAL EN TIENDA</strong> (stock actual)
-            </small>
+            <span class="badge bg-light text-dark border px-3 py-1.5 fw-bold" id="badgeMostrados" style="font-size: 0.78rem;">
+                Mostrando {{ $totalProductos }} productos
+            </span>
         </div>
-        <span class="badge bg-light text-dark border px-3 py-2 fw-bold" id="badgeMostrados">
-            Mostrando {{ $totalProductos }} productos
-        </span>
+        {{-- Banner explicativo de la fórmula de cuadre bien acomodado y visible en todo ancho --}}
+        <div class="banner-formula-cuadre mt-2.5 p-2 px-3 rounded-3 border bg-light d-flex align-items-center gap-2 text-muted" style="font-size: 0.78rem; line-height: 1.35; background-color: #f8fafc !important;">
+            <i class="bi bi-info-circle-fill text-primary flex-shrink-0"></i>
+            <div>
+                <strong class="text-dark">Fórmula de cuadre:</strong> 
+                <span class="badge bg-white text-secondary border px-1.5 py-0.5 ms-1 fw-bold">CANTIDAD ANTERIOR</span> (stock inicial)
+                <span class="text-danger fw-bold mx-1">&minus;</span> 
+                <span class="badge bg-white text-primary border px-1.5 py-0.5 fw-bold">VENTAS</span> (del período)
+                <span class="text-success fw-bold mx-1">=</span> 
+                <span class="badge bg-white text-dark border px-1.5 py-0.5 fw-bold">TOTAL EN TIENDA</span> (stock actual)
+            </div>
+        </div>
     </div>
     <div class="card-body p-0">
         <div class="table-responsive">
             <table class="table tabla-cierre align-middle m-0" id="tablaCierre">
                 <thead>
                     <tr>
-                        <th style="width: 130px; text-align: center;">CÓDIGO</th>
+                        <th style="width: 110px; text-align: center;">CÓDIGO</th>
                         <th>PRODUCTO</th>
-                        <th style="width: 140px; text-align: center;" title="Stock anterior o inicial del período">
+                        <th style="width: 120px; text-align: center;" title="Stock anterior o inicial del período">
                             CANTIDAD ANTERIOR
                         </th>
-                        <th style="width: 130px; text-align: center;" title="Ventas realizadas durante este mes">
+                        <th style="width: 110px; text-align: center;" title="Ventas realizadas durante este mes">
                             VENTAS MES
                         </th>
-                        <th style="width: 160px; text-align: center;" title="Stock físico actual registrado en tienda">
+                        <th style="width: 130px; text-align: center;" title="Stock físico actual registrado en tienda">
                             TOTAL EN TIENDA
                         </th>
-                        <th style="width: 130px; text-align: center;" title="Verificación física en estantería">
+                        <th style="width: 110px; text-align: center;" title="Verificación física en estantería">
                             ESTADO CHECK
                         </th>
                     </tr>
@@ -379,25 +513,25 @@
                         
                         {{-- CÓDIGO --}}
                         <td class="text-center">
-                            <span class="badge fw-bold" style="background:#f1f5f9; color:#334155; border: 1px solid #cbd5e1; font-size: 0.82rem;">
+                            <span class="badge fw-bold badge-codigo-cierre" style="background:#f1f5f9; color:#334155; border: 1px solid #cbd5e1;">
                                 {{ $item['codigo'] }}
                             </span>
                         </td>
 
                         {{-- PRODUCTO --}}
-                        <td class="fw-semibold text-dark">
+                        <td class="fw-bold text-dark col-prod-cierre">
                             {{ $item['nombre'] }}
                         </td>
 
                         {{-- CANTIDAD (Stock anterior / inicial) --}}
-                        <td class="text-center fw-bold fs-6 text-secondary">
+                        <td class="text-center fw-bold text-secondary">
                             {{ $item['cantidad_anterior'] }}
                         </td>
 
                         {{-- VENTA (mes) --}}
-                        <td class="text-center fw-bold fs-6">
+                        <td class="text-center fw-bold">
                             @if($item['venta'] > 0)
-                                <span class="badge px-3 py-1" style="background: #e0f2fe; color: #0284c7; border: 1px solid #bae6fd;">
+                                <span class="badge px-2.5 py-1" style="background: #e0f2fe; color: #0284c7; border: 1px solid #bae6fd;">
                                     {{ $item['venta'] }}
                                 </span>
                             @else
@@ -406,7 +540,7 @@
                         </td>
 
                         {{-- TOTAL EN TIENDA (stock actual) --}}
-                        <td class="text-center fw-bold fs-6 text-dark">
+                        <td class="text-center fw-bold text-dark">
                             {{ $item['total_tienda'] }}
                         </td>
 

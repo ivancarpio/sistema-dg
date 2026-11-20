@@ -82,36 +82,134 @@
 
 /* Mini barra de método de pago */
 .mini-bar { height: 4px; border-radius: 4px; margin-top: 6px; }
+
+/* ===== RESPONSIVE MÓVIL — Reporte Ventas ===== */
+@media (max-width: 767.98px) {
+    /* Encabezado y botones */
+    .header-reporte-ventas {
+        flex-direction: column !important;
+        align-items: stretch !important;
+        gap: 10px !important;
+    }
+    .header-reporte-ventas .btn-group-actions {
+        width: 100% !important;
+        display: flex !important;
+        gap: 8px !important;
+    }
+    .header-reporte-ventas .btn-group-actions .btn {
+        flex: 1 1 50% !important;
+        white-space: nowrap !important;
+        justify-content: center !important;
+        padding: 8px 8px !important;
+        font-size: 0.78rem !important;
+    }
+
+    /* Tarjetas métricas en móvil (Efectivo, QR, Por Cobrar, Total Facturado) */
+    .metric-card {
+        padding: 10px 10px !important;
+        border-radius: 12px !important;
+        min-height: 94px !important;
+    }
+    .metric-card .d-flex {
+        flex-direction: column !important;
+        align-items: flex-start !important;
+        gap: 4px !important;
+    }
+    .metric-card .metric-icon {
+        width: 26px !important;
+        height: 26px !important;
+        font-size: 0.85rem !important;
+        border-radius: 7px !important;
+        margin-bottom: 2px !important;
+    }
+    .metric-card .metric-label {
+        font-size: 0.65rem !important;
+        font-weight: 800 !important;
+        letter-spacing: 0.3px !important;
+        line-height: 1.2 !important;
+        word-break: break-word !important;
+    }
+    .metric-card .metric-value {
+        font-size: 1.05rem !important;
+        font-weight: 800 !important;
+        margin-top: 2px !important;
+        letter-spacing: -0.3px !important;
+        line-height: 1.15 !important;
+        width: 100% !important;
+        white-space: nowrap !important;
+        overflow: hidden !important;
+        text-overflow: ellipsis !important;
+    }
+    .metric-card .metric-sub {
+        font-size: 0.65rem !important;
+        margin-top: 1px !important;
+        line-height: 1.2 !important;
+        width: 100% !important;
+        white-space: nowrap !important;
+        overflow: hidden !important;
+        text-overflow: ellipsis !important;
+    }
+    .mini-bar {
+        height: 3px !important;
+        margin-top: 5px !important;
+    }
+
+    /* Tabla de ventas compacta para móvil */
+    .table-custom-header th {
+        padding: 7px 6px !important;
+        font-size: 0.65rem !important;
+        letter-spacing: 0.3px !important;
+    }
+    .table-custom td {
+        padding: 6px 6px !important;
+        font-size: 0.78rem !important;
+    }
+    .table-custom td.fw-bold {
+        font-size: 0.80rem !important;
+    }
+    .table-custom td .fw-semibold.text-dark {
+        font-size: 0.78rem !important;
+        line-height: 1.2 !important;
+    }
+    .table-custom td small {
+        font-size: 0.68rem !important;
+    }
+    .table-custom td .badge {
+        font-size: 0.70rem !important;
+        padding: 2px 6px !important;
+    }
+    .table-custom td.text-success {
+        font-size: 0.82rem !important;
+    }
+    .card-header .btn-sm {
+        font-size: 0.72rem !important;
+        padding: 3px 6px !important;
+    }
+}
 </style>
 
 {{-- ===== ENCABEZADO ===== --}}
-<div class="d-flex justify-content-between align-items-center mb-4">
-    <div class="d-flex align-items-center gap-3">
-        <div class="bg-primary bg-opacity-10 p-2 rounded text-primary">
-            <i class="bi bi-graph-up-arrow fs-3"></i>
+<div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-4 header-reporte-ventas">
+    <div class="d-flex align-items-center gap-2">
+        <div class="bg-primary bg-opacity-10 p-2 rounded text-primary flex-shrink-0" style="width: 36px; height: 36px; display: inline-flex; align-items: center; justify-content: center;">
+            <i class="bi bi-graph-up-arrow fs-5"></i>
         </div>
         <div>
-            <nav aria-label="breadcrumb">
-                <ol class="breadcrumb mb-0" style="font-size:0.8rem;">
-                    <li class="breadcrumb-item"><a href="/reportes" class="text-muted text-decoration-none">Reportes</a></li>
-                    <li class="breadcrumb-item active">Reporte de Ventas</li>
-                </ol>
-            </nav>
-            <h3 class="fw-bold m-0 text-dark">Reportes de Ventas</h3>
+            <h4 class="fw-bold m-0 text-dark" style="font-size:1.15rem;">Reporte de Ventas</h4>
             <small class="text-muted">
                 <i class="bi bi-clock me-1"></i>{{ $periodoLabel }}
             </small>
         </div>
     </div>
-    <div class="d-flex gap-2">
-        <a href="/reportes" class="btn btn-outline-secondary fw-bold">
-            <i class="bi bi-arrow-left me-1"></i> Volver a Reportes
+    <div class="btn-group-actions d-flex gap-2">
+        <a href="/reportes" class="btn btn-outline-secondary btn-sm fw-bold d-flex align-items-center justify-content-center gap-1" style="border-radius: 8px;">
+            <i class="bi bi-arrow-left"></i> <span>Volver a Reportes</span>
         </a>
         {{-- Botón Exportar Excel --}}
         <a href="/reportes/ventas/excel?{{ http_build_query(request()->all()) }}"
-           class="btn fw-bold shadow-sm px-4 py-2"
-           style="background: #16a34a; color: #fff; border-radius: 8px;">
-            <i class="bi bi-file-earmark-excel-fill me-2"></i>Exportar a Excel
+           class="btn btn-sm fw-bold shadow-sm d-flex align-items-center justify-content-center gap-1"
+           style="background: #16a34a; color: #fff; border-radius: 8px; white-space: nowrap;">
+            <i class="bi bi-file-earmark-excel-fill"></i><span>Exportar a Excel</span>
         </a>
     </div>
 </div>

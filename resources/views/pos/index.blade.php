@@ -299,6 +299,131 @@
         display: inline-block;
         animation: spinPosAnim 0.75s linear infinite;
     }
+
+    /* ===== RESPONSIVE MÓVIL — Punto de Venta (POS) ===== */
+    @media (max-width: 767.98px) {
+        /* Encabezado */
+        .header-pos {
+            flex-direction: column !important;
+            align-items: stretch !important;
+            gap: 10px !important;
+        }
+        .header-pos-title h3 {
+            font-size: 1.1rem !important;
+        }
+        .header-pos-title small {
+            font-size: 0.72rem !important;
+        }
+        .header-pos-icon {
+            width: 36px !important;
+            height: 36px !important;
+            padding: 0 !important;
+            display: inline-flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            border-radius: 8px !important;
+        }
+        .header-pos-icon i {
+            font-size: 1.25rem !important;
+        }
+        .header-pos-badges {
+            width: 100% !important;
+            flex-wrap: wrap !important;
+            gap: 6px !important;
+        }
+        .header-pos-badges .badge {
+            font-size: 0.72rem !important;
+            padding: 4px 8px !important;
+        }
+
+        /* Buscador y selectores de catálogo más compactos */
+        .search-input-pos-group,
+        .search-input-pos-group .input-group,
+        #filtroCategoria,
+        #btnActualizarCatalogoPos {
+            height: 36px !important;
+            font-size: 0.82rem !important;
+        }
+        .search-btn-left {
+            padding: 0 10px !important;
+            font-size: 0.82rem !important;
+        }
+        #btnActualizarCatalogoPos {
+            font-size: 0.76rem !important;
+            padding: 4px 8px !important;
+        }
+
+        /* Tabla de productos compacta para scroll cómodo */
+        .table-custom-header th {
+            padding: 7px 6px !important;
+            font-size: 0.65rem !important;
+            letter-spacing: 0.3px !important;
+        }
+        .table-custom td {
+            padding: 6px 6px !important;
+            font-size: 0.78rem !important;
+        }
+        .pos-prod-nombre {
+            font-size: 0.78rem !important;
+            line-height: 1.25 !important;
+            font-weight: 700 !important;
+            margin-bottom: 2px !important;
+        }
+        .badge-code {
+            font-size: 0.68rem !important;
+            padding: 1.5px 5px !important;
+            border-radius: 4px !important;
+        }
+        .val-precio-venta {
+            font-size: 0.82rem !important;
+        }
+        .val-precio-cliente {
+            font-size: 0.78rem !important;
+        }
+        .grupo-unidades-pos {
+            padding: 1px !important;
+        }
+        .btn-toggle-unidad {
+            font-size: 0.65rem !important;
+            padding: 1px 4px !important;
+        }
+        .btn-agregar-producto {
+            font-size: 0.72rem !important;
+            padding: 3px 8px !important;
+        }
+        .btn-agregar-producto .lbl-btn-agregar {
+            font-size: 0.72rem !important;
+        }
+        td.ps-4 {
+            padding-left: 6px !important;
+        }
+        td.pe-4, th.pe-4 {
+            padding-right: 6px !important;
+        }
+        th.ps-4 {
+            padding-left: 6px !important;
+        }
+
+        /* Carrito / Cobro en móvil */
+        .box-total-pos {
+            padding: 8px 12px !important;
+        }
+        .box-total-pos h2 {
+            font-size: 1.35rem !important;
+        }
+        .btn-cobrar-pos {
+            font-size: 0.95rem !important;
+            padding: 10px !important;
+        }
+        .btn-tarifa {
+            font-size: 0.74rem !important;
+            padding: 4px 6px !important;
+        }
+        .btn-metodo-pago {
+            padding: 6px 4px !important;
+            font-size: 0.76rem !important;
+        }
+    }
 </style>
 
 @if(isset($ventaRehacer) && $ventaRehacer)
@@ -331,9 +456,9 @@
 @endif
 
 <!-- ENCABEZADO PRINCIPAL (ESTILO UNIFICADO DEL SISTEMA) -->
-<div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4">
-    <div class="d-flex align-items-center">
-        <div class="bg-primary bg-opacity-10 p-3 rounded-3 me-3 text-primary">
+<div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4 header-pos">
+    <div class="d-flex align-items-center header-pos-title">
+        <div class="bg-primary bg-opacity-10 p-3 rounded-3 me-3 text-primary header-pos-icon">
             <i class="bi bi-cart4 fs-2"></i>
         </div>
         <div>
@@ -341,7 +466,7 @@
             <small class="text-muted">Caja registradora rápida • Selección de productos y cobro</small>
         </div>
     </div>
-    <div class="d-flex align-items-center gap-2">
+    <div class="d-flex align-items-center gap-2 header-pos-badges">
         @if(isset($arqueoActivo) && $arqueoActivo)
             <a href="/arqueos/sesion" class="badge bg-success bg-opacity-10 text-success border border-success-subtle px-3 py-2 rounded-3 shadow-sm d-flex align-items-center text-decoration-none" style="font-size: 0.85rem;" title="Ver turno de caja activo en vivo">
                 <i class="bi bi-record-circle-fill text-success me-1.5"></i> Caja Abierta · Turno #{{ $arqueoActivo->id }}
@@ -367,7 +492,7 @@
             <div class="p-3 border-bottom bg-light bg-opacity-50">
                 <div class="row g-2 align-items-center">
                     <div class="col-md-6 col-lg-6">
-                        <div class="input-group" style="height: 44px;">
+                        <div class="input-group search-input-pos-group" style="height: 44px;">
                             <span class="search-btn-left"><i class="bi bi-search"></i></span>
                             <input type="text" id="buscadorProductos" class="form-control search-input" placeholder="Buscar por producto, código o marca..." autofocus>
                         </div>
@@ -451,7 +576,7 @@
                                 <span class="badge-code">{{ $producto->codigo }}</span>
                             </td>
                             <td>
-                                <div class="fw-bold text-dark" style="font-size: 0.98rem;">{{ $producto->nombre }}</div>
+                                <div class="fw-bold text-dark pos-prod-nombre" style="font-size: 0.98rem;">{{ $producto->nombre }}</div>
                                 <div class="text-muted small d-flex flex-wrap align-items-center gap-1.5 mt-0.5">
                                     <span class="me-1"><i class="bi bi-tag me-1"></i>{{ optional($producto->marca)->nombre ?? 'Genérico' }}</span>
                                     @if($producto->categoria)

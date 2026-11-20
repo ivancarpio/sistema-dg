@@ -48,12 +48,169 @@
     .btn-motivo-rapido:hover {
         background: #eff6ff; border-color: #3b82f6; color: #1d4ed8;
     }
+
+    /* ===== RESPONSIVE MÓVIL — Historial de Ventas ===== */
+    @media (max-width: 767.98px) {
+        /* Encabezado */
+        .header-ventas {
+            flex-direction: column !important;
+            align-items: stretch !important;
+            gap: 12px !important;
+        }
+        .header-ventas-left h3 {
+            font-size: 1.1rem !important;
+        }
+        .header-ventas-left small {
+            font-size: 0.72rem !important;
+            line-height: 1.25 !important;
+        }
+        .header-ventas-icon {
+            width: 36px !important;
+            height: 36px !important;
+            padding: 0 !important;
+            display: inline-flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            border-radius: 8px !important;
+            margin-right: 8px !important;
+        }
+        .header-ventas-icon i {
+            font-size: 1.25rem !important;
+        }
+        .header-ventas-action {
+            width: 100% !important;
+        }
+        .header-ventas-action .btn {
+            width: 100% !important;
+            padding: 8px 12px !important;
+            font-size: 0.82rem !important;
+            border-radius: 9px !important;
+            display: flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+        }
+
+        /* Stat cards adaptadas idénticas a los demás módulos */
+        .stat-card-venta {
+            padding: 10px 10px !important;
+            border-radius: 12px !important;
+            min-height: 94px !important;
+        }
+        .stat-card-venta .d-flex.justify-content-between {
+            margin-bottom: 2px !important;
+        }
+        .stat-lbl-venta {
+            font-size: 0.65rem !important;
+            font-weight: 800 !important;
+            letter-spacing: 0.2px !important;
+            line-height: 1.2 !important;
+            white-space: nowrap !important;
+            overflow: hidden !important;
+            text-overflow: ellipsis !important;
+        }
+        .stat-card-venta .fs-4 {
+            font-size: 1rem !important;
+        }
+        .stat-val-venta {
+            font-size: 1.05rem !important;
+            font-weight: 800 !important;
+            margin-top: 2px !important;
+            letter-spacing: -0.3px !important;
+            line-height: 1.15 !important;
+            width: 100% !important;
+            white-space: nowrap !important;
+            overflow: hidden !important;
+            text-overflow: ellipsis !important;
+        }
+        .stat-card-venta small {
+            font-size: 0.65rem !important;
+            line-height: 1.2 !important;
+            display: block !important;
+            white-space: nowrap !important;
+            overflow: hidden !important;
+            text-overflow: ellipsis !important;
+        }
+
+        /* Pestañas de navegación en móvil */
+        .nav-pills-ventas {
+            display: grid !important;
+            grid-template-columns: 1fr 1fr !important;
+            gap: 6px !important;
+        }
+        .nav-pills-ventas .nav-item {
+            margin: 0 !important;
+        }
+        .nav-pills-ventas .nav-link {
+            margin: 0 !important;
+            padding: 8px 6px !important;
+            font-size: 0.76rem !important;
+            display: flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            text-align: center !important;
+            white-space: nowrap !important;
+        }
+        .nav-pills-ventas .nav-link i {
+            margin-right: 4px !important;
+        }
+        .nav-pills-ventas .nav-link .badge {
+            font-size: 0.68rem !important;
+            padding: 2px 6px !important;
+        }
+
+        /* Barra de filtros de ventas */
+        .card.p-3.mb-4 {
+            padding: 10px 12px !important;
+        }
+        .card.p-3.mb-4 .form-label {
+            font-size: 0.68rem !important;
+            margin-bottom: 2px !important;
+        }
+        .card.p-3.mb-4 .input-group,
+        .card.p-3.mb-4 .form-control,
+        .card.p-3.mb-4 .form-select,
+        .card.p-3.mb-4 .btn {
+            height: 36px !important;
+            font-size: 0.82rem !important;
+        }
+
+        /* Tablas de ventas (#tablaVentas y #tablaCompradores) */
+        .table-custom-header th {
+            padding: 7px 6px !important;
+            font-size: 0.65rem !important;
+            letter-spacing: 0.3px !important;
+        }
+        .table-custom-header th a {
+            font-size: 0.65rem !important;
+        }
+        .table-custom td {
+            padding: 6px 6px !important;
+            font-size: 0.78rem !important;
+        }
+        .table-custom td .fw-bold.text-dark,
+        .table-custom td .fw-bold.text-muted,
+        .nombre-comprador {
+            font-size: 0.80rem !important;
+            line-height: 1.25 !important;
+        }
+        .table-custom td small {
+            font-size: 0.68rem !important;
+        }
+        .table-custom td .badge {
+            font-size: 0.68rem !important;
+            padding: 2px 6px !important;
+        }
+        .table-custom td .btn-sm {
+            padding: 3px 8px !important;
+            font-size: 0.74rem !important;
+        }
+    }
 </style>
 
 <!-- ENCABEZADO PRINCIPAL -->
-<div class="d-flex flex-wrap justify-content-between align-items-center mb-4 gap-3">
-    <div class="d-flex align-items-center">
-        <div class="bg-info bg-opacity-10 p-2 rounded-3 me-3 text-info">
+<div class="d-flex flex-wrap justify-content-between align-items-center mb-4 gap-3 header-ventas">
+    <div class="d-flex align-items-center header-ventas-left">
+        <div class="bg-info bg-opacity-10 p-2 rounded-3 me-3 text-info header-ventas-icon">
             <i class="bi bi-receipt-cutoff fs-2"></i>
         </div>
         <div>
@@ -61,7 +218,7 @@
             <small class="text-muted">Supervisa notas emitidas, audita anulaciones y analiza clientes recurrentes</small>
         </div>
     </div>
-    <div>
+    <div class="header-ventas-action">
         <a href="/pos" class="btn btn-primary fw-bold px-4 py-2 shadow-sm rounded-3">
             <i class="bi bi-cart-plus me-1"></i> Ir al Punto de Venta
         </a>
@@ -116,14 +273,14 @@
 <ul class="nav nav-pills nav-pills-ventas mb-3" id="ventasTabs" role="tablist">
     <li class="nav-item" role="presentation">
         <button class="nav-link active d-flex align-items-center" id="tab-notas-btn" data-bs-toggle="pill" data-bs-target="#tab-notas" type="button" role="tab">
-            <i class="bi bi-receipt me-2"></i> Historial de Notas de Venta
-            <span class="badge bg-white text-dark ms-2 rounded-pill px-2">{{ $ventas->count() }}</span>
+            <i class="bi bi-receipt me-1"></i> <span>Notas<span class="d-none d-sm-inline"> de Venta</span></span>
+            <span class="badge bg-white text-dark ms-1 rounded-pill px-2">{{ $ventas->count() }}</span>
         </button>
     </li>
     <li class="nav-item" role="presentation">
         <button class="nav-link d-flex align-items-center" id="tab-clientes-btn" data-bs-toggle="pill" data-bs-target="#tab-clientes" type="button" role="tab">
-            <i class="bi bi-people-fill me-2"></i> Clientes y Frecuencia de Compra
-            <span class="badge bg-light text-secondary ms-2 rounded-pill px-2">{{ $compradores->count() }}</span>
+            <i class="bi bi-people-fill me-1"></i> <span>Clientes<span class="d-none d-sm-inline"> Frecuentes</span></span>
+            <span class="badge bg-light text-secondary ms-1 rounded-pill px-2">{{ $compradores->count() }}</span>
         </button>
     </li>
 </ul>

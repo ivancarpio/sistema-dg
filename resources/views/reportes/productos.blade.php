@@ -43,25 +43,128 @@
     background: #f1f5f9; color: #334155; padding: 3px 8px; border-radius: 6px;
     border: 1px solid #e2e8f0;
 }
+
+/* ===== RESPONSIVE MÓVIL — Reporte Productos/Stock ===== */
+@media (max-width: 767.98px) {
+    .header-reporte-prod {
+        flex-direction: column !important;
+        align-items: stretch !important;
+        gap: 10px !important;
+    }
+    .header-reporte-prod .btn-group-actions {
+        width: 100% !important;
+        display: flex !important;
+        gap: 8px !important;
+    }
+    .header-reporte-prod .btn-group-actions .btn {
+        flex: 1 1 50% !important;
+        white-space: nowrap !important;
+        justify-content: center !important;
+        padding: 8px 8px !important;
+        font-size: 0.78rem !important;
+    }
+
+    /* Tarjetas métricas superiores en móvil */
+    .metric-card-prod {
+        padding: 10px 10px !important;
+        border-radius: 12px !important;
+        min-height: 94px !important;
+    }
+    .metric-card-prod.d-flex {
+        flex-direction: column !important;
+        align-items: flex-start !important;
+        gap: 4px !important;
+    }
+    .metric-icon-box {
+        width: 26px !important;
+        height: 26px !important;
+        font-size: 0.85rem !important;
+        border-radius: 7px !important;
+        margin-bottom: 2px !important;
+        flex-shrink: 0;
+    }
+    .metric-label-prod {
+        font-size: 0.65rem !important;
+        font-weight: 800 !important;
+        letter-spacing: 0.3px !important;
+        line-height: 1.2 !important;
+        word-break: break-word !important;
+        white-space: normal !important;
+    }
+    .metric-value-prod {
+        font-size: 1.05rem !important;
+        font-weight: 800 !important;
+        margin-top: 2px !important;
+        letter-spacing: -0.3px !important;
+        line-height: 1.15 !important;
+        width: 100% !important;
+        white-space: nowrap !important;
+        overflow: hidden !important;
+        text-overflow: ellipsis !important;
+    }
+    .metric-sub-prod {
+        font-size: 0.65rem !important;
+        margin-top: 1px !important;
+        line-height: 1.2 !important;
+        width: 100% !important;
+        white-space: nowrap !important;
+        overflow: hidden !important;
+        text-overflow: ellipsis !important;
+    }
+
+    /* Tabla */
+    .table-custom-header th {
+        padding: 7px 6px !important;
+        font-size: 0.65rem !important;
+        letter-spacing: 0.3px !important;
+    }
+    .table-custom td {
+        padding: 6px 6px !important;
+        font-size: 0.78rem !important;
+    }
+    .table-custom td .fw-bold.text-dark {
+        font-size: 0.80rem !important;
+        line-height: 1.25 !important;
+        font-weight: 700 !important;
+    }
+    .table-custom td small {
+        font-size: 0.68rem !important;
+    }
+    .table-custom td .badge {
+        font-size: 0.70rem !important;
+        padding: 2px 6px !important;
+    }
+
+    /* Encabezado del panel de filtros de la tabla */
+    .p-3.border-bottom .w-25 {
+        width: 100% !important;
+        margin-top: 8px;
+    }
+    .p-3.border-bottom {
+        flex-direction: column !important;
+        align-items: flex-start !important;
+        gap: 8px;
+    }
+}
 </style>
 
 {{-- ENCABEZADO PRINCIPAL --}}
-<div class="d-flex flex-wrap justify-content-between align-items-center mb-4 gap-3">
-    <div class="d-flex align-items-center gap-3">
-        <a href="/reportes" class="btn btn-light border p-2 rounded-3 text-secondary" title="Volver a Reportes">
-            <i class="bi bi-arrow-left fs-5"></i>
-        </a>
-        <div class="bg-primary bg-opacity-10 p-2 rounded-3 text-primary">
-            <i class="bi bi-boxes fs-3"></i>
+<div class="d-flex flex-wrap justify-content-between align-items-center mb-4 gap-2 header-reporte-prod">
+    <div class="d-flex align-items-center gap-2">
+        <div class="bg-primary bg-opacity-10 p-2 rounded text-primary flex-shrink-0" style="width: 36px; height: 36px; display: inline-flex; align-items: center; justify-content: center;">
+            <i class="bi bi-boxes fs-5"></i>
         </div>
         <div>
-            <h3 class="fw-bold m-0 text-dark">Reporte General de Productos y Stock Físico</h3>
-            <small class="text-muted">Inventario total, desglose de precios (Venta, Costo, Cliente), marcas y unidades</small>
+            <h4 class="fw-bold m-0 text-dark" style="font-size:1.15rem; line-height:1.2;">Reporte de Productos y Stock</h4>
+            <small class="text-muted d-none d-sm-block">Inventario total, desglose de precios (Venta, Costo, Cliente), marcas y unidades</small>
         </div>
     </div>
-    <div class="d-flex gap-2">
-        <a href="{{ route('reportes.productos.excel', request()->query()) }}" class="btn btn-success fw-bold px-4 py-2 shadow-sm rounded-3 d-flex align-items-center gap-2">
-            <i class="bi bi-file-earmark-excel-fill fs-5"></i>
+    <div class="btn-group-actions d-flex gap-2">
+        <a href="/reportes" class="btn btn-outline-secondary btn-sm fw-bold d-flex align-items-center justify-content-center gap-1" style="border-radius: 8px;">
+            <i class="bi bi-arrow-left"></i> <span>Volver a Reportes</span>
+        </a>
+        <a href="{{ route('reportes.productos.excel', request()->query()) }}" class="btn btn-sm fw-bold shadow-sm d-flex align-items-center justify-content-center gap-1" style="background: #16a34a; color: #fff; border-radius: 8px; white-space: nowrap;">
+            <i class="bi bi-file-earmark-excel-fill"></i>
             <span>Exportar a Excel</span>
         </a>
     </div>
