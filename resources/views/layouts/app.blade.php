@@ -493,8 +493,8 @@
             top: 24px;
             right: 24px;
             z-index: 105000;
-            min-width: 330px;
-            max-width: 460px;
+            min-width: 340px;
+            max-width: 470px;
             pointer-events: none;
             display: flex;
             flex-direction: column;
@@ -506,7 +506,60 @@
             box-shadow: 0 12px 30px -4px rgba(15, 23, 42, 0.16), 0 0 0 1px rgba(0, 0, 0, 0.05) !important;
             border-radius: 14px !important;
             margin-bottom: 0 !important;
+            padding: 12px 14px !important;
+            position: relative;
             animation: toastNotificationIn 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+
+        /* Botón de cierre en cuadro visible y sin superposición */
+        #contenedorAlertasDinamicas .btn-close-toast {
+            position: static !important;
+            flex-shrink: 0;
+            width: 28px;
+            height: 28px;
+            padding: 0;
+            margin: 0 0 0 12px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            background-color: rgba(15, 23, 42, 0.08);
+            border: 1px solid rgba(15, 23, 42, 0.14);
+            border-radius: 8px;
+            color: #334155;
+            font-size: 0.8rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+            line-height: 1;
+        }
+
+        #contenedorAlertasDinamicas .btn-close-toast:hover {
+            background-color: rgba(15, 23, 42, 0.18);
+            color: #0f172a;
+            transform: scale(1.08);
+        }
+
+        /* Sobrescritura si Bootstrap inyecta .btn-close */
+        #contenedorAlertasDinamicas .btn-close {
+            position: static !important;
+            flex-shrink: 0;
+            width: 28px !important;
+            height: 28px !important;
+            padding: 0 !important;
+            margin: 0 0 0 12px !important;
+            background-color: rgba(15, 23, 42, 0.08);
+            border: 1px solid rgba(15, 23, 42, 0.14) !important;
+            border-radius: 8px !important;
+            opacity: 0.8;
+            background-size: 10px 10px;
+            background-position: center;
+            transition: all 0.2s ease;
+        }
+
+        #contenedorAlertasDinamicas .btn-close:hover {
+            opacity: 1;
+            background-color: rgba(15, 23, 42, 0.18);
+            transform: scale(1.08);
         }
 
         @keyframes toastNotificationIn {
@@ -801,67 +854,77 @@
     {{-- CONTENEDOR GLOBAL DE NOTIFICACIONES FLOTANTES (Esquina superior derecha - Estilo Toast) --}}
     <div id="contenedorAlertasDinamicas" aria-live="polite" aria-atomic="true">
         @if(session('error'))
-            <div class="alert alert-danger alert-dismissible fade show border-0 p-3" role="alert">
-                <div class="d-flex align-items-center">
-                    <i class="bi bi-shield-x text-danger fs-4 me-2.5 flex-shrink-0"></i>
-                    <div class="flex-grow-1 text-dark" style="font-size: 0.92rem; line-height: 1.35;"><strong>{{ session('error') }}</strong></div>
-                    <button type="button" class="btn-close ms-2" data-bs-dismiss="alert" aria-label="Close"></button>
+            <div class="alert alert-danger alert-dismissible fade show border-0" role="alert">
+                <div class="d-flex align-items-center justify-content-between w-100">
+                    <div class="d-flex align-items-center flex-grow-1 me-2 overflow-hidden">
+                        <i class="bi bi-shield-x text-danger fs-4 me-2.5 flex-shrink-0"></i>
+                        <div class="flex-grow-1 text-dark" style="font-size: 0.92rem; line-height: 1.35;"><strong>{{ session('error') }}</strong></div>
+                    </div>
+                    <button type="button" class="btn-close-toast" data-bs-dismiss="alert" aria-label="Cerrar" title="Cerrar"><i class="bi bi-x-lg"></i></button>
                 </div>
             </div>
         @endif
 
         @if(session('warning'))
-            <div class="alert alert-warning alert-dismissible fade show border-0 p-3" role="alert">
-                <div class="d-flex align-items-center">
-                    <i class="bi bi-exclamation-triangle-fill text-warning fs-4 me-2.5 flex-shrink-0"></i>
-                    <div class="flex-grow-1 text-dark" style="font-size: 0.92rem; line-height: 1.35;"><strong>{{ session('warning') }}</strong></div>
-                    <button type="button" class="btn-close ms-2" data-bs-dismiss="alert" aria-label="Close"></button>
+            <div class="alert alert-warning alert-dismissible fade show border-0" role="alert">
+                <div class="d-flex align-items-center justify-content-between w-100">
+                    <div class="d-flex align-items-center flex-grow-1 me-2 overflow-hidden">
+                        <i class="bi bi-exclamation-triangle-fill text-warning fs-4 me-2.5 flex-shrink-0"></i>
+                        <div class="flex-grow-1 text-dark" style="font-size: 0.92rem; line-height: 1.35;"><strong>{{ session('warning') }}</strong></div>
+                    </div>
+                    <button type="button" class="btn-close-toast" data-bs-dismiss="alert" aria-label="Cerrar" title="Cerrar"><i class="bi bi-x-lg"></i></button>
                 </div>
             </div>
         @endif
 
         @if(session('success'))
-            <div class="alert alert-success alert-dismissible fade show border-0 p-3" role="alert">
-                <div class="d-flex align-items-center">
-                    <i class="bi bi-check-circle-fill text-success fs-4 me-2.5 flex-shrink-0"></i>
-                    <div class="flex-grow-1 text-dark" style="font-size: 0.92rem; line-height: 1.35;">
-                        <strong>{{ session('success') }}</strong>
-                        @if(session('success_venta_id'))
-                            <div class="mt-2">
-                                <a href="/ventas/{{ session('success_venta_id') }}/pdf" target="_blank" class="btn btn-sm btn-success fw-bold text-white shadow-sm rounded-pill px-3 py-1" style="font-size: 0.8rem;">
-                                    <i class="bi bi-printer-fill me-1"></i> Imprimir Nota #{{ session('success_venta_id') }}
-                                </a>
-                            </div>
-                        @endif
-                        @if(session('anulada_id'))
-                            <div class="mt-2">
-                                <a href="/pos?rehacer_venta={{ session('anulada_id') }}" class="btn btn-sm btn-primary text-white fw-bold shadow-sm rounded-pill px-3 py-1" style="font-size: 0.8rem;">
-                                    <i class="bi bi-arrow-repeat me-1"></i> Rehacer esta Venta en Caja Ahora
-                                </a>
-                            </div>
-                        @endif
+            <div class="alert alert-success alert-dismissible fade show border-0" role="alert">
+                <div class="d-flex align-items-center justify-content-between w-100">
+                    <div class="d-flex align-items-center flex-grow-1 me-2 overflow-hidden">
+                        <i class="bi bi-check-circle-fill text-success fs-4 me-2.5 flex-shrink-0"></i>
+                        <div class="flex-grow-1 text-dark" style="font-size: 0.92rem; line-height: 1.35;">
+                            <strong>{{ session('success') }}</strong>
+                            @if(session('success_venta_id'))
+                                <div class="mt-2">
+                                    <a href="/ventas/{{ session('success_venta_id') }}/pdf" target="_blank" class="btn btn-sm btn-success fw-bold text-white shadow-sm rounded-pill px-3 py-1" style="font-size: 0.8rem;">
+                                        <i class="bi bi-printer-fill me-1"></i> Imprimir Nota #{{ session('success_venta_id') }}
+                                    </a>
+                                </div>
+                            @endif
+                            @if(session('anulada_id'))
+                                <div class="mt-2">
+                                    <a href="/pos?rehacer_venta={{ session('anulada_id') }}" class="btn btn-sm btn-primary text-white fw-bold shadow-sm rounded-pill px-3 py-1" style="font-size: 0.8rem;">
+                                        <i class="bi bi-arrow-repeat me-1"></i> Rehacer esta Venta en Caja Ahora
+                                    </a>
+                                </div>
+                            @endif
+                        </div>
                     </div>
-                    <button type="button" class="btn-close ms-2" data-bs-dismiss="alert" aria-label="Close"></button>
+                    <button type="button" class="btn-close-toast" data-bs-dismiss="alert" aria-label="Cerrar" title="Cerrar"><i class="bi bi-x-lg"></i></button>
                 </div>
             </div>
         @endif
 
         @if(session('info'))
-            <div class="alert alert-info alert-dismissible fade show border-0 p-3" role="alert">
-                <div class="d-flex align-items-center">
-                    <i class="bi bi-info-circle-fill text-info fs-4 me-2.5 flex-shrink-0"></i>
-                    <div class="flex-grow-1 text-dark" style="font-size: 0.92rem; line-height: 1.35;"><strong>{{ session('info') }}</strong></div>
-                    <button type="button" class="btn-close ms-2" data-bs-dismiss="alert" aria-label="Close"></button>
+            <div class="alert alert-info alert-dismissible fade show border-0" role="alert">
+                <div class="d-flex align-items-center justify-content-between w-100">
+                    <div class="d-flex align-items-center flex-grow-1 me-2 overflow-hidden">
+                        <i class="bi bi-info-circle-fill text-info fs-4 me-2.5 flex-shrink-0"></i>
+                        <div class="flex-grow-1 text-dark" style="font-size: 0.92rem; line-height: 1.35;"><strong>{{ session('info') }}</strong></div>
+                    </div>
+                    <button type="button" class="btn-close-toast" data-bs-dismiss="alert" aria-label="Cerrar" title="Cerrar"><i class="bi bi-x-lg"></i></button>
                 </div>
             </div>
         @endif
 
         @if(isset($errors) && $errors->any())
-            <div class="alert alert-danger alert-dismissible fade show border-0 p-3" role="alert">
-                <div class="d-flex align-items-center">
-                    <i class="bi bi-exclamation-octagon-fill text-danger fs-4 me-2.5 flex-shrink-0"></i>
-                    <div class="flex-grow-1 text-dark" style="font-size: 0.92rem; line-height: 1.35;"><strong>{{ $errors->first() }}</strong></div>
-                    <button type="button" class="btn-close ms-2" data-bs-dismiss="alert" aria-label="Close"></button>
+            <div class="alert alert-danger alert-dismissible fade show border-0" role="alert">
+                <div class="d-flex align-items-center justify-content-between w-100">
+                    <div class="d-flex align-items-center flex-grow-1 me-2 overflow-hidden">
+                        <i class="bi bi-exclamation-octagon-fill text-danger fs-4 me-2.5 flex-shrink-0"></i>
+                        <div class="flex-grow-1 text-dark" style="font-size: 0.92rem; line-height: 1.35;"><strong>{{ $errors->first() }}</strong></div>
+                    </div>
+                    <button type="button" class="btn-close-toast" data-bs-dismiss="alert" aria-label="Cerrar" title="Cerrar"><i class="bi bi-x-lg"></i></button>
                 </div>
             </div>
         @endif
@@ -1142,16 +1205,25 @@
             }
 
             const alertDiv = document.createElement('div');
-            const alertClass = tipo === 'danger' ? 'alert-danger' : (tipo === 'warning' ? 'alert-warning' : (tipo === 'info' ? 'alert-info' : 'alert-success'));
-            const iconClass = tipo === 'danger' ? 'bi-exclamation-octagon-fill text-danger' : (tipo === 'warning' ? 'bi-exclamation-triangle-fill text-warning' : (tipo === 'info' ? 'bi-info-circle-fill text-info' : 'bi-check-circle-fill text-success'));
+            const alertClass = tipo === 'danger' ? 'alert-danger' : (tipo === 'warning' ? 'alert-warning' : (tipo === 'info' || tipo === 'loading' ? 'alert-info' : 'alert-success'));
             
-            alertDiv.className = `alert ${alertClass} alert-dismissible fade show border-0 p-3 toast-alerta-item`;
+            let iconoHtml = '';
+            if (tipo === 'loading') {
+                iconoHtml = `<div class="spinner-border spinner-border-sm text-primary me-2.5 flex-shrink-0" style="width: 1.2rem; height: 1.2rem;" role="status"></div>`;
+            } else {
+                const iconClass = tipo === 'danger' ? 'bi-exclamation-octagon-fill text-danger' : (tipo === 'warning' ? 'bi-exclamation-triangle-fill text-warning' : (tipo === 'info' ? 'bi-info-circle-fill text-info' : 'bi-check-circle-fill text-success'));
+                iconoHtml = `<i class="bi ${iconClass} fs-4 me-2.5 flex-shrink-0"></i>`;
+            }
+            
+            alertDiv.className = `alert ${alertClass} alert-dismissible fade show border-0 toast-alerta-item`;
             alertDiv.setAttribute('role', 'alert');
             alertDiv.innerHTML = `
-                <div class="d-flex align-items-center">
-                    <i class="bi ${iconClass} fs-4 me-2.5 flex-shrink-0"></i>
-                    <div class="flex-grow-1 text-dark" style="font-size: 0.92rem; line-height: 1.35;">${mensaje.startsWith('<') ? mensaje : '<strong>' + mensaje + '</strong>'}</div>
-                    <button type="button" class="btn-close ms-2" data-bs-dismiss="alert" aria-label="Close"></button>
+                <div class="d-flex align-items-center justify-content-between w-100">
+                    <div class="d-flex align-items-center flex-grow-1 me-2 overflow-hidden">
+                        ${iconoHtml}
+                        <div class="flex-grow-1 text-dark" style="font-size: 0.92rem; line-height: 1.35;">${mensaje.startsWith('<') ? mensaje : '<strong>' + mensaje + '</strong>'}</div>
+                    </div>
+                    <button type="button" class="btn-close-toast" data-bs-dismiss="alert" aria-label="Cerrar" title="Cerrar"><i class="bi bi-x-lg"></i></button>
                 </div>
             `;
             contenedor.appendChild(alertDiv);

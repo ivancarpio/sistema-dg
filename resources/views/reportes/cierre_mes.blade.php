@@ -774,9 +774,9 @@ function marcarTodos(accion) {
     let toastCargando = null;
     if (typeof window.mostrarAlertaFlotante === 'function') {
         const textoCarga = accion === 'marcar'
-            ? '<div class="d-flex align-items-center gap-2"><div class="spinner-border spinner-border-sm text-primary" role="status"></div><span>Marcando productos como OK...</span></div>'
-            : '<div class="d-flex align-items-center gap-2"><div class="spinner-border spinner-border-sm text-secondary" role="status"></div><span>Desmarcando todos los productos...</span></div>';
-        toastCargando = window.mostrarAlertaFlotante(textoCarga, 'info', 10000);
+            ? 'Marcando productos como OK...'
+            : 'Desmarcando todos los productos...';
+        toastCargando = window.mostrarAlertaFlotante(textoCarga, 'loading', 10000);
     }
 
     fetch('/reportes/cierre-mes/check-all', {
