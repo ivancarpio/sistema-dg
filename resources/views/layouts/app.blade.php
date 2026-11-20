@@ -487,6 +487,48 @@
                 width: 100% !important;
             }
         }
+        /* CONTENEDOR GLOBAL DE TOASTS / ALERTAS FLOTANTES (ESQUINA SUPERIOR DERECHA) */
+        #contenedorAlertasDinamicas {
+            position: fixed;
+            top: 24px;
+            right: 24px;
+            z-index: 105000;
+            min-width: 330px;
+            max-width: 460px;
+            pointer-events: none;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        #contenedorAlertasDinamicas .alert {
+            pointer-events: auto;
+            box-shadow: 0 12px 30px -4px rgba(15, 23, 42, 0.16), 0 0 0 1px rgba(0, 0, 0, 0.05) !important;
+            border-radius: 14px !important;
+            margin-bottom: 0 !important;
+            animation: toastNotificationIn 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+
+        @keyframes toastNotificationIn {
+            from {
+                opacity: 0;
+                transform: translateY(-10px) translateX(20px) scale(0.96);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0) translateX(0) scale(1);
+            }
+        }
+
+        @media (max-width: 576px) {
+            #contenedorAlertasDinamicas {
+                top: 14px;
+                right: 14px;
+                left: 14px;
+                min-width: auto;
+                max-width: none;
+            }
+        }
     </style>
 </head>
 <body>
@@ -756,43 +798,79 @@
     <!-- ========================================== -->
 
 
-    <!-- ========================================== -->
-    <!-- CONTENIDO PRINCIPAL                        -->
-    <!-- ========================================== -->
-    <main class="main-content">
-        {{-- Alertas Globales de Sesión y Seguridad --}}
+    {{-- CONTENEDOR GLOBAL DE NOTIFICACIONES FLOTANTES (Esquina superior derecha - Estilo Toast) --}}
+    <div id="contenedorAlertasDinamicas" aria-live="polite" aria-atomic="true">
         @if(session('error'))
-            <div class="alert alert-danger alert-dismissible fade show shadow-sm mb-3 py-2.5 px-3 d-flex align-items-center gap-2 border-danger border-opacity-25" role="alert" style="border-radius: 14px;">
-                <i class="bi bi-shield-x fs-4 text-danger flex-shrink-0"></i>
-                <div class="flex-grow-1 fw-semibold small">{{ session('error') }}</div>
-                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            <div class="alert alert-danger alert-dismissible fade show border-0 p-3" role="alert">
+                <div class="d-flex align-items-center">
+                    <i class="bi bi-shield-x text-danger fs-4 me-2.5 flex-shrink-0"></i>
+                    <div class="flex-grow-1 text-dark" style="font-size: 0.92rem; line-height: 1.35;"><strong>{{ session('error') }}</strong></div>
+                    <button type="button" class="btn-close ms-2" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
             </div>
         @endif
 
         @if(session('warning'))
-            <div class="alert alert-warning alert-dismissible fade show shadow-sm mb-3 py-2.5 px-3 d-flex align-items-center gap-2 border-warning border-opacity-25" role="alert" style="border-radius: 14px; background-color: #fffbeb; color: #92400e;">
-                <i class="bi bi-exclamation-triangle-fill fs-4 text-warning flex-shrink-0"></i>
-                <div class="flex-grow-1 fw-semibold small">{{ session('warning') }}</div>
-                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            <div class="alert alert-warning alert-dismissible fade show border-0 p-3" role="alert">
+                <div class="d-flex align-items-center">
+                    <i class="bi bi-exclamation-triangle-fill text-warning fs-4 me-2.5 flex-shrink-0"></i>
+                    <div class="flex-grow-1 text-dark" style="font-size: 0.92rem; line-height: 1.35;"><strong>{{ session('warning') }}</strong></div>
+                    <button type="button" class="btn-close ms-2" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
             </div>
         @endif
 
         @if(session('success'))
-            <div class="alert alert-success alert-dismissible fade show shadow-sm mb-3 py-2.5 px-3 d-flex align-items-center gap-2 border-success border-opacity-25" role="alert" style="border-radius: 14px;">
-                <i class="bi bi-check-circle-fill fs-4 text-success flex-shrink-0"></i>
-                <div class="flex-grow-1 fw-semibold small">{{ session('success') }}</div>
-                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            <div class="alert alert-success alert-dismissible fade show border-0 p-3" role="alert">
+                <div class="d-flex align-items-center">
+                    <i class="bi bi-check-circle-fill text-success fs-4 me-2.5 flex-shrink-0"></i>
+                    <div class="flex-grow-1 text-dark" style="font-size: 0.92rem; line-height: 1.35;">
+                        <strong>{{ session('success') }}</strong>
+                        @if(session('success_venta_id'))
+                            <div class="mt-2">
+                                <a href="/ventas/{{ session('success_venta_id') }}/pdf" target="_blank" class="btn btn-sm btn-success fw-bold text-white shadow-sm rounded-pill px-3 py-1" style="font-size: 0.8rem;">
+                                    <i class="bi bi-printer-fill me-1"></i> Imprimir Nota #{{ session('success_venta_id') }}
+                                </a>
+                            </div>
+                        @endif
+                        @if(session('anulada_id'))
+                            <div class="mt-2">
+                                <a href="/pos?rehacer_venta={{ session('anulada_id') }}" class="btn btn-sm btn-primary text-white fw-bold shadow-sm rounded-pill px-3 py-1" style="font-size: 0.8rem;">
+                                    <i class="bi bi-arrow-repeat me-1"></i> Rehacer esta Venta en Caja Ahora
+                                </a>
+                            </div>
+                        @endif
+                    </div>
+                    <button type="button" class="btn-close ms-2" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
             </div>
         @endif
 
         @if(session('info'))
-            <div class="alert alert-info alert-dismissible fade show shadow-sm mb-3 py-2.5 px-3 d-flex align-items-center gap-2 border-info border-opacity-25" role="alert" style="border-radius: 14px;">
-                <i class="bi bi-info-circle-fill fs-4 text-info flex-shrink-0"></i>
-                <div class="flex-grow-1 fw-semibold small">{{ session('info') }}</div>
-                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            <div class="alert alert-info alert-dismissible fade show border-0 p-3" role="alert">
+                <div class="d-flex align-items-center">
+                    <i class="bi bi-info-circle-fill text-info fs-4 me-2.5 flex-shrink-0"></i>
+                    <div class="flex-grow-1 text-dark" style="font-size: 0.92rem; line-height: 1.35;"><strong>{{ session('info') }}</strong></div>
+                    <button type="button" class="btn-close ms-2" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
             </div>
         @endif
 
+        @if(isset($errors) && $errors->any())
+            <div class="alert alert-danger alert-dismissible fade show border-0 p-3" role="alert">
+                <div class="d-flex align-items-center">
+                    <i class="bi bi-exclamation-octagon-fill text-danger fs-4 me-2.5 flex-shrink-0"></i>
+                    <div class="flex-grow-1 text-dark" style="font-size: 0.92rem; line-height: 1.35;"><strong>{{ $errors->first() }}</strong></div>
+                    <button type="button" class="btn-close ms-2" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            </div>
+        @endif
+    </div>
+
+    <!-- ========================================== -->
+    <!-- CONTENIDO PRINCIPAL                        -->
+    <!-- ========================================== -->
+    <main class="main-content">
         @yield('content')
     </main>
 
@@ -1049,8 +1127,8 @@
             });
         };
 
-        const alerts = document.querySelectorAll(".alert");
-        alerts.forEach(function(alertEl) {
+        const toastAlerts = document.querySelectorAll("#contenedorAlertasDinamicas .alert");
+        toastAlerts.forEach(function(alertEl) {
             window.configurarAutoCierreAlerta(alertEl, 5000);
         });
 
@@ -1060,30 +1138,25 @@
             if (!contenedor) {
                 contenedor = document.createElement('div');
                 contenedor.id = 'contenedorAlertasDinamicas';
-                contenedor.style.position = 'fixed';
-                contenedor.style.top = '22px';
-                contenedor.style.right = '24px';
-                contenedor.style.zIndex = '99999';
-                contenedor.style.minWidth = '320px';
-                contenedor.style.maxWidth = '460px';
                 document.body.appendChild(contenedor);
             }
 
             const alertDiv = document.createElement('div');
-            const alertClass = tipo === 'danger' ? 'alert-danger' : (tipo === 'warning' ? 'alert-warning' : 'alert-success');
-            const iconClass = tipo === 'danger' ? 'bi-exclamation-octagon-fill text-danger' : (tipo === 'warning' ? 'bi-exclamation-triangle-fill text-warning' : 'bi-check-circle-fill text-success');
+            const alertClass = tipo === 'danger' ? 'alert-danger' : (tipo === 'warning' ? 'alert-warning' : (tipo === 'info' ? 'alert-info' : 'alert-success'));
+            const iconClass = tipo === 'danger' ? 'bi-exclamation-octagon-fill text-danger' : (tipo === 'warning' ? 'bi-exclamation-triangle-fill text-warning' : (tipo === 'info' ? 'bi-info-circle-fill text-info' : 'bi-check-circle-fill text-success'));
             
-            alertDiv.className = `alert ${alertClass} alert-dismissible fade show shadow-lg border-0 rounded-3 mb-3 p-3`;
+            alertDiv.className = `alert ${alertClass} alert-dismissible fade show border-0 p-3 toast-alerta-item`;
             alertDiv.setAttribute('role', 'alert');
             alertDiv.innerHTML = `
                 <div class="d-flex align-items-center">
-                    <i class="bi ${iconClass} fs-4 me-2.5"></i>
-                    <div class="flex-grow-1" style="font-size: 0.95rem;"><strong>${mensaje}</strong></div>
+                    <i class="bi ${iconClass} fs-4 me-2.5 flex-shrink-0"></i>
+                    <div class="flex-grow-1 text-dark" style="font-size: 0.92rem; line-height: 1.35;">${mensaje.startsWith('<') ? mensaje : '<strong>' + mensaje + '</strong>'}</div>
                     <button type="button" class="btn-close ms-2" data-bs-dismiss="alert" aria-label="Close"></button>
                 </div>
             `;
             contenedor.appendChild(alertDiv);
             window.configurarAutoCierreAlerta(alertDiv, duracionMs);
+            return alertDiv;
         };
     });
     </script>

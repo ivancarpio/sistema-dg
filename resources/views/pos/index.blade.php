@@ -301,35 +301,6 @@
     }
 </style>
 
-<!-- ALERTAS DE ÉXITO O ERROR -->
-@if(session('error'))
-    <div class="alert alert-danger alert-dismissible fade show shadow-sm mb-3 py-2" role="alert">
-        <div class="d-flex align-items-center">
-            <i class="bi bi-exclamation-triangle-fill fs-5 me-2 text-danger"></i>
-            <div><strong>Atención:</strong> {{ session('error') }}</div>
-        </div>
-        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-    </div>
-@endif
-
-@if(session('success_venta_id'))
-    <div class="alert alert-success alert-dismissible fade show shadow-sm d-flex justify-content-between align-items-center mb-3 py-2" role="alert">
-        <div class="d-flex align-items-center">
-            <i class="bi bi-check-circle-fill fs-4 text-success me-2"></i>
-            <div>
-                <h6 class="fw-bold mb-0 text-success">{{ session('success') ?? '¡Venta registrada con éxito!' }}</h6>
-                <small class="text-muted">Nota de Venta ID: #{{ session('success_venta_id') }}</small>
-            </div>
-        </div>
-        <div class="d-flex gap-2">
-            <a href="/ventas/{{ session('success_venta_id') }}/pdf" target="_blank" class="btn btn-sm btn-success fw-bold shadow-sm px-3">
-                <i class="bi bi-printer-fill me-1"></i> Imprimir Nota
-            </a>
-            <button type="button" class="btn-close position-relative top-0 end-0" data-bs-dismiss="alert"></button>
-        </div>
-    </div>
-@endif
-
 @if(isset($ventaRehacer) && $ventaRehacer)
     <div class="alert alert-warning border-0 shadow-sm d-flex flex-wrap align-items-center justify-content-between mb-4 p-3 rounded-4" style="background: linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%); border-left: 5px solid #f59e0b !important;">
         <div class="d-flex align-items-center gap-3">

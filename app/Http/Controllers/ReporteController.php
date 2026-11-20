@@ -334,18 +334,47 @@ class ReporteController extends Controller
 
         $mes    = $request->mes;
         $marcar = $request->accion === 'marcar';
+        $userId = Auth::id();
+        $now    = now();
 
-        $productos = Producto::all();
-        foreach ($productos as $p) {
-            CierreMesCheck::updateOrCreate(
-                ['id_producto' => $p->id, 'mes' => $mes],
-                ['verificado' => $marcar, 'id_usuario' => Auth::id()]
-            );
+        if ($marcar) {
+            $productIds = Producto::pluck('id');
+            $rows = [];
+            foreach ($productIds as $id) {
+                $rows[] = [
+                    'mes'                => $mes,
+                    'id_producto'        => $id,
+                    'verificado'         => true,
+                    'id_usuario'         => $userId,
+                    'fecha_verificacion' => $now,
+                    'created_at'         => $now,
+                    'updated_at'         => $now,
+                ];
+            }
+
+            foreach (array_chunk($rows, 500) as $chunk) {
+                CierreMesCheck::upsert(
+                    $chunk,
+                    ['mes', 'id_producto'],
+                    ['verificado', 'id_usuario', 'fecha_verificacion', 'updated_at']
+                );
+            }
+
+            $total       = count($productIds);
+            $verificados = $total;
+            $porcentaje  = 100;
+        } else {
+            CierreMesCheck::where('mes', $mes)->update([
+                'verificado'         => false,
+                'id_usuario'         => $userId,
+                'fecha_verificacion' => null,
+                'updated_at'         => $now,
+            ]);
+
+            $total       = Producto::count();
+            $verificados = 0;
+            $porcentaje  = 0;
         }
-
-        $verificados = $marcar ? $productos->count() : 0;
-        $total       = $productos->count();
-        $porcentaje  = $marcar ? 100 : 0;
 
         return response()->json([
             'success'     => true,

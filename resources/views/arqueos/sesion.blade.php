@@ -37,21 +37,6 @@
     }
 </style>
 
-{{-- Alertas --}}
-@if(session('success'))
-    <div class="alert alert-success alert-dismissible fade show shadow-sm border-0 mb-4 rounded-3">
-        <i class="bi bi-check-circle-fill me-2"></i>{{ session('success') }}
-        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-    </div>
-@endif
-
-@if(session('error'))
-    <div class="alert alert-danger alert-dismissible fade show shadow-sm border-0 mb-4 rounded-3">
-        <i class="bi bi-exclamation-triangle-fill me-2"></i>{{ session('error') }}
-        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-    </div>
-@endif
-
 {{-- ENCABEZADO --}}
 <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4">
     <div class="d-flex align-items-center">

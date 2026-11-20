@@ -234,27 +234,6 @@
     </div>
 </div>
 
-<!-- ALERTAS -->
-@if(session('success'))
-    <div class="alert alert-success alert-dismissible fade show shadow-sm border-0 border-start border-success border-4" role="alert">
-        <div class="d-flex align-items-center">
-            <i class="bi bi-check-circle-fill fs-4 text-success me-2"></i>
-            <div>{{ session('success') }}</div>
-        </div>
-        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-    </div>
-@endif
-
-@if(isset($errors) && $errors->any())
-    <div class="alert alert-danger alert-dismissible fade show shadow-sm border-0 border-start border-danger border-4" role="alert">
-        <div class="d-flex align-items-center">
-            <i class="bi bi-exclamation-triangle-fill fs-4 text-danger me-2"></i>
-            <div>{{ $errors->first() }}</div>
-        </div>
-        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-    </div>
-@endif
-
 <!-- CONTENEDOR PRINCIPAL CON PESTAÑAS -->
 <div class="card border-0 shadow-sm rounded-4 overflow-hidden mb-4">
     

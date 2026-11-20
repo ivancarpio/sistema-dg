@@ -50,27 +50,6 @@
     }
 </style>
 
-<!-- ALERTAS -->
-@if(session('success'))
-    <div class="alert alert-success alert-dismissible fade show shadow-sm mb-4 d-flex flex-wrap align-items-center justify-content-between gap-2">
-        <div>
-            <i class="bi bi-check-circle-fill me-2"></i>{{ session('success') }}
-        </div>
-        @if(session('anulada_id'))
-            <a href="/pos?rehacer_venta={{ session('anulada_id') }}" class="btn btn-sm btn-primary text-white fw-bold shadow-sm rounded-pill px-3">
-                <i class="bi bi-arrow-repeat me-1"></i> Rehacer esta Venta en Caja Ahora
-            </a>
-        @endif
-        <button class="btn-close" data-bs-dismiss="alert"></button>
-    </div>
-@endif
-@if(session('error'))
-    <div class="alert alert-danger alert-dismissible fade show shadow-sm mb-4">
-        <i class="bi bi-exclamation-triangle-fill me-2"></i>{{ session('error') }}
-        <button class="btn-close" data-bs-dismiss="alert"></button>
-    </div>
-@endif
-
 <!-- ENCABEZADO PRINCIPAL -->
 <div class="d-flex flex-wrap justify-content-between align-items-center mb-4 gap-3">
     <div class="d-flex align-items-center">

@@ -136,29 +136,6 @@
     }
 </style>
 
-{{-- Alertas de éxito o error --}}
-@if(session('success'))
-    <div class="alert alert-success alert-dismissible fade show shadow-sm mb-4" role="alert">
-        <i class="bi bi-check-circle-fill me-2 fs-5 align-middle"></i>
-        <strong>¡Éxito!</strong> {{ session('success') }}
-        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-    </div>
-@endif
-@if(session('info'))
-    <div class="alert alert-info alert-dismissible fade show shadow-sm mb-4" role="alert">
-        <i class="bi bi-info-circle-fill me-2 fs-5 align-middle"></i>
-        {{ session('info') }}
-        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-    </div>
-@endif
-@if(session('error'))
-    <div class="alert alert-danger alert-dismissible fade show shadow-sm mb-4" role="alert">
-        <i class="bi bi-exclamation-triangle-fill me-2 fs-5 align-middle"></i>
-        <strong>Error:</strong> {{ session('error') }}
-        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-    </div>
-@endif
-
 {{-- ===== NAVEGACIÓN Y TÍTULO ===== --}}
 <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4">
     <div class="d-flex align-items-center">
@@ -296,11 +273,11 @@
         </span>
         @if(!$cierreActual || !$cierreActual->isCerrado())
         <div class="d-flex gap-2">
-            <button class="btn btn-sm btn-outline-primary fw-bold" onclick="marcarTodos('marcar')">
-                <i class="bi bi-check-all me-1"></i> Marcar todos como OK
+            <button id="btnMarcarTodos" class="btn btn-sm btn-outline-primary fw-bold d-inline-flex align-items-center gap-1" onclick="marcarTodos('marcar')">
+                <i class="bi bi-check-all fs-6"></i> <span>Marcar todos como OK</span>
             </button>
-            <button class="btn btn-sm btn-outline-secondary fw-bold" onclick="marcarTodos('desmarcar')">
-                <i class="bi bi-x-circle me-1"></i> Desmarcar todos
+            <button id="btnDesmarcarTodos" class="btn btn-sm btn-outline-secondary fw-bold d-inline-flex align-items-center gap-1" onclick="marcarTodos('desmarcar')">
+                <i class="bi bi-x-circle fs-6"></i> <span>Desmarcar todos</span>
             </button>
         </div>
         @else
@@ -773,7 +750,11 @@ function toggleCheck(idProducto) {
 // 2. Marcar todos o desmarcar todos
 function marcarTodos(accion) {
     if (ES_MES_CERRADO) {
-        alert('Este mes ya ha sido cerrado oficialmente y sus cifras están archivadas.');
+        if (typeof window.mostrarAlertaFlotante === 'function') {
+            window.mostrarAlertaFlotante('Este mes ya ha sido cerrado oficialmente y sus cifras están archivadas.', 'warning', 4000);
+        } else {
+            alert('Este mes ya ha sido cerrado oficialmente y sus cifras están archivadas.');
+        }
         return;
     }
 
@@ -782,6 +763,21 @@ function marcarTodos(accion) {
         : '¿Estás seguro de desmarcar TODOS los productos?';
 
     if (!confirm(confirmMsg)) return;
+
+    const btnMarcar = document.getElementById('btnMarcarTodos');
+    const btnDesmarcar = document.getElementById('btnDesmarcarTodos');
+
+    if (btnMarcar) btnMarcar.disabled = true;
+    if (btnDesmarcar) btnDesmarcar.disabled = true;
+
+    // Toast indicador en la esquina superior derecha
+    let toastCargando = null;
+    if (typeof window.mostrarAlertaFlotante === 'function') {
+        const textoCarga = accion === 'marcar'
+            ? '<div class="d-flex align-items-center gap-2"><div class="spinner-border spinner-border-sm text-primary" role="status"></div><span>Marcando productos como OK...</span></div>'
+            : '<div class="d-flex align-items-center gap-2"><div class="spinner-border spinner-border-sm text-secondary" role="status"></div><span>Desmarcando todos los productos...</span></div>';
+        toastCargando = window.mostrarAlertaFlotante(textoCarga, 'info', 10000);
+    }
 
     fetch('/reportes/cierre-mes/check-all', {
         method: 'POST',
@@ -796,6 +792,10 @@ function marcarTodos(accion) {
     })
     .then(res => res.json())
     .then(data => {
+        if (toastCargando) {
+            try { toastCargando.remove(); } catch(e) {}
+        }
+
         if (data.success) {
             const esMarcar = (accion === 'marcar');
             document.querySelectorAll('.fila-producto').forEach(fila => {
@@ -820,10 +820,34 @@ function marcarTodos(accion) {
                     fila.dataset.estado = 'pendiente';
                 }
             });
+
             actualizarEstadisticas(data.totalChecks, data.pendientes, data.porcentaje);
+
+            if (typeof window.mostrarAlertaFlotante === 'function') {
+                const mensajeExito = esMarcar
+                    ? `¡Todos los ${data.total} productos fueron marcados como OK!`
+                    : `¡Todos los productos fueron desmarcados!`;
+                window.mostrarAlertaFlotante(mensajeExito, 'success', 3500);
+            }
+        } else {
+            if (typeof window.mostrarAlertaFlotante === 'function') {
+                window.mostrarAlertaFlotante(data.message || 'No se pudo completar la operación.', 'danger', 5000);
+            }
         }
     })
-    .catch(err => console.error('Error:', err));
+    .catch(err => {
+        if (toastCargando) {
+            try { toastCargando.remove(); } catch(e) {}
+        }
+        console.error('Error:', err);
+        if (typeof window.mostrarAlertaFlotante === 'function') {
+            window.mostrarAlertaFlotante('Ocurrió un error al procesar la solicitud.', 'danger', 5000);
+        }
+    })
+    .finally(() => {
+        if (btnMarcar) btnMarcar.disabled = false;
+        if (btnDesmarcar) btnDesmarcar.disabled = false;
+    });
 }
 
 // 3. Actualizar contadores y barra de progreso

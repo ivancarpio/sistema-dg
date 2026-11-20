@@ -88,14 +88,6 @@
     </div>
 </div>
 
-{{-- Alertas --}}
-@if(session('success'))
-    <div class="alert alert-success alert-dismissible fade show shadow-sm no-print">
-        <i class="bi bi-check-circle-fill me-2"></i>{{ session('success') }}
-        <button class="btn-close" data-bs-dismiss="alert"></button>
-    </div>
-@endif
-
 {{-- ===== ENCABEZADO DE PANTALLA ===== --}}
 <div class="d-flex justify-content-between align-items-center mb-4 no-print">
     <div class="d-flex align-items-center">

@@ -77,25 +77,6 @@
     }
 </style>
 
-<!-- ALERTAS -->
-@if(session('success'))
-<div class="alert alert-success alert-dismissible fade show d-flex align-items-center mb-4 rounded-3 shadow-sm" role="alert">
-    <i class="bi bi-check-circle-fill fs-4 me-3"></i>
-    <div class="fw-semibold">{{ session('success') }}</div>
-    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-</div>
-@endif
-
-@if(session('error') || (isset($errors) && $errors->any()))
-<div class="alert alert-danger alert-dismissible fade show d-flex align-items-center mb-4 rounded-3 shadow-sm" role="alert">
-    <i class="bi bi-exclamation-triangle-fill fs-4 me-3"></i>
-    <div class="fw-semibold">
-        {{ session('error') ?? ($errors->first() ?? 'Ha ocurrido un error.') }}
-    </div>
-    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-</div>
-@endif
-
 <!-- ENCABEZADO -->
 <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-3">
     <div class="d-flex align-items-center gap-3">
