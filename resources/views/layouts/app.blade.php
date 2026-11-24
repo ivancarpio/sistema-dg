@@ -99,7 +99,10 @@
             body.sidebar-collapsed .sidebar-section-title,
             body.sidebar-collapsed .user-info-text,
             body.sidebar-collapsed .btn-logout-text,
-            body.sidebar-collapsed .active-indicator-dot {
+            body.sidebar-collapsed .active-indicator-dot,
+            body.sidebar-collapsed .nav-accordion-arrow,
+            body.sidebar-collapsed .sidebar-accordion-body,
+            body.sidebar-collapsed .sidebar-submenu {
                 display: none !important;
             }
             body.sidebar-collapsed .sidebar-custom .nav-link {
@@ -437,6 +440,145 @@
             color: #ffffff;
         }
 
+        /* ============================================================ */
+        /* SUBMENÚ ACORDEÓN EN SIDEBAR (CAJA Y FINANZAS)                */
+        /* ============================================================ */
+        .nav-link-accordion {
+            cursor: pointer;
+            user-select: none;
+            display: flex;
+            align-items: center;
+        }
+        .nav-accordion-arrow {
+            margin-left: auto;
+            font-size: 0.75rem;
+            color: rgba(255, 255, 255, 0.5);
+            transition: transform 0.32s cubic-bezier(0.22, 1, 0.36, 1), color 0.25s ease;
+            flex-shrink: 0;
+        }
+        .nav-link-accordion[aria-expanded="true"] .nav-accordion-arrow,
+        .nav-link-accordion.open .nav-accordion-arrow {
+            transform: rotate(180deg);
+            color: #38bdf8;
+        }
+        .sidebar-accordion-body {
+            display: grid;
+            grid-template-rows: 0fr;
+            opacity: 0;
+            padding: 0;
+            visibility: hidden;
+            pointer-events: none;
+            transition: grid-template-rows 0.34s cubic-bezier(0.22, 1, 0.36, 1),
+                        opacity 0.26s ease,
+                        padding 0.34s cubic-bezier(0.22, 1, 0.36, 1),
+                        visibility 0.34s;
+        }
+        .sidebar-accordion-body.show {
+            grid-template-rows: 1fr;
+            opacity: 1;
+            padding: 4px 0 6px 0;
+            visibility: visible;
+            pointer-events: auto;
+        }
+        .sidebar-accordion-inner {
+            min-height: 0;
+            overflow: hidden;
+        }
+        .sidebar-submenu {
+            list-style: none;
+            padding: 2px 0 4px 0;
+            margin: 2px 10px 4px 20px;
+            border-left: 2px solid rgba(56, 189, 248, 0.35);
+        }
+        .sidebar-submenu .subnav-item {
+            margin: 3px 0;
+            opacity: 0;
+            transform: translateY(-6px);
+            transition: opacity 0.22s ease, transform 0.28s cubic-bezier(0.22, 1, 0.36, 1);
+        }
+        .sidebar-accordion-body.show .subnav-item {
+            opacity: 1;
+            transform: translateY(0);
+        }
+        .sidebar-accordion-body.show .subnav-item:nth-child(1) { transition-delay: 0.04s; }
+        .sidebar-accordion-body.show .subnav-item:nth-child(2) { transition-delay: 0.09s; }
+        .sidebar-accordion-body.show .subnav-item:nth-child(3) { transition-delay: 0.14s; }
+        .sidebar-submenu .subnav-link {
+            display: flex;
+            align-items: center;
+            padding: 7px 10px;
+            border-radius: 10px;
+            color: rgba(255, 255, 255, 0.78);
+            text-decoration: none;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+        }
+        .sidebar-submenu .subnav-link:hover {
+            color: #ffffff;
+            background: rgba(255, 255, 255, 0.08);
+            transform: translateX(3px);
+        }
+        .sidebar-submenu .subnav-link.active {
+            color: #ffffff !important;
+            background: rgba(2, 132, 199, 0.28) !important;
+            border: 1px solid rgba(56, 189, 248, 0.35);
+            box-shadow: 0 2px 8px rgba(2, 132, 199, 0.25);
+        }
+        .subnav-icon-box {
+            width: 30px;
+            height: 30px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.95rem;
+            flex-shrink: 0;
+            margin-right: 10px;
+            background: rgba(255, 255, 255, 0.08);
+            color: #38bdf8;
+            transition: all 0.2s ease;
+        }
+        .sidebar-submenu .subnav-link:hover .subnav-icon-box {
+            background: rgba(56, 189, 248, 0.25);
+            color: #ffffff;
+            transform: scale(1.05);
+        }
+        .sidebar-submenu .subnav-link.active .subnav-icon-box {
+            background: linear-gradient(135deg, #0284c7 0%, #0ea5e9 100%);
+            color: #ffffff;
+            box-shadow: 0 2px 6px rgba(2, 132, 199, 0.4);
+        }
+        .subnav-text-container {
+            flex-grow: 1;
+            line-height: 1.15;
+            min-width: 0;
+        }
+        .subnav-title {
+            font-size: 0.82rem;
+            font-weight: 700;
+            color: #f1f5f9;
+        }
+        .sidebar-submenu .subnav-link.active .subnav-title {
+            color: #38bdf8 !important;
+        }
+        .subnav-subtitle {
+            font-size: 0.66rem;
+            color: rgba(255, 255, 255, 0.5);
+            margin-top: 1px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .sidebar-submenu .subnav-dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background-color: #38bdf8;
+            margin-left: 6px;
+            flex-shrink: 0;
+            box-shadow: 0 0 6px rgba(56, 189, 248, 0.9);
+        }
+
         /* Botones globales en Azul Tonal */
         .btn-primary {
             background: linear-gradient(135deg, #0284c7 0%, #0ea5e9 100%) !important;
@@ -729,19 +871,74 @@
                 @endif
 
                 @if(auth()->check() && auth()->user()->tienePermiso('arqueos'))
+                @php
+                    $isFinanzasActive = request()->is('arqueos*') || request()->is('finanzas*');
+                @endphp
                 <li class="nav-item">
-                    <a class="nav-link {{ request()->is('arqueos*') ? 'active' : '' }}" href="/arqueos" title="Arqueo de Caja">
+                    <a class="nav-link nav-link-accordion {{ $isFinanzasActive ? 'active open' : '' }}" 
+                       id="btnFinanzasAccordion"
+                       href="javascript:void(0);" 
+                       onclick="toggleFinanzasAccordion(event)"
+                       role="button" 
+                       aria-expanded="{{ $isFinanzasActive ? 'true' : 'false' }}" 
+                       title="Caja y Finanzas">
                         <div class="nav-icon-box">
-                            <i class="bi bi-safe2-fill"></i>
+                            <i class="bi bi-wallet-fill"></i>
                         </div>
                         <div class="nav-text-container">
-                            <div class="nav-title">Arqueo de Caja</div>
-                            <div class="nav-subtitle">Cierres y turnos</div>
+                            <div class="nav-title">Caja y Finanzas</div>
+                            <div class="nav-subtitle">Turnos, gastos y caja chica</div>
                         </div>
-                        @if(request()->is('arqueos*'))
-                            <span class="active-indicator-dot"></span>
-                        @endif
+                        <i class="bi bi-chevron-down nav-accordion-arrow"></i>
                     </a>
+                    <div class="sidebar-accordion-body {{ $isFinanzasActive ? 'show' : '' }}" id="collapseFinanzas">
+                        <div class="sidebar-accordion-inner">
+                            <ul class="sidebar-submenu">
+                                <li class="subnav-item">
+                                    <a class="subnav-link {{ request()->is('arqueos*') ? 'active' : '' }}" href="/arqueos/sesion" title="Plata en cajón, cobros del día y cierres">
+                                        <div class="subnav-icon-box">
+                                            <i class="bi bi-cash-stack"></i>
+                                        </div>
+                                        <div class="subnav-text-container">
+                                            <div class="subnav-title">Gaveta de Efectivo</div>
+                                            <div class="subnav-subtitle">Turnos, cobros y cierres</div>
+                                        </div>
+                                        @if(request()->is('arqueos*'))
+                                            <span class="subnav-dot"></span>
+                                        @endif
+                                    </a>
+                                </li>
+                                <li class="subnav-item">
+                                    <a class="subnav-link {{ request()->is('finanzas/gastos*') ? 'active' : '' }}" href="/finanzas/gastos" title="Fletes, insumos y facturas">
+                                        <div class="subnav-icon-box">
+                                            <i class="bi bi-receipt"></i>
+                                        </div>
+                                        <div class="subnav-text-container">
+                                            <div class="subnav-title">Gastos Operativos</div>
+                                            <div class="subnav-subtitle">Fletes, insumos y facturas</div>
+                                        </div>
+                                        @if(request()->is('finanzas/gastos*'))
+                                            <span class="subnav-dot"></span>
+                                        @endif
+                                    </a>
+                                </li>
+                                <li class="subnav-item">
+                                    <a class="subnav-link {{ request()->is('finanzas/caja-chica*') ? 'active' : '' }}" href="/finanzas/caja-chica" title="Fondo fijo para compras menores">
+                                        <div class="subnav-icon-box">
+                                            <i class="bi bi-piggy-bank-fill"></i>
+                                        </div>
+                                        <div class="subnav-text-container">
+                                            <div class="subnav-title">Caja Chica (Oficina)</div>
+                                            <div class="subnav-subtitle">Fondo fijo compras menores</div>
+                                        </div>
+                                        @if(request()->is('finanzas/caja-chica*'))
+                                            <span class="subnav-dot"></span>
+                                        @endif
+                                    </a>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
                 </li>
                 @endif
 
@@ -972,6 +1169,48 @@
     <!-- SCRIPTS RESPONSIVE, COLLAPSE & SEGURIDAD   -->
     <!-- ========================================== -->
     <script>
+    function toggleFinanzasAccordion(event) {
+        if (event) {
+            event.preventDefault();
+            event.stopPropagation();
+        }
+        const btn = document.getElementById("btnFinanzasAccordion");
+        const menu = document.getElementById("collapseFinanzas");
+        if (!menu) return;
+
+        // Si en escritorio estaba colapsado en íconos, expandir primero para ver el submenú
+        if (window.innerWidth >= 992 && document.body.classList.contains("sidebar-collapsed")) {
+            document.body.classList.remove("sidebar-collapsed");
+            const iconCollapse = document.getElementById("iconSidebarCollapse");
+            if (iconCollapse) {
+                iconCollapse.classList.remove("bi-chevron-right");
+                iconCollapse.classList.add("bi-chevron-left");
+            }
+            localStorage.setItem("sistema_dg_sidebar_collapsed", "false");
+            menu.classList.add("show");
+            if (btn) {
+                btn.setAttribute("aria-expanded", "true");
+                btn.classList.add("open");
+            }
+            return;
+        }
+
+        const isOpen = menu.classList.contains("show");
+        if (isOpen) {
+            menu.classList.remove("show");
+            if (btn) {
+                btn.setAttribute("aria-expanded", "false");
+                btn.classList.remove("open");
+            }
+        } else {
+            menu.classList.add("show");
+            if (btn) {
+                btn.setAttribute("aria-expanded", "true");
+                btn.classList.add("open");
+            }
+        }
+    }
+
     document.addEventListener("DOMContentLoaded", function() {
         
         // ---------------------------------------------------------------------
@@ -1049,11 +1288,11 @@
             backdrop.addEventListener("click", cerrarSidebar);
         }
 
-        // Cerrar el menú al hacer clic en cualquier enlace dentro del sidebar en pantallas móviles
-        const navLinks = document.querySelectorAll(".sidebar-custom .nav-link");
+        // Cerrar el menú móvil únicamente al tocar enlaces de destino (NO al desplegar un acordeón)
+        const navLinks = document.querySelectorAll(".sidebar-custom .nav-link:not(.nav-link-accordion), .sidebar-custom .subnav-link");
         navLinks.forEach(function(link) {
             link.addEventListener("click", function() {
-                if (window.innerWidth < 992) {
+                if (window.innerWidth < 992 && !link.classList.contains("nav-link-accordion")) {
                     cerrarSidebar();
                 }
             });

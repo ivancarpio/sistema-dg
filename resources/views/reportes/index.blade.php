@@ -276,10 +276,10 @@
                 <div class="col-md-2">
                     <label class="form-label small text-muted fw-bold">Método de Pago</label>
                     <select name="metodo_pago" class="form-select bg-light">
-                        <option value="">Todos</option>
+                        <option value="">Todos los métodos</option>
                         <option value="Efectivo" {{ request('metodo_pago') == 'Efectivo' ? 'selected' : '' }}>💵 Efectivo</option>
-                        <option value="QR"       {{ request('metodo_pago') == 'QR'       ? 'selected' : '' }}>📱 QR</option>
-                        <option value="Por Pagar" {{ request('metodo_pago') == 'Por Pagar' ? 'selected' : '' }}>⏳ Por Pagar</option>
+                        <option value="QR"       {{ request('metodo_pago') == 'QR'       ? 'selected' : '' }}>📱 QR / Transferencia</option>
+                        <option value="Por Pagar" {{ request('metodo_pago') == 'Por Pagar' ? 'selected' : '' }}>⏳ Por Pagar (Crédito)</option>
                     </select>
                 </div>
 
@@ -323,8 +323,11 @@
                 <div>
                     <div class="metric-label">Efectivo</div>
                     <div class="metric-value">Bs. {{ number_format($totales['efectivo'], 2) }}</div>
-                    <div class="metric-sub">
-                        {{ $ventas->where('metodo_pago', 'Efectivo')->count() }} ventas
+                    <div class="metric-sub" title="Contado: Bs. {{ number_format($totales['efectivo_directo'] ?? 0, 2) }} | Créditos cobrados: Bs. {{ number_format($totales['efectivo_credito'] ?? 0, 2) }}">
+                        {{ $totales['con_efectivo'] ?? 0 }} ventas
+                        @if(($totales['cant_efectivo_credito'] ?? 0) > 0)
+                            <small class="text-muted d-block" style="font-size:0.65rem;">({{ $totales['cant_efectivo_directo'] }} contado + {{ $totales['cant_efectivo_credito'] }} crédito)</small>
+                        @endif
                     </div>
                 </div>
             </div>
@@ -332,7 +335,7 @@
                 $pctEfectivo = $totales['general'] > 0 ? ($totales['efectivo'] / $totales['general']) * 100 : 0;
             @endphp
             <div class="mini-bar mt-3" style="background:#bbf7d0;">
-                <div class="mini-bar" style="width:{{ $pctEfectivo }}%; background:#16a34a; margin:0;"></div>
+                <div class="mini-bar" style="width:{{ min(100, $pctEfectivo) }}%; background:#16a34a; margin:0;"></div>
             </div>
         </div>
     </div>
@@ -344,14 +347,19 @@
                 <div>
                     <div class="metric-label">QR / Transferencia</div>
                     <div class="metric-value">Bs. {{ number_format($totales['qr'], 2) }}</div>
-                    <div class="metric-sub">
-                        {{ $ventas->where('metodo_pago', 'QR')->count() }} ventas
+                    <div class="metric-sub" title="Directas: Bs. {{ number_format($totales['qr_directo'] ?? 0, 2) }} | Créditos cobrados: Bs. {{ number_format($totales['qr_credito'] ?? 0, 2) }}">
+                        {{ $totales['con_qr'] ?? 0 }} ventas
+                        @if(($totales['cant_qr_credito'] ?? 0) > 0)
+                            <small class="text-muted d-block" style="font-size:0.65rem;">({{ $totales['cant_qr_directo'] }} directo + {{ $totales['cant_qr_credito'] }} crédito)</small>
+                        @endif
                     </div>
                 </div>
             </div>
-            @php $pctQr = 100 - $pctEfectivo; @endphp
+            @php 
+                $pctQr = $totales['general'] > 0 ? ($totales['qr'] / $totales['general']) * 100 : 0; 
+            @endphp
             <div class="mini-bar mt-3" style="background:#bfdbfe;">
-                <div class="mini-bar" style="width:{{ $pctQr }}%; background:#2563eb; margin:0;"></div>
+                <div class="mini-bar" style="width:{{ min(100, $pctQr) }}%; background:#2563eb; margin:0;"></div>
             </div>
         </div>
     </div>
@@ -366,7 +374,7 @@
                     <div class="metric-label" style="color:#b45309;">Por Cobrar (Pendiente)</div>
                     <div class="metric-value" style="color:#b45309;">Bs. {{ number_format($totales['por_pagar'] ?? 0, 2) }}</div>
                     <div class="metric-sub text-muted">
-                        {{ $ventas->where('metodo_pago', 'Por Pagar')->where('saldo_pendiente', '>', 0)->count() }} ventas con saldo
+                        {{ $totales['por_pagar_con_deuda'] ?? 0 }} ventas con saldo
                     </div>
                 </div>
             </div>
@@ -472,11 +480,18 @@
                                     <i class="bi bi-qr-code me-1"></i>QR
                                 </span>
                             @else
-                                <span class="badge-por-pagar">
-                                    <i class="bi bi-clock-history me-1"></i>Por Pagar
-                                </span>
                                 @if(($venta->saldo_pendiente ?? 0) > 0)
+                                    <span class="badge" style="background:#fee2e2; color:#b91c1c; border:1px solid #fecaca; font-size:0.75rem;">
+                                        <i class="bi bi-hourglass-split me-1"></i>Crédito Pendiente
+                                    </span>
                                     <small class="text-danger fw-bold d-block" style="font-size:0.75rem;">Debe: Bs. {{ number_format($venta->saldo_pendiente, 2) }}</small>
+                                    @if(($venta->monto_pagado ?? 0) > 0)
+                                        <small class="text-muted d-block" style="font-size:0.70rem;">Abonado: Bs. {{ number_format($venta->monto_pagado, 2) }}</small>
+                                    @endif
+                                @else
+                                    <span class="badge" style="background:#dcfce7; color:#15803d; border:1px solid #bbf7d0; font-size:0.75rem;">
+                                        <i class="bi bi-check2-circle me-1"></i>Crédito Liquidado
+                                    </span>
                                 @endif
                             @endif
                         </td>
@@ -544,11 +559,34 @@
                                         &nbsp;·&nbsp;
                                         @if(strtolower($venta->metodo_pago) == 'efectivo')
                                             <span class="badge-efectivo"><i class="bi bi-cash me-1"></i>Efectivo</span>
-                                        @else
+                                        @elseif(strtolower($venta->metodo_pago) == 'qr')
                                             <span class="badge-qr"><i class="bi bi-qr-code me-1"></i>QR</span>
+                                        @else
+                                            @if(($venta->saldo_pendiente ?? 0) > 0)
+                                                <span class="badge" style="background:#fee2e2; color:#b91c1c; border:1px solid #fecaca;"><i class="bi bi-hourglass-split me-1"></i>Crédito Pendiente (Debe Bs. {{ number_format($venta->saldo_pendiente, 2) }})</span>
+                                            @else
+                                                <span class="badge" style="background:#dcfce7; color:#15803d; border:1px solid #bbf7d0;"><i class="bi bi-check2-circle me-1"></i>Crédito Liquidado</span>
+                                            @endif
                                         @endif
                                     </span>
                                 </div>
+
+                                {{-- Historial de cobros si es venta a crédito --}}
+                                @if($venta->metodo_pago === 'Por Pagar' && ($venta->pagos->isNotEmpty() || !empty($venta->metodo_adelanto)))
+                                <div style="margin-top:6px; padding-top:6px; font-size:0.75rem; color:#475569; display:flex; justify-content:flex-end; align-items:center; gap:8px; flex-wrap:wrap;">
+                                    <span class="fw-bold text-muted"><i class="bi bi-clock-history me-1"></i>Cobros registrados:</span>
+                                    @if(!empty($venta->metodo_adelanto) && floatval($venta->monto_adelanto ?? 0) > 0)
+                                        <span class="badge bg-light text-dark border">
+                                            Adelanto: Bs. {{ number_format($venta->monto_adelanto, 2) }} ({{ $venta->metodo_adelanto }})
+                                        </span>
+                                    @endif
+                                    @foreach($venta->pagos as $p)
+                                        <span class="badge bg-light text-dark border">
+                                            {{ \Carbon\Carbon::parse($p->fecha)->format('d/m/Y') }}: Bs. {{ number_format($p->monto, 2) }} ({{ $p->metodo_pago }})
+                                        </span>
+                                    @endforeach
+                                </div>
+                                @endif
                             </div>
                         </td>
                     </tr>
@@ -580,6 +618,11 @@
                             <span class="badge-qr">
                                 <i class="bi bi-qr-code me-1"></i>Bs. {{ number_format($totales['qr'], 2) }}
                             </span>
+                            @if(($totales['por_pagar'] ?? 0) > 0)
+                            <span class="badge-por-pagar ms-2">
+                                <i class="bi bi-clock-history me-1"></i>Debe: Bs. {{ number_format($totales['por_pagar'], 2) }}
+                            </span>
+                            @endif
                         </td>
                         <td>
                             <span class="text-muted small">

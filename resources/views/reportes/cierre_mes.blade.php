@@ -358,6 +358,64 @@
 @endif
 
 {{-- ===== TARJETAS DE MÉTRICAS Y PROGRESO ===== --}}
+{{-- ===== BALANCE FINANCIERO OFICIAL (ESTADO DE RESULTADOS) ===== --}}
+<div class="card mb-4 border-0 shadow-sm rounded-4 bg-white overflow-hidden">
+    <div class="card-header bg-white py-3 px-3 px-md-4 border-0 d-flex flex-wrap justify-content-between align-items-center gap-2">
+        <h6 class="fw-bold m-0 text-dark d-flex align-items-center">
+            <i class="bi bi-cash-coin me-2 text-primary fs-5"></i>
+            Estado de Resultados Financiero Oficial &bull; {{ \Carbon\Carbon::parse($mesSeleccionado . '-01')->translatedFormat('F Y') }}
+        </h6>
+        @if($cierreActual && $cierreActual->isCerrado())
+            <span class="badge bg-success bg-opacity-10 text-success border border-success border-opacity-25 px-2.5 py-1 small fw-bold">
+                <i class="bi bi-lock-fill me-1"></i> Snapshot Financiero Congelado
+            </span>
+        @else
+            <span class="badge bg-primary bg-opacity-10 text-primary border border-primary border-opacity-25 px-2.5 py-1 small fw-bold">
+                <i class="bi bi-arrow-repeat me-1"></i> Calculado en Tiempo Real
+            </span>
+        @endif
+    </div>
+    <div class="card-body p-3 p-md-4 pt-1">
+        <div class="row g-2 g-md-3">
+            <div class="col-6 col-md">
+                <div class="p-3 rounded-3 bg-light border text-center h-100">
+                    <span class="text-muted small fw-bold text-uppercase d-block" style="font-size: 0.68rem;">Ventas Facturadas</span>
+                    <strong class="text-dark fs-5 my-1 d-block">Bs. {{ number_format($ingresosVentas, 2) }}</strong>
+                    <span class="text-muted small">100% ingresos</span>
+                </div>
+            </div>
+            <div class="col-6 col-md">
+                <div class="p-3 rounded-3 bg-light border text-center h-100">
+                    <span class="text-muted small fw-bold text-uppercase d-block" style="font-size: 0.68rem;">(-) Costo Mercadería (CMV)</span>
+                    <strong class="text-secondary fs-5 my-1 d-block">Bs. {{ number_format($costoVentas, 2) }}</strong>
+                    <span class="text-muted small">Costo catálogo</span>
+                </div>
+            </div>
+            <div class="col-6 col-md">
+                <div class="p-3 rounded-3 bg-light border text-center h-100">
+                    <span class="text-muted small fw-bold text-uppercase d-block" style="font-size: 0.68rem;">(=) Utilidad Bruta</span>
+                    <strong class="text-primary fs-5 my-1 d-block">Bs. {{ number_format($utilidadBruta, 2) }}</strong>
+                    <span class="badge bg-info bg-opacity-10 text-info small">Margen comercial</span>
+                </div>
+            </div>
+            <div class="col-6 col-md">
+                <div class="p-3 rounded-3 bg-danger bg-opacity-10 border border-danger border-opacity-25 text-center h-100">
+                    <span class="text-danger small fw-bold text-uppercase d-block" style="font-size: 0.68rem;">(-) Gastos Operativos</span>
+                    <strong class="text-danger fs-5 my-1 d-block">Bs. {{ number_format($gastosOperativos, 2) }}</strong>
+                    <span class="badge bg-danger text-white small">Egresos negocio</span>
+                </div>
+            </div>
+            <div class="col-12 col-md">
+                <div class="p-3 rounded-3 {{ $utilidadNeta >= 0 ? 'bg-success bg-opacity-10 border-success' : 'bg-danger bg-opacity-10 border-danger' }} border border-opacity-25 text-center h-100">
+                    <span class="{{ $utilidadNeta >= 0 ? 'text-success' : 'text-danger' }} small fw-bold text-uppercase d-block" style="font-size: 0.68rem;">(=) UTILIDAD NETA</span>
+                    <strong class="{{ $utilidadNeta >= 0 ? 'text-success' : 'text-danger' }} fs-4 my-1 d-block">Bs. {{ number_format($utilidadNeta, 2) }}</strong>
+                    <span class="badge {{ $utilidadNeta >= 0 ? 'bg-success' : 'bg-danger' }} text-white small">Ganancia Líquida</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
 <div class="row g-3 mb-4">
     <div class="col-6 col-md-3">
         <div class="metric-cierre h-100">
@@ -740,9 +798,23 @@
                             <span class="text-muted">Ventas consolidadas del mes:</span>
                             <strong class="text-primary">{{ number_format($totalVendidos, 0) }} unidades</strong>
                         </div>
-                        <div class="d-flex justify-content-between small">
+                        <div class="d-flex justify-content-between mb-2 small">
                             <span class="text-muted">Stock actual en tienda:</span>
                             <strong class="text-dark">{{ number_format($totalStockTienda, 0) }} unidades</strong>
+                        </div>
+                        <div class="border-top pt-2 mt-2">
+                            <div class="d-flex justify-content-between mb-1 small">
+                                <span class="text-muted">Ventas Facturadas:</span>
+                                <strong class="text-dark">Bs. {{ number_format($ingresosVentas, 2) }}</strong>
+                            </div>
+                            <div class="d-flex justify-content-between mb-1 small">
+                                <span class="text-muted">Gastos Operativos:</span>
+                                <strong class="text-danger">Bs. {{ number_format($gastosOperativos, 2) }}</strong>
+                            </div>
+                            <div class="d-flex justify-content-between small">
+                                <span class="text-muted fw-bold">Utilidad Neta Oficial:</span>
+                                <strong class="{{ $utilidadNeta >= 0 ? 'text-success' : 'text-danger' }}">Bs. {{ number_format($utilidadNeta, 2) }}</strong>
+                            </div>
                         </div>
                     </div>
 

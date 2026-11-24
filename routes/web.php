@@ -10,6 +10,8 @@ use App\Http\Controllers\ConfiguracionController;
 use App\Http\Controllers\UsuarioController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\ArqueoController;
+use App\Http\Controllers\GastoController;
+use App\Http\Controllers\CajaChicaController;
 use App\Http\Controllers\ReporteController;
 use App\Http\Controllers\ClienteController;
 
@@ -93,18 +95,33 @@ Route::middleware(['auth'])->group(function () {
     });
 
     // ============================================================
-    // MÓDULO 6: ARQUEO DE CAJA
+    // MÓDULO 6: CAJA Y FINANZAS (TURNOS, GASTOS Y CAJA CHICA)
     // ============================================================
     Route::middleware(['permiso:arqueos'])->group(function () {
-        Route::get('/arqueos', [ArqueoController::class, 'index']);
+        // Gaveta de Efectivo (Sesiones y Cierres)
+        Route::redirect('/arqueos', '/arqueos/sesion');
+        Route::redirect('/arqueos/crear', '/arqueos/sesion');
         Route::get('/arqueos/sesion', [ArqueoController::class, 'sesionActual'])->name('arqueos.sesion');
+        Route::get('/arqueos/sesion/{id}/detalle', [ArqueoController::class, 'detalleSesion'])->name('arqueos.sesion.detalle');
         Route::post('/arqueos/abrir', [ArqueoController::class, 'abrirCaja'])->name('arqueos.abrir');
         Route::post('/arqueos/cerrar', [ArqueoController::class, 'cerrarCaja'])->name('arqueos.cerrar');
         Route::post('/arqueos/movimiento', [ArqueoController::class, 'registrarMovimiento'])->name('arqueos.movimiento');
-        Route::get('/arqueos/crear', [ArqueoController::class, 'create']);
         Route::post('/arqueos', [ArqueoController::class, 'store']);
         Route::get('/arqueos/{id}', [ArqueoController::class, 'show']);
         Route::get('/arqueos/{id}/excel', [ArqueoController::class, 'exportarExcel']);
+
+        // Gastos Operativos
+        Route::get('/finanzas/gastos', [GastoController::class, 'index'])->name('finanzas.gastos.index');
+        Route::post('/finanzas/gastos', [GastoController::class, 'store'])->name('finanzas.gastos.store');
+        Route::delete('/finanzas/gastos/{id}', [GastoController::class, 'destroy'])->name('finanzas.gastos.destroy');
+        Route::get('/finanzas/gastos/excel', [GastoController::class, 'exportarExcel'])->name('finanzas.gastos.excel');
+
+        // Caja Chica (Fondo Fijo)
+        Route::get('/finanzas/caja-chica', [CajaChicaController::class, 'index'])->name('finanzas.cajachica.index');
+        Route::post('/finanzas/caja-chica/reposicion', [CajaChicaController::class, 'storeReposicion'])->name('finanzas.cajachica.reposicion');
+        Route::post('/finanzas/caja-chica/gasto', [CajaChicaController::class, 'storeGasto'])->name('finanzas.cajachica.gasto');
+        Route::post('/finanzas/caja-chica/ajuste', [CajaChicaController::class, 'storeAjuste'])->name('finanzas.cajachica.ajuste');
+        Route::get('/finanzas/caja-chica/excel', [CajaChicaController::class, 'exportarExcel'])->name('finanzas.cajachica.excel');
     });
 
     // ============================================================
@@ -118,6 +135,9 @@ Route::middleware(['auth'])->group(function () {
 
         Route::get('/reportes/productos', [ReporteController::class, 'productos'])->name('reportes.productos');
         Route::get('/reportes/productos/excel', [ReporteController::class, 'exportarProductosExcel'])->name('reportes.productos.excel');
+
+        Route::get('/reportes/finanzas', [ReporteController::class, 'finanzas'])->name('reportes.finanzas');
+        Route::get('/reportes/finanzas/excel', [ReporteController::class, 'exportarFinanzasExcel'])->name('reportes.finanzas.excel');
 
         Route::get('/reportes/cierre-mes', [ReporteController::class, 'cierreMes']);
         Route::post('/reportes/cierre-mes/cerrar', [ReporteController::class, 'storeCierreMes']);

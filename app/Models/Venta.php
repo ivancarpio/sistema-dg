@@ -78,20 +78,31 @@ class Venta extends Model
             return $this->metodo_pago ?: 'Efectivo';
         }
 
-        // Revisar pagos registrados
+        $metodos = collect();
+
+        // 1. Revisar si tuvo adelanto registrado que no esté en pagos
+        $adelanto = floatval($this->monto_adelanto ?? 0);
         $pagos = $this->relationLoaded('pagos') ? $this->pagos : $this->pagos()->get();
-        if ($pagos->isNotEmpty()) {
-            $metodos = $pagos->pluck('metodo_pago')->filter()->unique();
-            if ($metodos->count() === 1) {
-                return $metodos->first();
-            } elseif ($metodos->count() > 1) {
-                return 'Mixto (' . $metodos->implode('/') . ')';
+        $totalEnPagos = $pagos->sum('monto');
+        $montoPagado = floatval($this->monto_pagado ?? 0);
+
+        if (!empty($this->metodo_adelanto) && ($adelanto > 0 || ($montoPagado - $totalEnPagos) > 0.009)) {
+            $metodos->push($this->metodo_adelanto);
+        }
+
+        // 2. Revisar métodos de los abonos en pagos_ventas
+        foreach ($pagos as $p) {
+            if (!empty($p->metodo_pago)) {
+                $metodos->push($p->metodo_pago);
             }
         }
 
-        // Si tuvo adelanto registrado
-        if (!empty($this->metodo_adelanto) && floatval($this->monto_pagado ?? 0) > 0) {
-            return $this->metodo_adelanto;
+        $metodosUnicos = $metodos->filter()->unique()->values();
+
+        if ($metodosUnicos->count() === 1) {
+            return $metodosUnicos->first();
+        } elseif ($metodosUnicos->count() > 1) {
+            return 'Mixto (' . $metodosUnicos->implode('/') . ')';
         }
 
         return 'Por Pagar';

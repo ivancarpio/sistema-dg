@@ -25,6 +25,7 @@
 
 /* Borde izquierdo de color por tipo */
 .report-card.tipo-ventas    { border-left: 6px solid #1e40af; }
+.report-card.tipo-finanzas  { border-left: 6px solid #7c3aed; }
 .report-card.tipo-cierre    { border-left: 6px solid #16a34a; }
 .report-card.tipo-productos { border-left: 6px solid #0284c7; }
 
@@ -35,6 +36,7 @@
     padding: 5px 14px; display: inline-block;
 }
 .badge-ventas    { background-color: #1e3a8a; color: #fff; }
+.badge-finanzas  { background-color: #6d28d9; color: #fff; }
 .badge-cierre    { background-color: #16a34a; color: #fff; }
 .badge-productos { background-color: #0284c7; color: #fff; }
 
@@ -45,6 +47,7 @@
     font-size: 1.7rem; flex-shrink: 0;
 }
 .icon-ventas    { background: #eff6ff; color: #1e40af; }
+.icon-finanzas  { background: #f5f3ff; color: #7c3aed; }
 .icon-cierre    { background: #f0fdf4; color: #16a34a; }
 .icon-productos { background: #f0f9ff; color: #0284c7; }
 
@@ -59,6 +62,7 @@
     font-size: 0.8rem; font-weight: 700;
 }
 .report-footer-ventas    { color: #1e40af; }
+.report-footer-finanzas  { color: #7c3aed; }
 .report-footer-cierre    { color: #16a34a; }
 .report-footer-productos { color: #0284c7; }
 
@@ -107,13 +111,13 @@
     @endif
 </div>
 
-{{-- ===== LAS TRES TARJETAS DE REPORTE ===== --}}
+{{-- ===== LAS CUATRO TARJETAS DE REPORTE ===== --}}
 <div class="row g-4">
 
     {{-- ========================================== --}}
     {{-- TARJETA 1: REPORTE DE VENTAS              --}}
     {{-- ========================================== --}}
-    <div class="col-lg-4 col-md-6">
+    <div class="col-lg-6 col-md-6">
         <a href="/reportes/ventas" class="report-card tipo-ventas p-4 h-100 d-flex flex-column justify-content-between">
             <div>
                 <div class="d-flex align-items-start gap-3">
@@ -147,9 +151,44 @@
     </div>
 
     {{-- ========================================== --}}
-    {{-- TARJETA 2: REPORTE GENERAL DE PRODUCTOS   --}}
+    {{-- TARJETA 2: REPORTE DE CAJA Y FINANZAS     --}}
     {{-- ========================================== --}}
-    <div class="col-lg-4 col-md-6">
+    <div class="col-lg-6 col-md-6">
+        <a href="/reportes/finanzas" class="report-card tipo-finanzas p-4 h-100 d-flex flex-column justify-content-between">
+            <div>
+                <div class="d-flex align-items-start gap-3">
+                    <div class="report-icon icon-finanzas">
+                        <i class="bi bi-pie-chart-fill"></i>
+                    </div>
+                    <div class="flex-grow-1">
+                        <span class="cat-badge badge-finanzas">Caja y Finanzas</span>
+                        <div class="report-title">Reporte de Caja y Finanzas</div>
+                    </div>
+                </div>
+                <p class="report-desc mt-3">
+                    Estado de resultados real, <strong>gráfico de torta</strong> con el top de gastos por categoría,
+                    y control de cuánto efectivo se saca de la gaveta para <strong>depósitos al banco</strong>.
+                </p>
+                <div class="d-flex flex-wrap gap-2 mt-3">
+                    <div style="background:#fef2f2; border-radius:8px; padding:6px 12px; font-size:0.75rem; font-weight:700; color:#dc2626;">
+                        <i class="bi bi-receipt me-1"></i> Gastos mes: Bs. {{ number_format($gastosMes ?? 0, 2) }}
+                    </div>
+                    <div style="background:#f5f3ff; border-radius:8px; padding:6px 12px; font-size:0.75rem; font-weight:700; color:#7c3aed;">
+                        <i class="bi bi-bank me-1"></i> Retiros banco: Bs. {{ number_format($retirosBancoMes ?? 0, 2) }}
+                    </div>
+                </div>
+            </div>
+            <div class="report-footer report-footer-finanzas">
+                <span><i class="bi bi-file-earmark-excel-fill me-1"></i> Gráficos + Excel</span>
+                <span class="fw-bold">Ver Análisis <i class="bi bi-arrow-right ms-1"></i></span>
+            </div>
+        </a>
+    </div>
+
+    {{-- ========================================== --}}
+    {{-- TARJETA 3: REPORTE GENERAL DE PRODUCTOS   --}}
+    {{-- ========================================== --}}
+    <div class="col-lg-6 col-md-6">
         <a href="/reportes/productos" class="report-card tipo-productos p-4 h-100 d-flex flex-column justify-content-between">
             <div>
                 <div class="d-flex align-items-start gap-3">
@@ -183,9 +222,9 @@
     </div>
 
     {{-- ========================================== --}}
-    {{-- TARJETA 3: REPORTE DE CIERRE DE MES       --}}
+    {{-- TARJETA 4: REPORTE DE CIERRE DE MES       --}}
     {{-- ========================================== --}}
-    <div class="col-lg-4 col-md-12">
+    <div class="col-lg-6 col-md-6">
         <a href="/reportes/cierre-mes" class="report-card tipo-cierre p-4 h-100 d-flex flex-column justify-content-between">
             <div>
                 <div class="d-flex align-items-start gap-3">

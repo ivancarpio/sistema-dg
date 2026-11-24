@@ -10,9 +10,14 @@ use App\Models\CierreMesCheck;
 use App\Models\CierreMes;
 use App\Models\Marca;
 use App\Models\Categoria;
+use App\Models\Gasto;
+use App\Models\MovimientoCaja;
+use App\Models\ArqueoCaja;
+use App\Models\CajaChicaMovimiento;
 use App\Exports\VentasExport;
 use App\Exports\CierreMesExport;
 use App\Exports\ProductosExport;
+use App\Exports\FinanzasExport;
 use Maatwebsite\Excel\Facades\Excel;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
@@ -45,13 +50,24 @@ class ReporteController extends Controller
 
         $porcentajeCierre = $totalProductos > 0 ? round(($checksMes / $totalProductos) * 100) : 0;
 
+        $gastosMes = (float) Gasto::whereBetween('fecha', [$inicioMes, $finMes])->sum('monto');
+        $retirosBancoMes = (float) MovimientoCaja::where('tipo', 'egreso_retiro')
+            ->whereBetween('fecha', [$inicioMes, $finMes])
+            ->where(function ($q) {
+                $q->whereNull('motivo')
+                  ->orWhere('motivo', 'NOT LIKE', 'Traslado a Caja Chica:%');
+            })
+            ->sum('monto');
+
         return view('reportes.hub', compact(
             'ventasMes',
             'totalRecaudadoMes',
             'totalProductos',
             'checksMes',
             'porcentajeCierre',
-            'mesActual'
+            'mesActual',
+            'gastosMes',
+            'retirosBancoMes'
         ));
     }
 
@@ -63,7 +79,7 @@ class ReporteController extends Controller
         $periodo = $request->input('periodo', 'hoy');
         [$fechaDesde, $fechaHasta, $periodoLabel] = $this->getRango($request, $periodo);
 
-        $query = Venta::with(['usuario', 'detalles.producto'])
+        $query = Venta::with(['usuario', 'detalles.producto', 'pagos'])
             ->where('estado', '!=', 'Anulada')
             ->whereBetween('fecha', [$fechaDesde->startOfDay(), $fechaHasta->copy()->endOfDay()]);
 
@@ -89,38 +105,7 @@ class ReporteController extends Controller
 
         $ventas = $query->orderBy('fecha', 'desc')->get();
 
-        // Totales discriminados
-        $totalEfectivo = 0;
-        $totalQr = 0;
-        $totalPorPagarPendiente = 0;
-
-        foreach ($ventas as $v) {
-            $cobrado = $v->monto_pagado !== null ? floatval($v->monto_pagado) : floatval($v->total);
-            $pendiente = floatval($v->saldo_pendiente ?? 0);
-
-            if ($v->metodo_pago === 'Efectivo') {
-                $totalEfectivo += $cobrado;
-            } elseif ($v->metodo_pago === 'QR') {
-                $totalQr += $cobrado;
-            } elseif ($v->metodo_pago === 'Por Pagar') {
-                $totalPorPagarPendiente += $pendiente;
-                if ($v->metodo_adelanto === 'QR') {
-                    $totalQr += $cobrado;
-                } else {
-                    $totalEfectivo += $cobrado;
-                }
-            }
-        }
-
-        $totales = [
-            'efectivo'   => $totalEfectivo,
-            'qr'         => $totalQr,
-            'por_pagar'  => $totalPorPagarPendiente,
-            'general'    => $ventas->sum('total'),
-            'recaudado'  => $totalEfectivo + $totalQr,
-            'cantidad'   => $ventas->count(),
-            'productos'  => $ventas->flatMap->detalles->sum('cantidad'),
-        ];
+        $totales = $this->calcularTotalesVentas($ventas);
 
         $usuarios = User::all();
 
@@ -137,7 +122,7 @@ class ReporteController extends Controller
         $periodo = $request->input('periodo', 'hoy');
         [$fechaDesde, $fechaHasta, $periodoLabel] = $this->getRango($request, $periodo);
 
-        $query = Venta::with(['usuario', 'detalles.producto'])
+        $query = Venta::with(['usuario', 'detalles.producto', 'pagos'])
             ->where('estado', '!=', 'Anulada')
             ->whereBetween('fecha', [$fechaDesde->startOfDay(), $fechaHasta->copy()->endOfDay()]);
 
@@ -163,33 +148,7 @@ class ReporteController extends Controller
 
         $ventas = $query->orderBy('fecha', 'desc')->get();
 
-        // Totales discriminados para el Excel
-        $totalEfectivo = 0;
-        $totalQr = 0;
-        $totalPorPagar = 0;
-
-        foreach ($ventas as $v) {
-            $cobrado = $v->monto_pagado !== null ? floatval($v->monto_pagado) : floatval($v->total);
-            if ($v->metodo_pago === 'Efectivo') {
-                $totalEfectivo += $cobrado;
-            } elseif ($v->metodo_pago === 'QR') {
-                $totalQr += $cobrado;
-            } elseif ($v->metodo_pago === 'Por Pagar') {
-                $totalPorPagar += floatval($v->saldo_pendiente ?? 0);
-                if ($v->metodo_adelanto === 'QR') {
-                    $totalQr += $cobrado;
-                } else {
-                    $totalEfectivo += $cobrado;
-                }
-            }
-        }
-
-        $totales = [
-            'efectivo'  => $totalEfectivo,
-            'qr'        => $totalQr,
-            'por_pagar' => $totalPorPagar,
-            'general'   => $ventas->sum('total'),
-        ];
+        $totales = $this->calcularTotalesVentas($ventas);
 
         $filtros = [
             'periodo_label' => $periodoLabel,
@@ -199,6 +158,118 @@ class ReporteController extends Controller
         $nombreArchivo = 'Reporte_Ventas_' . $fechaDesde->format('Ymd') . '_' . $fechaHasta->format('Ymd') . '.xlsx';
 
         return Excel::download(new VentasExport($ventas, $filtros, $totales), $nombreArchivo);
+    }
+
+    /**
+     * Calcula los totales discriminados de ventas con precisión contable de cobros reales.
+     */
+    private function calcularTotalesVentas($ventas): array
+    {
+        $totalEfectivo = 0;
+        $totalQr = 0;
+        $totalPorPagarPendiente = 0;
+
+        $efectivoDirecto = 0;
+        $efectivoCredito = 0;
+        $qrDirecto = 0;
+        $qrCredito = 0;
+
+        $cantEfectivoDirecto = 0;
+        $cantEfectivoCredito = 0;
+        $cantQrDirecto = 0;
+        $cantQrCredito = 0;
+
+        $ventasConEfectivoCount = 0;
+        $ventasConQrCount = 0;
+        $ventasConDeudaCount = 0;
+
+        foreach ($ventas as $v) {
+            $cobrado = $v->monto_pagado !== null ? floatval($v->monto_pagado) : floatval($v->total);
+            $pendiente = floatval($v->saldo_pendiente ?? 0);
+            $totalPorPagarPendiente += $pendiente;
+
+            $efectivoVenta = 0;
+            $qrVenta = 0;
+
+            if ($v->metodo_pago === 'Efectivo') {
+                $efectivoVenta = $cobrado;
+                $efectivoDirecto += $cobrado;
+                $cantEfectivoDirecto++;
+            } elseif ($v->metodo_pago === 'QR') {
+                $qrVenta = $cobrado;
+                $qrDirecto += $cobrado;
+                $cantQrDirecto++;
+            } elseif ($v->metodo_pago === 'Por Pagar') {
+                // Revisar si tiene cobros en pagos_ventas
+                $pagos = $v->relationLoaded('pagos') ? $v->pagos : $v->pagos()->get();
+                $pagadoEnPagos = 0;
+
+                if ($pagos->isNotEmpty()) {
+                    foreach ($pagos as $p) {
+                        $montoPago = floatval($p->monto);
+                        $pagadoEnPagos += $montoPago;
+                        if (strtolower($p->metodo_pago) === 'qr') {
+                            $qrVenta += $montoPago;
+                        } else {
+                            $efectivoVenta += $montoPago;
+                        }
+                    }
+                }
+
+                // Si cobrado excede lo registrado en pagos_ventas (ej: adelanto inicial en el POS)
+                $diferencia = $cobrado - $pagadoEnPagos;
+                if ($diferencia > 0.009) {
+                    if (strtolower($v->metodo_adelanto ?? '') === 'qr') {
+                        $qrVenta += $diferencia;
+                    } else {
+                        $efectivoVenta += $diferencia;
+                    }
+                }
+
+                if ($efectivoVenta > 0) {
+                    $efectivoCredito += $efectivoVenta;
+                    $cantEfectivoCredito++;
+                }
+                if ($qrVenta > 0) {
+                    $qrCredito += $qrVenta;
+                    $cantQrCredito++;
+                }
+            }
+
+            $totalEfectivo += $efectivoVenta;
+            $totalQr += $qrVenta;
+
+            if ($efectivoVenta > 0) {
+                $ventasConEfectivoCount++;
+            }
+            if ($qrVenta > 0) {
+                $ventasConQrCount++;
+            }
+            if ($pendiente > 0) {
+                $ventasConDeudaCount++;
+            }
+        }
+
+        return [
+            'efectivo'                 => $totalEfectivo,
+            'qr'                       => $totalQr,
+            'por_pagar'                => $totalPorPagarPendiente,
+            'general'                  => $ventas->sum('total'),
+            'recaudado'                => $totalEfectivo + $totalQr,
+            'cantidad'                 => $ventas->count(),
+            'productos'                => $ventas->flatMap->detalles->sum('cantidad'),
+            'con_efectivo'             => $ventasConEfectivoCount,
+            'con_qr'                   => $ventasConQrCount,
+            'por_pagar_con_deuda'      => $ventasConDeudaCount,
+            'efectivo_directo'         => $efectivoDirecto,
+            'efectivo_credito'         => $efectivoCredito,
+            'cant_efectivo_directo'    => $cantEfectivoDirecto,
+            'cant_efectivo_credito'    => $cantEfectivoCredito,
+            'qr_directo'               => $qrDirecto,
+            'qr_credito'               => $qrCredito,
+            'cant_qr_directo'          => $cantQrDirecto,
+            'cant_qr_credito'          => $cantQrCredito,
+        ];
     }
 
     // ============================================================
@@ -253,16 +324,20 @@ class ReporteController extends Controller
         CierreMes::updateOrCreate(
             ['mes' => $mes],
             [
-                'total_productos'   => $datos['totalProductos'],
-                'total_ventas'      => $datos['totalVentas'],
-                'total_stock'       => $datos['totalEnTienda'],
-                'verificados_count' => $datos['verificadosCount'],
-                'porcentaje'        => $datos['porcentaje'],
-                'id_usuario'        => Auth::id() ?? 1,
-                'fecha_cierre'      => now(),
-                'notas'             => $request->notas,
-                'snapshot_items'    => $snapshot,
-                'estado'            => 'Cerrado',
+                'total_productos'         => $datos['totalProductos'],
+                'total_ventas'            => $datos['totalVentas'],
+                'total_stock'             => $datos['totalEnTienda'],
+                'verificados_count'       => $datos['verificadosCount'],
+                'porcentaje'              => $datos['porcentaje'],
+                'total_ingresos_ventas'   => $datos['ingresosVentas'],
+                'total_costo_ventas'      => $datos['costoVentas'],
+                'total_gastos_operativos' => $datos['gastosOperativos'],
+                'utilidad_neta'           => $datos['utilidadNeta'],
+                'id_usuario'              => Auth::id() ?? 1,
+                'fecha_cierre'            => now(),
+                'notas'                   => $request->notas,
+                'snapshot_items'          => $snapshot,
+                'estado'                  => 'Cerrado',
             ]
         );
 
@@ -487,6 +562,36 @@ class ReporteController extends Controller
         $porcentaje = $totalProductos > 0 ? round(($verificadosCount / $totalProductos) * 100) : 0;
         $pendientesCount = max(0, $totalProductos - $verificadosCount);
 
+        // Métricas financieras del período (Estado de Resultados)
+        $cierreOficial = CierreMes::where('mes', $mes)->where('estado', 'Cerrado')->first();
+
+        if ($cierreOficial && floatval($cierreOficial->total_ingresos_ventas) > 0) {
+            $ingresosVentas   = floatval($cierreOficial->total_ingresos_ventas);
+            $costoVentas      = floatval($cierreOficial->total_costo_ventas);
+            $gastosOperativos = floatval($cierreOficial->total_gastos_operativos);
+            $utilidadBruta    = round($ingresosVentas - $costoVentas, 2);
+            $utilidadNeta     = floatval($cierreOficial->utilidad_neta);
+        } else {
+            $ingresosVentas = (float) Venta::where('estado', '!=', 'Anulada')
+                ->whereBetween('fecha', [$fechaInicio, $fechaFin])
+                ->sum('total');
+
+            $costoReal = (float) DB::table('detalle_ventas')
+                ->join('ventas', 'detalle_ventas.id_venta', '=', 'ventas.id')
+                ->join('productos', 'detalle_ventas.id_producto', '=', 'productos.id')
+                ->where('ventas.estado', '!=', 'Anulada')
+                ->whereBetween('ventas.fecha', [$fechaInicio, $fechaFin])
+                ->sum(DB::raw('detalle_ventas.cantidad * COALESCE(productos.costo, 0)'));
+
+            $costoVentas = ($costoReal > 0 && $costoReal != $ingresosVentas)
+                ? round($costoReal, 2)
+                : round($ingresosVentas * 0.65, 2);
+
+            $gastosOperativos = (float) Gasto::whereBetween('fecha', [$fechaInicio, $fechaFin])->sum('monto');
+            $utilidadBruta    = round($ingresosVentas - $costoVentas, 2);
+            $utilidadNeta     = round($utilidadBruta - $gastosOperativos, 2);
+        }
+
         return [
             'items'                 => $filas,
             'filas'                 => $filas,
@@ -501,6 +606,11 @@ class ReporteController extends Controller
             'totalVendidos'         => $totalVentas,
             'totalEnTienda'         => $totalEnTienda,
             'totalStockTienda'      => $totalEnTienda,
+            'ingresosVentas'        => $ingresosVentas,
+            'costoVentas'           => $costoVentas,
+            'gastosOperativos'      => $gastosOperativos,
+            'utilidadBruta'         => $utilidadBruta,
+            'utilidadNeta'          => $utilidadNeta,
             'inicioMes'             => $fechaInicio,
             'finMes'                => $fechaFin,
         ];
@@ -644,5 +754,187 @@ class ReporteController extends Controller
         $nombreArchivo = 'Reporte_Inventario_Productos_' . now()->format('Ymd_His') . '.xlsx';
 
         return Excel::download(new ProductosExport($productos, $totales, $filtros), $nombreArchivo);
+    }
+
+    // ============================================================
+    // 5. REPORTE DE CAJA Y FINANZAS (Rentabilidad, Torta de Gastos y Retiros a Banco)
+    // ============================================================
+    public function finanzas(Request $request)
+    {
+        $datos = $this->obtenerDatosFinanzas($request);
+        return view('reportes.finanzas', $datos);
+    }
+
+    public function exportarFinanzasExcel(Request $request)
+    {
+        $datos = $this->obtenerDatosFinanzas($request);
+        $nombreArchivo = 'Reporte_Caja_Finanzas_' . $datos['fechaDesde']->format('Ymd') . '_' . $datos['fechaHasta']->format('Ymd') . '.xlsx';
+        return Excel::download(new FinanzasExport($datos), $nombreArchivo);
+    }
+
+    private function obtenerDatosFinanzas(Request $request): array
+    {
+        $periodo = $request->input('periodo', 'mes');
+        [$fechaDesde, $fechaHasta, $periodoLabel] = $this->getRango($request, $periodo);
+
+        $inicio = $fechaDesde->copy()->startOfDay();
+        $fin    = $fechaHasta->copy()->endOfDay();
+
+        // 1. Ingresos Reales del Período (sin costos CMV ficticios mientras los productos tengan costo 0)
+        $ventasPeriodo = Venta::with(['pagos'])
+            ->where('estado', '!=', 'Anulada')
+            ->whereBetween('fecha', [$inicio, $fin])
+            ->get();
+
+        $totalesVentas    = $this->calcularTotalesVentas($ventasPeriodo);
+        $ventasBrutas     = round((float) $totalesVentas['general'], 2);
+        $conteoVentas     = (int) $totalesVentas['cantidad'];
+        $ingresosEfectivo = round((float) $totalesVentas['efectivo'], 2);
+        $ingresosQr       = round((float) $totalesVentas['qr'], 2);
+        $ingresosCobrados = round((float) $totalesVentas['recaudado'], 2);
+        $saldoPorCobrar   = round((float) $totalesVentas['por_pagar'], 2);
+
+        // 2. Gastos Operativos del Período + Agrupación por Categoría (Top / Torta)
+        $gastos = Gasto::with(['categoria', 'usuario', 'turnoCaja'])
+            ->whereBetween('fecha', [$inicio, $fin])
+            ->orderByDesc('fecha')
+            ->get();
+
+        $totalGastos  = round((float) $gastos->sum('monto'), 2);
+        $conteoGastos = $gastos->count();
+
+        $flujoNetoOperativo = round($ingresosCobrados - $totalGastos, 2);
+        $pctLibreGastos     = $ingresosCobrados > 0 ? round(($flujoNetoOperativo / $ingresosCobrados) * 100, 1) : 0;
+
+        $gastosPorCategoria = Gasto::join('categorias_gasto', 'gastos.categoria_gasto_id', '=', 'categorias_gasto.id')
+            ->whereBetween('gastos.fecha', [$inicio, $fin])
+            ->select(
+                'categorias_gasto.id',
+                'categorias_gasto.nombre',
+                'categorias_gasto.icono',
+                'categorias_gasto.color',
+                DB::raw('SUM(gastos.monto) as total_monto'),
+                DB::raw('COUNT(gastos.id) as total_cantidad')
+            )
+            ->groupBy('categorias_gasto.id', 'categorias_gasto.nombre', 'categorias_gasto.icono', 'categorias_gasto.color')
+            ->orderByDesc('total_monto')
+            ->get();
+
+        // Asignar paleta vibrante y distinta por porción (evitando grises idénticos)
+        $paletaVibrante = ['#2563eb', '#f59e0b', '#10b981', '#ef4444', '#8b5cf6', '#06b6d4', '#ec4899', '#14b8a6'];
+        $coloresUsados = [];
+        foreach ($gastosPorCategoria as $idx => $cat) {
+            $colorBase = strtolower(trim((string) $cat->color));
+            $esGris = in_array($colorBase, ['', '#64748b', '#6b7280', '#94a3b8', '#475569']);
+            if ($esGris || in_array($colorBase, $coloresUsados)) {
+                $colorAsignado = $paletaVibrante[$idx % count($paletaVibrante)];
+                foreach ($paletaVibrante as $pColor) {
+                    if (!in_array($pColor, $coloresUsados)) {
+                        $colorAsignado = $pColor;
+                        break;
+                    }
+                }
+            } else {
+                $colorAsignado = $colorBase;
+            }
+            $coloresUsados[] = $colorAsignado;
+            $cat->chart_color = $colorAsignado;
+        }
+
+        $topCategoriaGasto = $gastosPorCategoria->first();
+        $chartLabels       = $gastosPorCategoria->pluck('nombre')->toArray();
+        $chartMontos       = $gastosPorCategoria->pluck('total_monto')->map(fn($v) => round(floatval($v), 2))->toArray();
+        $chartColores      = $gastosPorCategoria->pluck('chart_color')->toArray();
+
+        $topGastosIndividuales = $gastos->sortByDesc('monto')->take(5)->values();
+
+        // Desglose de Gastos por Origen de Fondos
+        $gastosDesdeGaveta    = round((float) $gastos->where('origen_pago', 'gaveta')->sum('monto'), 2);
+        $gastosDesdeCajaChica = round((float) $gastos->where('origen_pago', 'caja_chica')->sum('monto'), 2);
+        $gastosDesdeBancoQr   = round((float) $gastos->where('origen_pago', 'banco_qr')->sum('monto'), 2);
+        $gastosDesdeGerencia  = round((float) $gastos->where('origen_pago', 'gerencia')->sum('monto'), 2);
+        $gastosOtrasFuentes   = round($totalGastos - $gastosDesdeGaveta, 2);
+
+        // 3. Métrica de Salidas de Gaveta y Retiros / Depósitos al Banco
+        $retirosTodos = MovimientoCaja::with(['usuario', 'arqueo'])
+            ->where('tipo', 'egreso_retiro')
+            ->whereBetween('fecha', [$inicio, $fin])
+            ->orderByDesc('fecha')
+            ->get();
+
+        $retirosBanco = $retirosTodos->filter(function ($m) {
+            return !str_starts_with((string) ($m->motivo ?? ''), 'Traslado a Caja Chica:');
+        })->values();
+
+        $trasladosCajaChica = $retirosTodos->filter(function ($m) {
+            return str_starts_with((string) ($m->motivo ?? ''), 'Traslado a Caja Chica:');
+        })->values();
+
+        $totalRetirosBanco       = round((float) $retirosBanco->sum('monto'), 2);
+        $conteoRetirosBanco      = $retirosBanco->count();
+        $promedioRetiroBanco     = $conteoRetirosBanco > 0 ? round($totalRetirosBanco / $conteoRetirosBanco, 2) : 0;
+        $mayorRetiroBanco        = $retirosBanco->sortByDesc('monto')->first();
+        $totalTrasladosCajaChica = round((float) $trasladosCajaChica->sum('monto'), 2);
+
+        $retirosBancoPorMetodo = [
+            'efectivo' => round((float) $retirosBanco->where('metodo_pago', 'Efectivo')->sum('monto'), 2),
+            'qr'       => round((float) $retirosBanco->where('metodo_pago', '!=', 'Efectivo')->sum('monto'), 2),
+        ];
+
+        $totalSalidoGaveta    = round($totalRetirosBanco + $totalTrasladosCajaChica + $gastosDesdeGaveta, 2);
+        $saldoCajaChicaActual = round((float) CajaChicaMovimiento::saldoActual(), 2);
+
+        // 4. Turnos de Gaveta del Período (para auditoría rápida de cierres)
+        $turnosPeriodo = ArqueoCaja::with(['usuario', 'usuarioCierre'])
+            ->whereBetween('fecha_apertura', [$inicio, $fin])
+            ->orderByDesc('fecha_apertura')
+            ->get();
+
+        $turnosCerradosCount  = $turnosPeriodo->where('estado', 'cerrado')->count();
+        $totalContadoTurnos   = round((float) $turnosPeriodo->where('estado', 'cerrado')->sum('monto_fisico_declarado'), 2);
+        $diferenciaNetaTurnos = round((float) $turnosPeriodo->where('estado', 'cerrado')->sum('diferencia'), 2);
+
+        return compact(
+            'periodo',
+            'periodoLabel',
+            'fechaDesde',
+            'fechaHasta',
+            'ventasBrutas',
+            'conteoVentas',
+            'ingresosEfectivo',
+            'ingresosQr',
+            'ingresosCobrados',
+            'saldoPorCobrar',
+            'totalGastos',
+            'conteoGastos',
+            'flujoNetoOperativo',
+            'pctLibreGastos',
+            'gastos',
+            'gastosPorCategoria',
+            'topCategoriaGasto',
+            'topGastosIndividuales',
+            'chartLabels',
+            'chartMontos',
+            'chartColores',
+            'gastosDesdeGaveta',
+            'gastosDesdeCajaChica',
+            'gastosDesdeBancoQr',
+            'gastosDesdeGerencia',
+            'gastosOtrasFuentes',
+            'retirosBanco',
+            'trasladosCajaChica',
+            'totalRetirosBanco',
+            'conteoRetirosBanco',
+            'promedioRetiroBanco',
+            'mayorRetiroBanco',
+            'totalTrasladosCajaChica',
+            'retirosBancoPorMetodo',
+            'totalSalidoGaveta',
+            'saldoCajaChicaActual',
+            'turnosPeriodo',
+            'turnosCerradosCount',
+            'totalContadoTurnos',
+            'diferenciaNetaTurnos'
+        );
     }
 }

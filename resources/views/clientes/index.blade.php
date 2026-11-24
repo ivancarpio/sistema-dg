@@ -898,43 +898,127 @@
         <div class="modal-content border-0 shadow-lg rounded-4 overflow-hidden">
             <div class="modal-header bg-light border-bottom p-3">
                 <div class="d-flex align-items-center gap-2">
-                    <div class="bg-primary bg-opacity-10 text-primary p-2.5 rounded-circle">
-                        <i class="bi bi-journal-check fs-3"></i>
+                    <div class="bg-primary bg-opacity-10 text-primary rounded-circle d-flex align-items-center justify-content-center" style="width:40px; height:40px;">
+                        <i class="bi bi-journal-check fs-4"></i>
                     </div>
                     <div>
                         <h5 class="fw-bold m-0 text-dark">Auditoría / Log Global de Cobros</h5>
-                        <small class="text-muted">Historial completo de pagos y cobros de clientes con identificación de cajero</small>
+                        <small class="text-muted">Historial completo de pagos y cobranzas con filtros en tiempo real</small>
                     </div>
                 </div>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
 
-            <div class="modal-body p-4">
-                <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
-                    <div class="small text-muted">
-                        Mostrando los últimos <strong>{{ $ultimosCobrosGlobales->count() }}</strong> cobros registrados en el sistema.
+            <div class="modal-body p-4 bg-light bg-opacity-50">
+                {{-- KPI Cards del Modal --}}
+                <div class="row g-2 mb-3">
+                    <div class="col-6 col-md-3">
+                        <div class="card border-0 shadow-sm p-3 rounded-3 bg-white h-100">
+                            <div class="text-muted small fw-bold text-uppercase" style="font-size:0.70rem;">Total Cobrado</div>
+                            <div class="fw-bold fs-5 text-dark" id="logCobrosTotal">Bs. {{ number_format($ultimosCobrosGlobales->sum('monto'), 2) }}</div>
+                            <small class="text-muted" id="logCobrosCantidad">{{ $ultimosCobrosGlobales->count() }} cobros</small>
+                        </div>
                     </div>
-                    <span class="badge bg-success bg-opacity-10 text-success border border-success-subtle px-3 py-1.5 fw-bold fs-6">
-                        Total Cobrado Registrado: Bs. {{ number_format($ultimosCobrosGlobales->sum('monto'), 2) }}
-                    </span>
+                    <div class="col-6 col-md-3">
+                        <div class="card border-0 shadow-sm p-3 rounded-3 bg-white h-100 border-start border-success border-4">
+                            <div class="text-success small fw-bold text-uppercase" style="font-size:0.70rem;"><i class="bi bi-cash me-1"></i>En Efectivo</div>
+                            <div class="fw-bold fs-5 text-success" id="logCobrosEfectivo">Bs. {{ number_format($ultimosCobrosGlobales->where('metodo_pago', 'Efectivo')->sum('monto'), 2) }}</div>
+                            <small class="text-muted" id="logCobrosCantEfectivo">{{ $ultimosCobrosGlobales->where('metodo_pago', 'Efectivo')->count() }} pagos</small>
+                        </div>
+                    </div>
+                    <div class="col-6 col-md-3">
+                        <div class="card border-0 shadow-sm p-3 rounded-3 bg-white h-100 border-start border-primary border-4">
+                            <div class="text-primary small fw-bold text-uppercase" style="font-size:0.70rem;"><i class="bi bi-qr-code me-1"></i>Por QR</div>
+                            <div class="fw-bold fs-5 text-primary" id="logCobrosQr">Bs. {{ number_format($ultimosCobrosGlobales->where('metodo_pago', 'QR')->sum('monto'), 2) }}</div>
+                            <small class="text-muted" id="logCobrosCantQr">{{ $ultimosCobrosGlobales->where('metodo_pago', 'QR')->count() }} pagos</small>
+                        </div>
+                    </div>
+                    <div class="col-6 col-md-3">
+                        <div class="card border-0 shadow-sm p-3 rounded-3 bg-white h-100 d-flex justify-content-center">
+                            <div class="d-flex align-items-center justify-content-between">
+                                <div>
+                                    <div class="text-muted small fw-bold text-uppercase" style="font-size:0.70rem;">Filtrando por</div>
+                                    <div class="fw-bold text-dark small" id="logCobrosFiltroActivo" style="line-height:1.2;">Todos los registros</div>
+                                </div>
+                                <button type="button" class="btn btn-sm btn-outline-secondary" onclick="limpiarFiltrosLogCobros()" title="Restablecer filtros">
+                                    <i class="bi bi-arrow-clockwise"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
                 </div>
 
-                <div class="table-responsive rounded-3 border" style="max-height: 480px; overflow-y: auto;">
-                    <table class="table table-hover align-middle mb-0" style="font-size: 0.86rem;">
-                        <thead class="bg-light text-secondary text-uppercase fw-bold sticky-top" style="font-size: 0.75rem; z-index: 2;">
+                {{-- Barra de Filtros interactiva --}}
+                <div class="card border-0 shadow-sm p-3 rounded-3 bg-white mb-3">
+                    <div class="row g-2 align-items-center">
+                        {{-- Períodos rápidos --}}
+                        <div class="col-12 col-lg-auto d-flex gap-1 flex-wrap">
+                            <button type="button" class="btn btn-sm btn-periodo-log active btn-primary fw-bold" data-periodo="todos" onclick="setPeriodoLog('todos', this)">Todos</button>
+                            <button type="button" class="btn btn-sm btn-periodo-log btn-light border fw-semibold" data-periodo="hoy" onclick="setPeriodoLog('hoy', this)">Hoy</button>
+                            <button type="button" class="btn btn-sm btn-periodo-log btn-light border fw-semibold" data-periodo="semana" onclick="setPeriodoLog('semana', this)">Esta Semana</button>
+                            <button type="button" class="btn btn-sm btn-periodo-log btn-light border fw-semibold" data-periodo="mes" onclick="setPeriodoLog('mes', this)">Este Mes</button>
+                        </div>
+
+                        {{-- Selector Método --}}
+                        <div class="col-6 col-md-3 col-lg-2">
+                            <select id="logFiltroMetodo" class="form-select form-select-sm bg-light" onchange="filtrarTablaCobros()">
+                                <option value="">Todos los métodos</option>
+                                <option value="efectivo">💵 Solo Efectivo</option>
+                                <option value="qr">📱 Solo QR</option>
+                            </select>
+                        </div>
+
+                        {{-- Selector Tipo de Cobro (Abono de Crédito vs Venta Contado POS) --}}
+                        <div class="col-6 col-md-3 col-lg-2">
+                            <select id="logFiltroTipo" class="form-select form-select-sm bg-light" onchange="filtrarTablaCobros()">
+                                <option value="">Todos los orígenes</option>
+                                <option value="credito">📑 Abonos Crédito (Deudas)</option>
+                                <option value="contado">🛒 Ventas Contado POS</option>
+                            </select>
+                        </div>
+
+                        {{-- Rango de fechas manual --}}
+                        <div class="col-6 col-md-4 col-lg-2.5 d-flex gap-1 align-items-center">
+                            <input type="date" id="logFechaDesde" class="form-control form-control-sm bg-light" placeholder="Desde" onchange="aplicarFechaManualLog()">
+                            <span class="text-muted small">-</span>
+                            <input type="date" id="logFechaHasta" class="form-control form-control-sm bg-light" placeholder="Hasta" onchange="aplicarFechaManualLog()">
+                        </div>
+
+                        {{-- Buscador --}}
+                        <div class="col-12 col-md-5 col-lg-auto flex-grow-1">
+                            <div class="input-group input-group-sm">
+                                <span class="input-group-text bg-light border-end-0"><i class="bi bi-search text-muted"></i></span>
+                                <input type="text" id="logBuscador" class="form-control border-start-0 bg-light" placeholder="Buscar cliente, nota o cajero..." onkeyup="filtrarTablaCobros()">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                {{-- Tabla de Cobros --}}
+                <div class="table-responsive rounded-3 border bg-white shadow-sm" style="max-height: 440px; overflow-y: auto;">
+                    <table class="table table-hover align-middle mb-0" id="tablaLogCobros" style="font-size: 0.86rem;">
+                        <thead class="bg-light text-secondary text-uppercase fw-bold sticky-top" style="font-size: 0.74rem; z-index: 2;">
                             <tr>
                                 <th class="ps-3 py-2.5">Fecha y Hora</th>
                                 <th>Cliente</th>
                                 <th>Nº Nota</th>
                                 <th class="text-end">Monto Cobrado</th>
-                                <th>Método</th>
-                                <th>Cajero que Registró el Cobro</th>
+                                <th class="text-center">Método</th>
+                                <th>Cajero</th>
                                 <th class="pe-3">Observación</th>
                             </tr>
                         </thead>
                         <tbody>
                             @forelse($ultimosCobrosGlobales as $cg)
-                            <tr>
+                            @php
+                                $esCredito = ($cg->venta && $cg->venta->metodo_pago === 'Por Pagar');
+                            @endphp
+                            <tr class="fila-cobro"
+                                data-fecha="{{ \Carbon\Carbon::parse($cg->fecha)->format('Y-m-d') }}"
+                                data-metodo="{{ strtolower($cg->metodo_pago) }}"
+                                data-tipo="{{ $esCredito ? 'credito' : 'contado' }}"
+                                data-monto="{{ floatval($cg->monto) }}"
+                                data-texto="{{ strtolower(($cg->cliente->nombre ?? '') . ' ' . ($cg->venta->numero_nota ?? ('SYS-'.$cg->id_venta)) . ' ' . ($cg->usuario->name ?? '') . ' ' . ($cg->observacion ?? '')) }}">
                                 <td class="ps-3 fw-semibold text-dark" style="white-space: nowrap;">
                                     <i class="bi bi-calendar2-check me-1 text-primary"></i>
                                     {{ \Carbon\Carbon::parse($cg->fecha)->format('d/m/Y H:i') }}
@@ -953,8 +1037,8 @@
                                 <td class="text-end fw-bold text-success fs-6" style="white-space: nowrap;">
                                     Bs. {{ number_format($cg->monto, 2) }}
                                 </td>
-                                <td>
-                                    @if($cg->metodo_pago === 'QR')
+                                <td class="text-center">
+                                    @if(strtolower($cg->metodo_pago) === 'qr')
                                         <span class="badge bg-primary bg-opacity-10 text-primary border border-primary-subtle px-2 py-1 fw-bold"><i class="bi bi-qr-code me-1"></i>QR</span>
                                     @else
                                         <span class="badge bg-success bg-opacity-10 text-success border border-success-subtle px-2 py-1 fw-bold"><i class="bi bi-cash me-1"></i>Efectivo</span>
@@ -962,38 +1046,212 @@
                                 </td>
                                 <td>
                                     <div class="d-flex align-items-center gap-1.5">
-                                        <div class="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center fw-bold" style="width:26px; height:26px; font-size:0.72rem; flex-shrink: 0;">
+                                        <div class="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center fw-bold" style="width:24px; height:24px; font-size:0.70rem; flex-shrink: 0;">
                                             {{ strtoupper(substr($cg->usuario->name ?? 'U', 0, 1)) }}
                                         </div>
                                         <div>
-                                            <span class="fw-bold text-dark d-block" style="line-height: 1.1;">{{ $cg->usuario->name ?? 'Sistema' }}</span>
-                                            <small class="text-muted" style="font-size: 0.70rem;">{{ $cg->usuario->rol ?? 'Cajero' }}</small>
+                                            <span class="fw-bold text-dark d-block" style="line-height: 1.1; font-size:0.80rem;">{{ $cg->usuario->name ?? 'Sistema' }}</span>
+                                            <small class="text-muted" style="font-size: 0.68rem;">{{ $cg->usuario->rol ?? 'Cajero' }}</small>
                                         </div>
                                     </div>
                                 </td>
-                                <td class="pe-3 text-muted small">
-                                    {{ $cg->observacion ?: 'Cobro de saldo pendiente' }}
+                                <td class="pe-3 small">
+                                    @if($esCredito)
+                                        <span class="badge bg-warning bg-opacity-25 text-dark border border-warning-subtle py-1 px-1.5 me-1" style="font-size:0.70rem;">
+                                            <i class="bi bi-clock-history me-1"></i>Abono Crédito
+                                        </span>
+                                    @else
+                                        <span class="badge bg-secondary bg-opacity-25 text-dark border border-secondary-subtle py-1 px-1.5 me-1" style="font-size:0.70rem;">
+                                            <i class="bi bi-cart-check me-1"></i>Venta Contado POS
+                                        </span>
+                                    @endif
+                                    <span class="text-muted">{{ $cg->observacion ?: 'Cobro de saldo pendiente' }}</span>
                                 </td>
                             </tr>
                             @empty
-                            <tr>
+                            <tr id="filaSinCobrosInicial">
                                 <td colspan="7" class="text-center py-5 text-muted">
-                                    <i class="bi bi-inbox fs-1 d-block mb-2 text-muted"></i>
-                                    No se han registrado cobros de saldo o abonos aún.
+                                    <i class="bi bi-journal-x fs-1 d-block mb-2 opacity-25"></i>
+                                    <p class="fw-bold mb-1">No se han registrado cobros todavía</p>
+                                    <small>Los cobros y abonos realizados se listarán aquí en tiempo real.</small>
                                 </td>
                             </tr>
                             @endforelse
+                            <tr id="filaSinResultadosFiltro" style="display:none;">
+                                <td colspan="7" class="text-center py-5 text-muted">
+                                    <i class="bi bi-funnel fs-1 d-block mb-2 opacity-25"></i>
+                                    <p class="fw-bold mb-1">No se encontraron cobros para el filtro seleccionado</p>
+                                    <small>Prueba ajustando el rango de fechas, el método o el buscador.</small>
+                                </td>
+                            </tr>
                         </tbody>
                     </table>
                 </div>
             </div>
 
-            <div class="modal-footer bg-light border-0 p-3">
-                <button type="button" class="btn btn-secondary fw-bold px-4" data-bs-dismiss="modal">Cerrar</button>
+            <div class="modal-footer bg-light border-top p-2.5 d-flex justify-content-between">
+                <small class="text-muted"><i class="bi bi-info-circle me-1"></i>Los cobros quedan registrados con fecha exacta y cajero responsable para auditoría interna.</small>
+                <button type="button" class="btn btn-secondary px-4 fw-bold" data-bs-dismiss="modal">Cerrar</button>
             </div>
         </div>
     </div>
 </div>
+
+<script>
+let periodoLogSeleccionado = 'todos';
+
+function setPeriodoLog(periodo, btn) {
+    periodoLogSeleccionado = periodo;
+    document.querySelectorAll('.btn-periodo-log').forEach(b => {
+        b.classList.remove('active', 'btn-primary');
+        b.classList.add('btn-light');
+    });
+    btn.classList.add('active', 'btn-primary');
+    btn.classList.remove('btn-light');
+    
+    document.getElementById('logFechaDesde').value = '';
+    document.getElementById('logFechaHasta').value = '';
+
+    filtrarTablaCobros();
+}
+
+function aplicarFechaManualLog() {
+    periodoLogSeleccionado = 'manual';
+    document.querySelectorAll('.btn-periodo-log').forEach(b => {
+        b.classList.remove('active', 'btn-primary');
+        b.classList.add('btn-light');
+    });
+    filtrarTablaCobros();
+}
+
+function limpiarFiltrosLogCobros() {
+    periodoLogSeleccionado = 'todos';
+    document.querySelectorAll('.btn-periodo-log').forEach((b, i) => {
+        if (i === 0) {
+            b.classList.add('active', 'btn-primary');
+            b.classList.remove('btn-light');
+        } else {
+            b.classList.remove('active', 'btn-primary');
+            b.classList.add('btn-light');
+        }
+    });
+    document.getElementById('logFiltroMetodo').value = '';
+    document.getElementById('logFiltroTipo').value = '';
+    document.getElementById('logFechaDesde').value = '';
+    document.getElementById('logFechaHasta').value = '';
+    document.getElementById('logBuscador').value = '';
+    filtrarTablaCobros();
+}
+
+function filtrarTablaCobros() {
+    const metodo = document.getElementById('logFiltroMetodo').value.toLowerCase();
+    const tipo = document.getElementById('logFiltroTipo') ? document.getElementById('logFiltroTipo').value.toLowerCase() : '';
+    const buscar = document.getElementById('logBuscador').value.toLowerCase().trim();
+    const fDesde = document.getElementById('logFechaDesde').value;
+    const fHasta = document.getElementById('logFechaHasta').value;
+
+    const filas = document.querySelectorAll('.fila-cobro');
+    const hoy = new Date();
+    
+    let fechaInicioPeriodo = null;
+    let fechaFinPeriodo = null;
+    
+    if (periodoLogSeleccionado === 'hoy') {
+        const y = hoy.getFullYear();
+        const m = String(hoy.getMonth() + 1).padStart(2, '0');
+        const d = String(hoy.getDate()).padStart(2, '0');
+        fechaInicioPeriodo = `${y}-${m}-${d}`;
+        fechaFinPeriodo = fechaInicioPeriodo;
+    } else if (periodoLogSeleccionado === 'semana') {
+        const diaSemana = hoy.getDay() || 7;
+        const lunes = new Date(hoy);
+        lunes.setDate(hoy.getDate() - diaSemana + 1);
+        const y = lunes.getFullYear();
+        const m = String(lunes.getMonth() + 1).padStart(2, '0');
+        const d = String(lunes.getDate()).padStart(2, '0');
+        fechaInicioPeriodo = `${y}-${m}-${d}`;
+        
+        const yH = hoy.getFullYear();
+        const mH = String(hoy.getMonth() + 1).padStart(2, '0');
+        const dH = String(hoy.getDate()).padStart(2, '0');
+        fechaFinPeriodo = `${yH}-${mH}-${dH}`;
+    } else if (periodoLogSeleccionado === 'mes') {
+        const año = hoy.getFullYear();
+        const mes = String(hoy.getMonth() + 1).padStart(2, '0');
+        fechaInicioPeriodo = `${año}-${mes}-01`;
+        const ultimoDia = new Date(año, hoy.getMonth() + 1, 0).getDate();
+        fechaFinPeriodo = `${año}-${mes}-${ultimoDia}`;
+    } else if (periodoLogSeleccionado === 'manual') {
+        fechaInicioPeriodo = fDesde || null;
+        fechaFinPeriodo = fHasta || null;
+    }
+
+    let sumaTotal = 0;
+    let sumaEf = 0;
+    let sumaQr = 0;
+    let vis = 0;
+    let visEf = 0;
+    let visQr = 0;
+
+    filas.forEach(fila => {
+        const filaFecha = fila.getAttribute('data-fecha');
+        const filaMetodo = fila.getAttribute('data-metodo');
+        const filaTipo = fila.getAttribute('data-tipo');
+        const filaMonto = parseFloat(fila.getAttribute('data-monto')) || 0;
+        const filaTexto = fila.getAttribute('data-texto') || '';
+
+        let coincideFecha = true;
+        if (fechaInicioPeriodo && filaFecha < fechaInicioPeriodo) coincideFecha = false;
+        if (fechaFinPeriodo && filaFecha > fechaFinPeriodo) coincideFecha = false;
+
+        let coincideMetodo = true;
+        if (metodo && filaMetodo !== metodo) coincideMetodo = false;
+
+        let coincideTipo = true;
+        if (tipo && filaTipo !== tipo) coincideTipo = false;
+
+        let coincideTexto = true;
+        if (buscar && !filaTexto.includes(buscar)) coincideTexto = false;
+
+        if (coincideFecha && coincideMetodo && coincideTipo && coincideTexto) {
+            fila.style.display = '';
+            sumaTotal += filaMonto;
+            vis++;
+            if (filaMetodo === 'qr') {
+                sumaQr += filaMonto;
+                visQr++;
+            } else {
+                sumaEf += filaMonto;
+                visEf++;
+            }
+        } else {
+            fila.style.display = 'none';
+        }
+    });
+
+    document.getElementById('logCobrosTotal').textContent = 'Bs. ' + sumaTotal.toLocaleString('es-BO', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+    document.getElementById('logCobrosEfectivo').textContent = 'Bs. ' + sumaEf.toLocaleString('es-BO', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+    document.getElementById('logCobrosQr').textContent = 'Bs. ' + sumaQr.toLocaleString('es-BO', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+    document.getElementById('logCobrosCantidad').textContent = vis + ' cobros';
+    document.getElementById('logCobrosCantEfectivo').textContent = visEf + ' pagos';
+    document.getElementById('logCobrosCantQr').textContent = visQr + ' pagos';
+
+    let textoFiltro = 'Todos los registros';
+    if (periodoLogSeleccionado === 'hoy') textoFiltro = 'Cobros de Hoy';
+    else if (periodoLogSeleccionado === 'semana') textoFiltro = 'Cobros de Esta Semana';
+    else if (periodoLogSeleccionado === 'mes') textoFiltro = 'Cobros de Este Mes';
+    else if (periodoLogSeleccionado === 'manual' && (fDesde || fHasta)) textoFiltro = 'Rango personalizado';
+    if (tipo) textoFiltro += ' • ' + (tipo === 'credito' ? 'Abonos Crédito' : 'Ventas Contado POS');
+    if (metodo) textoFiltro += ' (' + (metodo === 'qr' ? 'Solo QR' : 'Solo Efectivo') + ')';
+    if (buscar) textoFiltro += ' • "' + buscar + '"';
+    document.getElementById('logCobrosFiltroActivo').textContent = textoFiltro;
+
+    const filaSinResultados = document.getElementById('filaSinResultadosFiltro');
+    if (filaSinResultados) {
+        filaSinResultados.style.display = (vis === 0 && filas.length > 0) ? '' : 'none';
+    }
+}
+</script>
 
 @if(request('nuevo_nombre'))
 <script>

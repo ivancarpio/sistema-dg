@@ -9,6 +9,8 @@ use App\Models\MovimientoCaja;
 use App\Models\PagoVenta;
 use App\Models\Venta;
 use App\Models\User;
+use App\Models\Gasto;
+use App\Models\CategoriaGasto;
 use App\Exports\ArqueoExport;
 use Maatwebsite\Excel\Facades\Excel;
 use Illuminate\Support\Facades\Auth;
@@ -22,7 +24,8 @@ class ArqueoController extends Controller
     // ============================================================
 
     /**
-     * Muestra la sesión de caja activa o la opción para abrir un nuevo turno.
+     * Muestra la sesión de caja activa o la opción para abrir un nuevo turno,
+     * junto con el historial filtrable de turnos cerrados.
      */
     public function sesionActual(Request $request)
     {
@@ -31,16 +34,73 @@ class ArqueoController extends Controller
             'pagos.venta', 
             'pagos.cliente', 
             'movimientos.usuario', 
-            'movimientos.venta'
+            'movimientos.venta',
+            'movimientos.gasto.categoria'
         ])->where('estado', 'abierto')->latest('fecha_apertura')->first();
 
-        $sesionesCerradas = ArqueoCaja::with('usuario')
-            ->where('estado', 'cerrado')
-            ->latest('fecha_cierre')
-            ->take(10)
-            ->get();
+        $queryCerradas = ArqueoCaja::with(['usuario', 'usuarioCierre'])
+            ->where('estado', 'cerrado');
 
-        return view('arqueos.sesion', compact('sesion', 'sesionesCerradas'));
+        if ($request->filled('fecha_desde')) {
+            $queryCerradas->whereDate(DB::raw('COALESCE(fecha_cierre, fecha_apertura)'), '>=', $request->fecha_desde);
+        }
+
+        if ($request->filled('fecha_hasta')) {
+            $queryCerradas->whereDate(DB::raw('COALESCE(fecha_cierre, fecha_apertura)'), '<=', $request->fecha_hasta);
+        }
+
+        if ($request->filled('cajero')) {
+            $cajeroId = (int) $request->cajero;
+            $queryCerradas->where(function ($q) use ($cajeroId) {
+                $q->where('id_usuario_cierre', $cajeroId)
+                  ->orWhere(function ($q2) use ($cajeroId) {
+                      $q2->whereNull('id_usuario_cierre')
+                         ->where('id_usuario', $cajeroId);
+                  });
+            });
+        }
+
+        if ($request->filled('cuadre')) {
+            if ($request->cuadre === 'exacto') {
+                $queryCerradas->where('diferencia', 0);
+            } elseif ($request->cuadre === 'sobrante') {
+                $queryCerradas->where('diferencia', '>', 0);
+            } elseif ($request->cuadre === 'faltante') {
+                $queryCerradas->where('diferencia', '<', 0);
+            }
+        }
+
+        $resumenHistorial = [
+            'cantidad'         => (clone $queryCerradas)->count(),
+            'efectivo_sistema' => (float) (clone $queryCerradas)->sum('total_efectivo_sistema'),
+            'qr_sistema'       => (float) (clone $queryCerradas)->sum('total_qr_sistema'),
+            'egresos'          => (float) (clone $queryCerradas)->sum('total_egresos'),
+            'declarado_fisico' => (float) (clone $queryCerradas)->sum('monto_fisico_declarado'),
+            'neto_diferencia'  => (float) (clone $queryCerradas)->sum('diferencia'),
+        ];
+
+        $sesionesCerradas = $queryCerradas
+            ->orderByDesc('fecha_cierre')
+            ->orderByDesc('id')
+            ->paginate(12)
+            ->withQueryString();
+
+        $usuarios = User::orderBy('name')->get();
+        $hayFiltrosHistorial = $request->filled('fecha_desde')
+            || $request->filled('fecha_hasta')
+            || $request->filled('cajero')
+            || $request->filled('cuadre');
+
+        $categorias = CategoriaGasto::where('activo', true)->orderBy('nombre')->get();
+
+        return view('arqueos.sesion', compact(
+            'sesion',
+            'sesionesCerradas',
+            'categorias',
+            'usuarios',
+            'resumenHistorial',
+            'hayFiltrosHistorial'
+        ));
     }
 
     /**
@@ -95,6 +155,7 @@ class ArqueoController extends Controller
         $diferencia = round($declarado - $esperado, 2);
 
         $sesion->fecha_cierre = now();
+        $sesion->id_usuario_cierre = Auth::id() ?? $sesion->id_usuario;
         $sesion->monto_fisico_declarado = $declarado;
         $sesion->diferencia = $diferencia;
         $sesion->estado = 'cerrado';
@@ -114,6 +175,87 @@ class ArqueoController extends Controller
     }
 
     /**
+     * Retorna el detalle completo de una sesión de caja (para el modal de auditoría).
+     */
+    public function detalleSesion($id)
+    {
+        $turno = ArqueoCaja::with([
+            'usuario',
+            'usuarioCierre',
+            'pagos.venta',
+            'pagos.cliente',
+            'movimientos.usuario',
+            'movimientos.gasto.categoria',
+        ])->findOrFail($id);
+
+        $egresosEfectivo = (float) $turno->movimientos
+            ->whereIn('tipo', ['egreso_gasto', 'egreso_devolucion', 'egreso_retiro'])
+            ->where('metodo_pago', 'Efectivo')
+            ->sum('monto');
+
+        $ingresosExtraEfectivo = (float) $turno->movimientos
+            ->where('tipo', 'ingreso_extra')
+            ->where('metodo_pago', 'Efectivo')
+            ->sum('monto');
+
+        $efectivoEsperado = ($turno->monto_fisico_declarado !== null && $turno->diferencia !== null)
+            ? round(floatval($turno->monto_fisico_declarado) - floatval($turno->diferencia), 2)
+            : round(floatval($turno->monto_inicial) + floatval($turno->total_efectivo_sistema) + $ingresosExtraEfectivo - $egresosEfectivo, 2);
+
+        $pagos = $turno->pagos->sortByDesc('id')->values()->map(function ($p) {
+            return [
+                'hora'        => $p->fecha ? Carbon::parse($p->fecha)->format('d/m H:i') : $p->created_at->format('d/m H:i'),
+                'nota'        => optional($p->venta)->numero_nota ?? ('Nota #' . $p->id_venta),
+                'cliente'     => optional($p->cliente)->nombre ?? (optional($p->venta)->cliente ?? 'Cliente Ocasional'),
+                'metodo'      => $p->metodo_pago,
+                'observacion' => $p->observacion ?: 'Cobro de venta',
+                'monto'       => floatval($p->monto),
+            ];
+        });
+
+        $movimientos = $turno->movimientos->sortByDesc('id')->values()->map(function ($m) {
+            $tipoLabel = match ($m->tipo) {
+                'egreso_gasto'      => 'Gasto Operativo',
+                'egreso_retiro'     => 'Retiro / Depósito',
+                'egreso_devolucion' => 'Devolución a Cliente',
+                default             => 'Ingreso Extra',
+            };
+            return [
+                'hora'      => $m->fecha ? Carbon::parse($m->fecha)->format('d/m H:i') : $m->created_at->format('d/m H:i'),
+                'tipo'      => $m->tipo,
+                'tipo_label'=> $tipoLabel,
+                'categoria' => ($m->gasto && $m->gasto->categoria) ? $m->gasto->categoria->nombre : null,
+                'metodo'    => $m->metodo_pago,
+                'motivo'    => $m->motivo,
+                'usuario'   => optional($m->usuario)->name ?? 'Usuario',
+                'monto'     => floatval($m->monto),
+                'es_egreso' => in_array($m->tipo, ['egreso_gasto', 'egreso_retiro', 'egreso_devolucion']),
+            ];
+        });
+
+        return response()->json([
+            'id'                       => $turno->id,
+            'estado'                   => $turno->estado,
+            'usuario_apertura'         => optional($turno->usuario)->name ?? 'Cajero',
+            'usuario_cierre'           => optional($turno->usuarioCierre)->name ?? (optional($turno->usuario)->name ?? 'Cajero'),
+            'fecha_apertura'           => $turno->fecha_apertura ? $turno->fecha_apertura->format('d/m/Y H:i') : '—',
+            'fecha_cierre'             => $turno->fecha_cierre ? $turno->fecha_cierre->format('d/m/Y H:i') : '—',
+            'monto_inicial'            => floatval($turno->monto_inicial),
+            'total_efectivo_sistema'   => floatval($turno->total_efectivo_sistema),
+            'total_qr_sistema'         => floatval($turno->total_qr_sistema),
+            'ingresos_extra_efectivo'  => $ingresosExtraEfectivo,
+            'egresos_efectivo'         => $egresosEfectivo,
+            'total_egresos'            => floatval($turno->total_egresos),
+            'efectivo_esperado'        => $efectivoEsperado,
+            'monto_fisico_declarado'   => $turno->monto_fisico_declarado !== null ? floatval($turno->monto_fisico_declarado) : null,
+            'diferencia'               => $turno->diferencia !== null ? floatval($turno->diferencia) : null,
+            'observaciones'            => $turno->observaciones,
+            'pagos'                    => $pagos,
+            'movimientos'              => $movimientos,
+        ]);
+    }
+
+    /**
      * Registra un movimiento directo en caja (gasto operativo, retiro o ingreso extra).
      */
     public function registrarMovimiento(Request $request)
@@ -123,38 +265,79 @@ class ArqueoController extends Controller
             return back()->with('error', 'Debes tener un turno de caja abierto para registrar gastos o movimientos.');
         }
 
-        $request->validate([
-            'tipo'        => 'required|in:egreso_gasto,ingreso_extra',
-            'metodo_pago' => 'required|in:Efectivo,QR,Transferencia',
-            'monto'       => 'required|numeric|min:0.5',
-            'motivo'      => 'required|string|min:3|max:255',
-        ], [
-            'tipo.required'        => 'Selecciona el tipo de movimiento.',
-            'metodo_pago.required' => 'Selecciona el método de pago.',
-            'monto.required'       => 'Ingresa el monto del movimiento.',
-            'motivo.required'      => 'Describe el motivo u observación del movimiento.',
+        $rules = [
+            'tipo'            => 'required|in:egreso_gasto,egreso_retiro,ingreso_extra',
+            'metodo_pago'     => 'required|in:Efectivo,QR,Transferencia',
+            'monto'           => 'required|numeric|min:0.5',
+            'motivo'          => 'required|string|min:3|max:255',
+            'nro_comprobante' => 'nullable|string|max:100',
+        ];
+
+        if ($request->tipo === 'egreso_gasto') {
+            $rules['categoria_gasto_id'] = 'required|exists:categorias_gasto,id';
+        }
+
+        $request->validate($rules, [
+            'tipo.required'               => 'Selecciona el tipo de movimiento.',
+            'categoria_gasto_id.required' => 'Los gastos operativos requieren seleccionar una categoría contable.',
+            'metodo_pago.required'        => 'Selecciona el método de pago.',
+            'monto.required'              => 'Ingresa el monto del movimiento.',
+            'motivo.required'             => 'Describe el motivo u observación del movimiento.',
         ]);
 
         $monto = floatval($request->monto);
+        $tipo = $request->tipo;
 
-        MovimientoCaja::create([
-            'arqueo_caja_id' => $sesion->id,
-            'id_usuario'     => Auth::id() ?? 1,
-            'tipo'           => $request->tipo,
-            'metodo_pago'    => $request->metodo_pago,
-            'monto'          => $monto,
-            'motivo'         => trim($request->motivo),
-            'fecha'          => now(),
-        ]);
+        try {
+            DB::transaction(function () use ($request, $sesion, $monto, $tipo, &$msg) {
+                $now = now();
 
-        if ($request->tipo === 'egreso_gasto') {
-            $sesion->increment('total_egresos', $monto);
-            $msg = "Gasto de Bs. " . number_format($monto, 2) . " registrado como egreso en caja.";
-        } else {
-            $msg = "Ingreso extra de Bs. " . number_format($monto, 2) . " registrado.";
+                $mov = MovimientoCaja::create([
+                    'arqueo_caja_id' => $sesion->id,
+                    'id_usuario'     => Auth::id() ?? 1,
+                    'tipo'           => $tipo,
+                    'metodo_pago'    => $request->metodo_pago,
+                    'monto'          => $monto,
+                    'motivo'         => trim($request->motivo),
+                    'fecha'          => $now,
+                ]);
+
+                if ($tipo === 'egreso_gasto') {
+                    // Crea el registro oficial en la tabla general de gastos
+                    $gasto = Gasto::create([
+                        'fecha'              => $now,
+                        'categoria_gasto_id' => $request->categoria_gasto_id,
+                        'descripcion'        => trim($request->motivo),
+                        'monto'              => $monto,
+                        'origen_pago'        => ($request->metodo_pago === 'Efectivo' ? 'gaveta' : 'banco_qr'),
+                        'turno_caja_id'      => $sesion->id,
+                        'movimiento_caja_id' => $mov->id,
+                        'nro_comprobante'    => $request->nro_comprobante ? trim($request->nro_comprobante) : null,
+                        'user_id'            => Auth::id() ?? 1,
+                    ]);
+
+                    $mov->update(['gasto_id' => $gasto->id]);
+                    if ($request->metodo_pago === 'Efectivo') {
+                        $sesion->increment('total_egresos', $monto);
+                        $msg = "Gasto Operativo de Bs. " . number_format($monto, 2) . " registrado y descontado de la gaveta de efectivo.";
+                    } else {
+                        $msg = "Gasto Operativo de Bs. " . number_format($monto, 2) . " registrado vía QR / Banco.";
+                    }
+                } elseif ($tipo === 'egreso_retiro') {
+                    // Descuenta de la gaveta física pero NO es gasto operativo (no afecta Utilidad Neta)
+                    if ($request->metodo_pago === 'Efectivo') {
+                        $sesion->increment('total_egresos', $monto);
+                    }
+                    $msg = "Retiro / Traslado de Bs. " . number_format($monto, 2) . " registrado como egreso de efectivo.";
+                } else {
+                    $msg = "Ingreso extra de Bs. " . number_format($monto, 2) . " registrado en caja.";
+                }
+            });
+
+            return back()->with('success', $msg);
+        } catch (\Exception $e) {
+            return back()->with('error', 'Error al procesar el movimiento: ' . $e->getMessage())->withInput();
         }
-
-        return back()->with('success', $msg);
     }
 
     // ============================================================

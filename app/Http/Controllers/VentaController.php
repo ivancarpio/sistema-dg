@@ -9,6 +9,7 @@ use App\Models\Movimiento;
 use App\Models\User;
 use App\Models\Cliente;
 use App\Models\Configuracion;
+use App\Models\ArqueoCaja;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;

@@ -13,6 +13,7 @@ class ArqueoCaja extends Model
 
     protected $fillable = [
         'id_usuario',
+        'id_usuario_cierre',
         'fecha_apertura',
         'fecha_cierre',
         'monto_inicial',
@@ -47,6 +48,14 @@ class ArqueoCaja extends Model
     }
 
     /**
+     * Cajero o administrador que cerró la sesión.
+     */
+    public function usuarioCierre()
+    {
+        return $this->belongsTo(User::class, 'id_usuario_cierre');
+    }
+
+    /**
      * Pagos y cobros reales recaudados durante este arqueo.
      */
     public function pagos()
@@ -63,30 +72,50 @@ class ArqueoCaja extends Model
     }
 
     /**
-     * Solo los egresos (gastos operativos y devoluciones de ventas).
+     * Solo los egresos (gastos operativos, retiros y devoluciones de ventas).
      */
     public function egresos()
     {
         return $this->hasMany(MovimientoCaja::class, 'arqueo_caja_id')
-            ->whereIn('tipo', ['egreso_gasto', 'egreso_devolucion']);
+            ->whereIn('tipo', ['egreso_gasto', 'egreso_devolucion', 'egreso_retiro']);
     }
 
     /**
-     * Efectivo físico esperado en gaveta (Monto Inicial + Efectivo cobrado - Egresos en efectivo).
+     * Gastos operativos registrados en este turno.
      */
-    public function getEfectivoEsperadoAttribute(): float
+    public function gastos()
     {
-        $egresosEfectivo = (float) $this->movimientos()
-            ->whereIn('tipo', ['egreso_gasto', 'egreso_devolucion'])
+        return $this->hasMany(Gasto::class, 'turno_caja_id');
+    }
+
+    /**
+     * Egresos de efectivo físico que salieron de la gaveta.
+     */
+    public function getEgresosEfectivoAttribute(): float
+    {
+        return (float) $this->movimientos()
+            ->whereIn('tipo', ['egreso_gasto', 'egreso_devolucion', 'egreso_retiro'])
             ->where('metodo_pago', 'Efectivo')
             ->sum('monto');
+    }
 
-        $ingresosExtraEfectivo = (float) $this->movimientos()
+    /**
+     * Ingresos extra de efectivo físico ingresados a la gaveta.
+     */
+    public function getIngresosExtraEfectivoAttribute(): float
+    {
+        return (float) $this->movimientos()
             ->where('tipo', 'ingreso_extra')
             ->where('metodo_pago', 'Efectivo')
             ->sum('monto');
+    }
 
-        return round(floatval($this->monto_inicial) + floatval($this->total_efectivo_sistema) + $ingresosExtraEfectivo - $egresosEfectivo, 2);
+    /**
+     * Efectivo físico esperado en gaveta (Monto Inicial + Efectivo cobrado + Ingresos extras - Egresos en efectivo).
+     */
+    public function getEfectivoEsperadoAttribute(): float
+    {
+        return round(floatval($this->monto_inicial) + floatval($this->total_efectivo_sistema) + $this->ingresos_extra_efectivo - $this->egresos_efectivo, 2);
     }
 
     /**

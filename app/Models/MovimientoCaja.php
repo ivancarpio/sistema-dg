@@ -15,6 +15,7 @@ class MovimientoCaja extends Model
         'arqueo_caja_id',
         'id_usuario',
         'id_venta',
+        'gasto_id',
         'tipo',
         'metodo_pago',
         'monto',
@@ -40,5 +41,10 @@ class MovimientoCaja extends Model
     public function venta()
     {
         return $this->belongsTo(Venta::class, 'id_venta');
+    }
+
+    public function gasto()
+    {
+        return $this->belongsTo(Gasto::class, 'gasto_id');
     }
 }

@@ -58,7 +58,7 @@ class ClienteController extends Controller
         // Historial global de cobros para auditoría
         $ultimosCobrosGlobales = \App\Models\PagoVenta::with(['cliente', 'usuario', 'venta'])
             ->orderBy('fecha', 'desc')
-            ->take(150)
+            ->take(500)
             ->get();
 
         return view('clientes.index', compact(

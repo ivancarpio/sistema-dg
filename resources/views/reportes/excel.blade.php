@@ -50,8 +50,8 @@
                     @php
                         $saldoPend = floatval($venta->saldo_pendiente ?? 0);
                         $metodoTexto = $saldoPend > 0 
-                            ? 'Por Pagar (Debe Bs. ' . number_format($saldoPend, 2) . ')'
-                            : $venta->metodo_cobro_real . ($venta->metodo_pago === 'Por Pagar' ? ' (Al día)' : '');
+                            ? 'Crédito Pendiente (Debe Bs. ' . number_format($saldoPend, 2) . ')'
+                            : ($venta->metodo_pago === 'Por Pagar' ? 'Crédito Liquidado' : $venta->metodo_pago);
                     @endphp
                     <td>{{ $metodoTexto }}</td>
                     <td>{{ number_format($venta->total, 2) }}</td>
@@ -78,8 +78,8 @@
             @php
                 $saldoPend = floatval($venta->saldo_pendiente ?? 0);
                 $metodoTexto = $saldoPend > 0 
-                    ? 'Por Pagar (Debe Bs. ' . number_format($saldoPend, 2) . ')'
-                    : $venta->metodo_cobro_real . ($venta->metodo_pago === 'Por Pagar' ? ' (Al día)' : '');
+                    ? 'Crédito Pendiente (Debe Bs. ' . number_format($saldoPend, 2) . ')'
+                    : ($venta->metodo_pago === 'Por Pagar' ? 'Crédito Liquidado' : $venta->metodo_pago);
             @endphp
             <td>{{ $metodoTexto }}</td>
             <td>{{ number_format($venta->total, 2) }}</td>

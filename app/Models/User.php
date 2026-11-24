@@ -86,9 +86,9 @@ class User extends Authenticatable
                 'color' => 'danger',
             ],
             'arqueos' => [
-                'nombre' => 'Arqueo de Caja',
-                'descripcion' => 'Apertura, verificación de billetes y cierre de caja.',
-                'icono' => 'bi-calculator',
+                'nombre' => 'Caja y Finanzas',
+                'descripcion' => 'Gaveta de efectivo, turnos y cierres, gastos operativos y caja chica.',
+                'icono' => 'bi-wallet2',
                 'color' => 'warning',
             ],
             'reportes' => [
