@@ -446,9 +446,63 @@
         </div>
     </div>
 </div>
-@endsection
 
-@section('scripts')
+<!-- MODAL: COTIZACIÓN GUARDADA CON ÉXITO -->
+<div class="modal fade" id="modalExitoCotizacion" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg rounded-4 overflow-hidden">
+            <div class="modal-header border-0 bg-success text-white py-3">
+                <div class="d-flex align-items-center gap-2">
+                    <i class="bi bi-check-circle-fill fs-3"></i>
+                    <div>
+                        <h6 class="modal-title fw-bold mb-0">¡Cotización Guardada Exitosamente!</h6>
+                        <small class="text-white-50">Documento generado y listo para entregar</small>
+                    </div>
+                </div>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body p-4 text-center">
+                <div class="p-3 bg-light border rounded-3 mb-4 text-start">
+                    <div class="d-flex justify-content-between align-items-center mb-1">
+                        <span class="small text-muted fw-bold">NÚMERO:</span>
+                        <span class="fw-extrabold text-primary fs-5" id="exitoNumeroCot">—</span>
+                    </div>
+                    <div class="d-flex justify-content-between align-items-center mb-1">
+                        <span class="small text-muted fw-bold">DESTINATARIO:</span>
+                        <span class="fw-bold text-dark" id="exitoDestinatarioCot">—</span>
+                    </div>
+                    <div class="d-flex justify-content-between align-items-center">
+                        <span class="small text-muted fw-bold">TOTAL COTIZADO:</span>
+                        <span class="fw-extrabold text-success fs-5" id="exitoTotalCot">—</span>
+                    </div>
+                </div>
+
+                <p class="small text-muted fw-semibold mb-3">¿Qué deseas hacer con esta cotización?</p>
+
+                <div class="d-grid gap-2">
+                    <button type="button" id="exitoBtnWa" class="btn btn-success fw-bold py-2.5 shadow-sm d-flex align-items-center justify-content-center gap-2">
+                        <i class="bi bi-whatsapp fs-5"></i> Enviar por WhatsApp al Cliente
+                    </button>
+                    <a href="#" target="_blank" id="exitoBtnPdf" class="btn btn-danger fw-bold py-2.5 shadow-sm d-flex align-items-center justify-content-center gap-2">
+                        <i class="bi bi-file-earmark-pdf-fill fs-5"></i> Descargar PDF Oficial (con Logo)
+                    </a>
+                    <a href="#" target="_blank" id="exitoBtnImprimir" class="btn btn-dark fw-bold py-2.5 shadow-sm d-flex align-items-center justify-content-center gap-2">
+                        <i class="bi bi-printer-fill fs-5"></i> Imprimir Cotización
+                    </a>
+                </div>
+            </div>
+            <div class="modal-footer border-0 bg-light d-flex justify-content-between">
+                <a href="{{ route('cotizaciones.create') }}" class="btn btn-outline-primary btn-sm fw-bold">
+                    <i class="bi bi-plus-circle me-1"></i> Nueva Cotización
+                </a>
+                <button type="button" class="btn btn-secondary btn-sm fw-semibold" data-bs-dismiss="modal">
+                    Ver Listado de Cotizaciones
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <script>
     const CSRF_TOKEN = '{{ csrf_token() }}';
 
@@ -460,6 +514,35 @@
             .replace(/>/g, '&gt;')
             .replace(/"/g, '&quot;')
             .replace(/'/g, '&#039;');
+    }
+
+    function abrirModalExito(id) {
+        const modalEl = document.getElementById('modalExitoCotizacion');
+        const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
+
+        fetch(`/cotizaciones/${id}`, {
+            headers: { 'Accept': 'application/json' }
+        })
+        .then(r => r.json())
+        .then(d => {
+            if (!d.success) return;
+            const sim = d.simbolo_moneda || 'Bs.';
+            document.getElementById('exitoNumeroCot').textContent = d.numero_cotizacion;
+            document.getElementById('exitoDestinatarioCot').textContent = d.destinatario_nombre + (d.destinatario_empresa ? ` (${d.destinatario_empresa})` : '');
+            document.getElementById('exitoTotalCot').textContent = `${sim} ${Number(d.total).toFixed(2)}`;
+
+            document.getElementById('exitoBtnPdf').href = d.pdf_url;
+            document.getElementById('exitoBtnImprimir').href = `${d.imprimir_url}?autoprint=1`;
+            document.getElementById('exitoBtnWa').onclick = function () {
+                modal.hide();
+                abrirModalWhatsApp(d.id);
+            };
+
+            modal.show();
+        })
+        .catch(() => {
+            verDetalleCotizacion(id);
+        });
     }
 
     function verDetalleCotizacion(id) {
@@ -654,7 +737,6 @@
         const url = `https://wa.me/${tel}?text=${encodeURIComponent(msg)}`;
         window.open(url, '_blank');
 
-        // Marcar automáticamente como 'enviada' si aún está 'pendiente'
         if (id && estadoActual === 'pendiente') {
             fetch(`/cotizaciones/${id}/estado`, {
                 method: 'POST',
@@ -718,7 +800,9 @@
     }
 
     document.addEventListener('DOMContentLoaded', function () {
-        @if(session('abrir_wa_id'))
+        @if(session('abrir_exito_id'))
+            abrirModalExito({{ intval(session('abrir_exito_id')) }});
+        @elseif(session('abrir_wa_id'))
             abrirModalWhatsApp({{ intval(session('abrir_wa_id')) }});
         @elseif(session('abrir_detalle_id'))
             verDetalleCotizacion({{ intval(session('abrir_detalle_id')) }});

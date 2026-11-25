@@ -6,6 +6,7 @@
 @php
     $esEdicion = $cotizacion !== null;
     $monedaInicial = old('moneda', $cotizacion->moneda ?? ($monedaPrincipal ?? 'BOB'));
+    $simboloInicial = $monedaInicial === 'PEN' ? 'S/' : 'Bs.';
     $tipoInicial = old('tipo_cotizacion', $cotizacion->tipo_cotizacion ?? 'cliente');
     $tasaDefault = floatval($tipoCambio->tasa_venta ?? 3.60);
     $tasaInicial = old('tasa_cambio_aplicada', $cotizacion->tasa_cambio_aplicada ?? $tasaDefault);
@@ -30,26 +31,6 @@
         ];
     }, $itemsParaJs, array_keys($itemsParaJs)));
 
-    $productosJson = $productos->map(function ($p) {
-        return [
-            'id'                        => $p->id,
-            'codigo'                    => $p->codigo ?? '',
-            'nombre'                    => $p->nombre,
-            'marca'                     => optional($p->marca)->nombre ?? '',
-            'categoria_id'              => $p->id_categoria,
-            'categoria'                 => optional($p->categoria)->nombre ?? '',
-            'stock'                     => intval($p->stock),
-            'unidad'                    => optional($p->unidad)->nombre ?? 'Pieza',
-            'precio_venta'              => floatval($p->getPrecioPara('Ocasional')),
-            'precio_cliente'            => floatval($p->getPrecioPara('Regular')),
-            'tiene_secundaria'          => $p->tieneUnidadSecundaria(),
-            'unidad_secundaria'         => optional($p->unidadSecundaria)->nombre ?? '',
-            'factor_conversion'         => floatval($p->factor_conversion ?? 1),
-            'precio_venta_secundario'   => floatval($p->getPrecioSecundarioPara('Ocasional')),
-            'precio_cliente_secundario' => floatval($p->getPrecioSecundarioPara('Regular')),
-        ];
-    })->values();
-
     $clientesJson = $clientes->map(function ($c) {
         return [
             'id'        => $c->id,
@@ -68,7 +49,7 @@
         color: #fff;
     }
     .catalog-scroll {
-        max-height: 615px;
+        max-height: 560px;
         overflow-y: auto;
     }
     .catalog-scroll::-webkit-scrollbar {
@@ -78,19 +59,15 @@
         background: #cbd5e1;
         border-radius: 4px;
     }
-    .prod-catalog-card {
-        border: 1px solid #e2e8f0;
-        border-radius: 10px;
-        transition: all 0.15s ease;
-        background: #ffffff;
+    .fila-catalogo-prod {
+        transition: background-color 0.15s ease;
     }
-    .prod-catalog-card:hover {
-        border-color: #0284c7;
-        box-shadow: 0 4px 12px rgba(2, 132, 199, 0.08);
+    .fila-catalogo-prod:hover {
+        background-color: #f0f9ff !important;
     }
     .tipo-pill-btn {
         cursor: pointer;
-        border: 1.5px solid #cbd5e1;
+        border: 2px solid #cbd5e1;
         border-radius: 10px;
         padding: 10px 14px;
         transition: all 0.15s ease;
@@ -100,13 +77,13 @@
         border-color: #0284c7;
         background: #f0f9ff;
         color: #0369a1;
-        box-shadow: 0 2px 8px rgba(2, 132, 199, 0.12);
+        box-shadow: 0 2px 8px rgba(2, 132, 199, 0.15);
     }
     .tipo-pill-btn.active-tienda {
         border-color: #7c3aed;
         background: #f5f3ff;
         color: #5b21b6;
-        box-shadow: 0 2px 8px rgba(124, 58, 237, 0.12);
+        box-shadow: 0 2px 8px rgba(124, 58, 237, 0.15);
     }
     .cot-table-items th {
         font-size: 11px;
@@ -121,8 +98,18 @@
     }
     .total-panel {
         background: linear-gradient(135deg, #f8fafc 0%, #f0f9ff 100%);
-        border: 1.5px solid #bae6fd;
-        border-radius: 12px;
+        border: 2px solid #bae6fd;
+        border-radius: 14px;
+    }
+    .btn-cantidad-step {
+        width: 28px;
+        height: 28px;
+        padding: 0;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 14px;
+        border-radius: 6px;
     }
 </style>
 
@@ -136,10 +123,10 @@
             </div>
             <h4 class="fw-bold mb-0">
                 <i class="bi bi-file-earmark-text-fill me-2"></i>
-                {{ $esEdicion ? 'Editar Cotización ' . $cotizacion->numero_cotizacion : 'Generador de Cotizaciones y Proformas' }}
+                {{ $esEdicion ? 'Editar Cotización ' . $cotizacion->numero_cotizacion : 'Nueva Cotización y Proforma' }}
             </h4>
             <div class="small text-white-50 mt-1">
-                Cotiza productos del catálogo o ítems externos para clientes y tiendas externas con envío directo por PDF, Impresión y WhatsApp.
+                Agrega productos de tu catálogo o conceptos libres, cotiza en Soles o Bolivianos y genera de inmediato el PDF o envío por WhatsApp.
             </div>
         </div>
         <div class="d-flex flex-wrap gap-2">
@@ -147,8 +134,8 @@
                 <i class="bi bi-arrow-left me-1"></i> Volver al Historial
             </a>
             @if($esEdicion)
-                <a href="{{ route('cotizaciones.pdf', $cotizacion->id) }}" target="_blank" class="btn btn-light btn-sm fw-bold text-primary">
-                    <i class="bi bi-file-earmark-pdf-fill text-danger me-1"></i> Ver PDF
+                <a href="{{ route('cotizaciones.pdf', $cotizacion->id) }}" target="_blank" class="btn btn-light btn-sm fw-bold text-danger">
+                    <i class="bi bi-file-earmark-pdf-fill me-1"></i> Descargar PDF
                 </a>
             @endif
         </div>
@@ -162,7 +149,7 @@
     @endif
     @if(isset($errors) && $errors->any())
         <div class="alert alert-danger alert-dismissible fade show shadow-sm border-0 rounded-3" role="alert">
-            <strong><i class="bi bi-exclamation-octagon-fill me-1"></i> Revisa los datos de la cotización:</strong>
+            <strong><i class="bi bi-exclamation-octagon-fill me-1"></i> Por favor revisa los datos:</strong>
             <ul class="mb-0 mt-1 small">
                 @foreach($errors->all() as $err)
                     <li>{{ $err }}</li>
@@ -173,16 +160,17 @@
     @endif
 
     <div class="row g-3 align-items-start">
-        <!-- COLUMNA IZQUIERDA: CATÁLOGO DE PRODUCTOS -->
+        <!-- COLUMNA IZQUIERDA: CATÁLOGO DE PRODUCTOS (RENDERIZADO INMEDIATO) -->
         <div class="col-lg-5">
             <div class="card border-0 shadow-sm rounded-4 overflow-hidden">
                 <div class="card-header bg-white border-bottom py-3">
                     <div class="d-flex justify-content-between align-items-center mb-2">
                         <h6 class="fw-bold text-dark mb-0">
                             <i class="bi bi-box-seam-fill text-primary me-2"></i>Catálogo de Productos
+                            <span class="badge bg-secondary-subtle text-secondary border ms-1" id="badgeTotalCatalogo">{{ count($productos) }}</span>
                         </h6>
                         <button type="button" class="btn btn-outline-primary btn-sm fw-bold" data-bs-toggle="modal" data-bs-target="#modalItemExterno">
-                            <i class="bi bi-plus-lg me-1"></i> Ítem Externo / Libre
+                            <i class="bi bi-plus-lg me-1"></i> + Ítem Libre / Externo
                         </button>
                     </div>
 
@@ -191,7 +179,7 @@
                         <div class="col-7">
                             <div class="input-group input-group-sm">
                                 <span class="input-group-text bg-light border-end-0"><i class="bi bi-search text-muted"></i></span>
-                                <input type="text" id="buscarCatalogo" class="form-control border-start-0" placeholder="Buscar producto, código o marca...">
+                                <input type="text" id="buscarCatalogo" class="form-control border-start-0" placeholder="Buscar producto, código o marca..." autofocus>
                             </div>
                         </div>
                         <div class="col-5">
@@ -206,7 +194,7 @@
 
                     <!-- Tarifa por defecto al agregar -->
                     <div class="d-flex align-items-center justify-content-between bg-light rounded-3 px-2 py-1 border">
-                        <span class="small fw-semibold text-muted"><i class="bi bi-tag-fill me-1"></i>Tarifa al agregar:</span>
+                        <span class="small fw-semibold text-muted"><i class="bi bi-tag-fill me-1"></i>Tarifa:</span>
                         <div class="btn-group btn-group-sm" role="group">
                             <input type="radio" class="btn-check" name="tarifa_catalogo" id="tarifaVenta" value="venta" checked>
                             <label class="btn btn-outline-primary fw-semibold py-0 px-2" for="tarifaVenta">P. Venta</label>
@@ -216,14 +204,100 @@
                         </div>
                     </div>
 
-                    <div id="avisoConversionCatalogo" class="alert alert-info py-1 px-2 mt-2 mb-0 small d-none">
+                    <div id="avisoConversionCatalogo" class="alert alert-info py-1 px-2 mt-2 mb-0 small {{ ($monedaPrincipal ?? 'BOB') === $monedaInicial ? 'd-none' : '' }}">
                         <i class="bi bi-arrow-left-right me-1"></i>
-                        Catálogo base en <strong>{{ $monedaSimbolo }}</strong>: al agregar, los precios se convertirán automáticamente a <strong id="monedaCotDestinoLbl"></strong>.
+                        Precios del catálogo se muestran convertidos a <strong id="monedaCotDestinoLbl">{{ $monedaInicial === 'PEN' ? 'Soles (S/)' : 'Bolivianos (Bs.)' }}</strong> según tasa.
                     </div>
                 </div>
 
-                <div class="card-body p-2 bg-light catalog-scroll" id="contenedorCatalogo">
-                    <!-- Renderizado dinámico con JS para respuesta instantánea -->
+                <!-- Tabla de productos del catálogo (visible al 100% desde la primera carga) -->
+                <div class="card-body p-0 catalog-scroll" id="contenedorCatalogo">
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle mb-0" id="tablaCatalogoProductos">
+                            <thead class="table-light sticky-top small" style="z-index: 2;">
+                                <tr>
+                                    <th class="ps-3" style="width: 18%;">CÓDIGO</th>
+                                    <th>PRODUCTO</th>
+                                    <th class="text-center" style="width: 14%;">STOCK</th>
+                                    <th class="text-end" style="width: 22%;">PRECIO</th>
+                                    <th class="text-center pe-3" style="width: 18%;">ACCIÓN</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tbodyCatalogo">
+                                @forelse($productos as $p)
+                                @php
+                                    $unidadBase = optional($p->unidad)->nombre ?? 'Pieza';
+                                    $pClienteBase = ($p->precio_cliente !== null && $p->precio_cliente > 0) ? floatval($p->precio_cliente) : floatval($p->precio_venta);
+                                    $pVentaBase = floatval($p->precio_venta);
+
+                                    $tieneSec = $p->tieneUnidadSecundaria();
+                                    $unidadSec = $tieneSec ? (optional($p->unidadSecundaria)->nombre ?? 'Paquete') : '';
+                                    $pVentaSec = $tieneSec ? $p->getPrecioSecundarioPara('Ocasional') : 0;
+                                    $pClienteSec = $tieneSec ? $p->getPrecioSecundarioPara('Regular') : 0;
+                                @endphp
+                                <tr class="fila-catalogo-prod"
+                                    data-id="{{ $p->id }}"
+                                    data-codigo="{{ strtolower($p->codigo ?? '') }}"
+                                    data-nombre="{{ strtolower($p->nombre) }}"
+                                    data-marca="{{ strtolower(optional($p->marca)->nombre ?? '') }}"
+                                    data-categoria="{{ $p->id_categoria }}"
+                                    data-stock="{{ $p->stock }}"
+                                    data-nombre-real="{{ $p->nombre }}"
+                                    data-codigo-real="{{ $p->codigo ?? '' }}"
+                                    data-unidad-base="{{ $unidadBase }}"
+                                    data-pventa-base="{{ $pVentaBase }}"
+                                    data-pcliente-base="{{ $pClienteBase }}"
+                                    data-tiene-sec="{{ $tieneSec ? '1' : '0' }}"
+                                    data-unidad-sec="{{ $unidadSec }}"
+                                    data-pventa-sec="{{ $pVentaSec }}"
+                                    data-pcliente-sec="{{ $pClienteSec }}">
+                                    <td class="ps-3">
+                                        <span class="badge bg-light text-dark border small" style="font-size: 10px;">{{ $p->codigo ?: '—' }}</span>
+                                    </td>
+                                    <td>
+                                        <div class="fw-bold text-dark text-truncate" style="max-width: 190px;" title="{{ $p->nombre }}">{{ $p->nombre }}</div>
+                                        <div class="text-muted" style="font-size: 11px;">
+                                            {{ optional($p->marca)->nombre ?? '' }} • {{ $unidadBase }}
+                                        </div>
+                                    </td>
+                                    <td class="text-center">
+                                        @if($p->stock > 0)
+                                            <span class="badge bg-success-subtle text-success border border-success-subtle">{{ $p->stock }}</span>
+                                        @else
+                                            <span class="badge bg-danger-subtle text-danger border border-danger-subtle">0</span>
+                                        @endif
+                                    </td>
+                                    <td class="text-end">
+                                        <div class="fw-bold text-primary precio-visible-catalogo" data-pventa="{{ $pVentaBase }}" data-pcliente="{{ $pClienteBase }}">
+                                            <span class="lbl-simbolo-moneda">{{ $simboloInicial }}</span> <span class="val-num-catalogo">{{ number_format($pVentaBase, 2) }}</span>
+                                        </div>
+                                        <small class="text-muted tarifa-lbl-catalogo" style="font-size: 10px;">P. Venta</small>
+                                    </td>
+                                    <td class="text-center pe-3">
+                                        <button type="button" class="btn btn-sm btn-primary fw-bold px-2 py-1" onclick="agregarProductoDesdeFila(this, false)">
+                                            <i class="bi bi-plus-lg"></i> Agregar
+                                        </button>
+                                        @if($tieneSec && $unidadSec)
+                                            <button type="button" class="btn btn-sm btn-outline-secondary fw-semibold mt-1 py-0 px-1 d-block w-100" style="font-size: 10px;" onclick="agregarProductoDesdeFila(this, true)" title="Agregar por {{ $unidadSec }}">
+                                                + {{ $unidadSec }}
+                                            </button>
+                                        @endif
+                                    </td>
+                                </tr>
+                                @empty
+                                <tr>
+                                    <td colspan="5" class="text-center py-4 text-muted">
+                                        No hay productos registrados en el inventario.
+                                    </td>
+                                </tr>
+                                @endforelse
+                            </tbody>
+                        </table>
+                    </div>
+                    <div id="noResultadosCatalogo" class="text-center py-5 text-muted d-none">
+                        <i class="bi bi-search fs-3 opacity-50"></i>
+                        <p class="small mt-2 mb-0">No se encontraron productos con ese criterio de búsqueda.</p>
+                    </div>
                 </div>
             </div>
         </div>
@@ -243,12 +317,12 @@
                         <!-- SECCIÓN 1: TIPO DE COTIZACIÓN -->
                         <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
                             <h6 class="fw-bold text-dark mb-0">
-                                <i class="bi bi-person-badge-fill text-primary me-2"></i>Tipo y Datos del Destinatario
+                                <i class="bi bi-person-badge-fill text-primary me-2"></i>1. Destinatario de la Cotización
                             </h6>
                             <div class="d-flex align-items-center gap-2">
-                                <label class="small text-muted fw-semibold mb-0">N°:</label>
+                                <label class="small text-muted fw-semibold mb-0">N° Cotización:</label>
                                 <input type="text" name="numero_cotizacion" class="form-control form-control-sm fw-bold text-primary text-center"
-                                       style="width: 135px;" value="{{ old('numero_cotizacion', $numeroSugerido) }}"
+                                       style="width: 140px;" value="{{ old('numero_cotizacion', $numeroSugerido) }}"
                                        {{ $esEdicion ? 'readonly' : '' }}>
                             </div>
                         </div>
@@ -257,9 +331,9 @@
                             <div class="col-6">
                                 <div class="tipo-pill-btn {{ $tipoInicial === 'cliente' ? 'active-cliente' : '' }}" id="pillTipoCliente" onclick="seleccionarTipoCotizacion('cliente')">
                                     <div class="d-flex align-items-center gap-2">
-                                        <i class="bi bi-person-fill fs-5"></i>
+                                        <i class="bi bi-person-fill fs-4 text-primary"></i>
                                         <div>
-                                            <div class="fw-bold small">Cotizar a Cliente</div>
+                                            <div class="fw-bold small">Para un Cliente</div>
                                             <div class="text-muted" style="font-size: 11px;">Cliente final, obra o frecuente</div>
                                         </div>
                                     </div>
@@ -268,7 +342,7 @@
                             <div class="col-6">
                                 <div class="tipo-pill-btn {{ $tipoInicial === 'tienda_externa' ? 'active-tienda' : '' }}" id="pillTipoTienda" onclick="seleccionarTipoCotizacion('tienda_externa')">
                                     <div class="d-flex align-items-center gap-2">
-                                        <i class="bi bi-shop-window fs-5"></i>
+                                        <i class="bi bi-shop-window fs-4" style="color: #7c3aed;"></i>
                                         <div>
                                             <div class="fw-bold small">Tienda Externa / Ferretería</div>
                                             <div class="text-muted" style="font-size: 11px;">Cotización comercial o proveedor</div>
@@ -280,14 +354,14 @@
                         </div>
 
                         <!-- Selector rápido de clientes / ferreterías registrados -->
-                        <div class="bg-light border rounded-3 p-2 mb-3">
+                        <div class="bg-light border rounded-3 p-2.5 mb-3">
                             <div class="row g-2 align-items-center">
                                 <div class="col-md-8">
                                     <label class="form-label small fw-bold text-muted mb-1">
-                                        <i class="bi bi-people-fill text-primary me-1"></i>Cargar Cliente o Ferretería Registrada (Opcional)
+                                        <i class="bi bi-people-fill text-primary me-1"></i>Autocompletar con Cliente / Ferretería Registrada:
                                     </label>
                                     <select id="selectorClienteRegistrado" class="form-select form-select-sm">
-                                        <option value="">-- Seleccionar para autocompletar datos y WhatsApp --</option>
+                                        <option value="">-- Seleccionar cliente para autocompletar WhatsApp y datos --</option>
                                         @foreach($clientes as $cli)
                                             <option value="{{ $cli->id }}" {{ old('id_cliente', $cotizacion->id_cliente ?? '') == $cli->id ? 'selected' : '' }}>
                                                 {{ $cli->nombre }} {{ $cli->telefono ? '— Tel: ' . $cli->telefono : '' }} {{ $cli->ci_nit ? '(NIT: ' . $cli->ci_nit . ')' : '' }}
@@ -339,11 +413,11 @@
 
                         <hr class="my-3">
 
-                        <!-- SECCIÓN 2: MONEDA Y TASA DE CAMBIO -->
+                        <!-- SECCIÓN 2: MONEDA Y CONVERSIÓN -->
                         <div class="row g-2 align-items-center bg-light border rounded-3 p-2">
                             <div class="col-md-4">
                                 <label class="form-label small fw-bold mb-1 text-dark">
-                                    <i class="bi bi-currency-exchange text-primary me-1"></i>Moneda de Cotización
+                                    <i class="bi bi-currency-exchange text-primary me-1"></i>Moneda de la Cotización
                                 </label>
                                 <select name="moneda" id="selectMonedaCotizacion" class="form-select form-select-sm fw-bold">
                                     <option value="BOB" {{ $monedaInicial === 'BOB' ? 'selected' : '' }}>🇧🇴 Bolivianos (Bs.)</option>
@@ -352,15 +426,12 @@
                             </div>
                             <div class="col-md-4">
                                 <label class="form-label small fw-bold mb-1 text-dark">
-                                    Tasa Ref. (1 S/ = Bs.)
+                                    Tasa Ref. Ragnar (1 S/ = Bs.)
                                 </label>
                                 <div class="input-group input-group-sm">
                                     <span class="input-group-text">Bs.</span>
                                     <input type="number" step="0.0001" min="0.01" name="tasa_cambio_aplicada" id="inputTasaCambio"
                                            class="form-control fw-bold" value="{{ number_format(floatval($tasaInicial), 2, '.', '') }}">
-                                    <button type="button" class="btn btn-outline-secondary" onclick="convertirTodosLosPrecios()" title="Recalcular precios unitarios según tasa">
-                                        <i class="bi bi-arrow-repeat"></i>
-                                    </button>
                                 </div>
                             </div>
                             <div class="col-md-4">
@@ -369,7 +440,7 @@
                                     <input class="form-check-input" type="checkbox" role="switch" name="mostrar_equivalente" id="chkMostrarEquivalente" value="1"
                                            {{ $mostrarEquivInicial == '1' ? 'checked' : '' }}>
                                     <label class="form-check-label small fw-semibold" for="chkMostrarEquivalente">
-                                        Mostrar equivalente en PDF / WA
+                                        Mostrar equivalente en PDF y WA
                                     </label>
                                 </div>
                             </div>
@@ -381,7 +452,7 @@
                 <div class="card border-0 shadow-sm rounded-4 mb-3">
                     <div class="card-header bg-white border-bottom py-2 px-3 d-flex justify-content-between align-items-center">
                         <h6 class="fw-bold text-dark mb-0">
-                            <i class="bi bi-list-check text-primary me-2"></i>Detalle de Productos e Ítems
+                            <i class="bi bi-list-check text-primary me-2"></i>2. Productos e Ítems Cotizados
                             <span class="badge bg-primary rounded-pill ms-1" id="badgeCantidadItems">0</span>
                         </h6>
                         <button type="button" class="btn btn-sm btn-link text-danger text-decoration-none fw-semibold p-0" onclick="vaciarItemsCotizacion()">
@@ -393,38 +464,40 @@
                             <table class="table table-hover cot-table-items mb-0">
                                 <thead>
                                     <tr>
-                                        <th style="width: 36%;">Producto / Ítem</th>
+                                        <th style="width: 36%;">Producto / Descripción</th>
                                         <th class="text-center" style="width: 14%;">Unidad</th>
-                                        <th class="text-center" style="width: 15%;">Cant.</th>
-                                        <th class="text-end" style="width: 18%;">P. Unit (<span class="lbl-simbolo-moneda">{{ $monedaInicial === 'PEN' ? 'S/' : 'Bs.' }}</span>)</th>
+                                        <th class="text-center" style="width: 17%;">Cant.</th>
+                                        <th class="text-end" style="width: 16%;">P. Unit (<span class="lbl-simbolo-moneda">{{ $simboloInicial }}</span>)</th>
                                         <th class="text-end" style="width: 13%;">Subtotal</th>
                                         <th class="text-center" style="width: 4%;"></th>
                                     </tr>
                                 </thead>
                                 <tbody id="tbodyItemsCotizacion">
-                                    <!-- Renderizado dinámico JS -->
+                                    <!-- Renderizado interactivo -->
                                 </tbody>
                             </table>
                         </div>
                         <div id="emptyStateItems" class="text-center py-5 text-muted">
                             <i class="bi bi-cart-plus fs-1 text-secondary opacity-50"></i>
                             <p class="fw-semibold mb-1 mt-2">Aún no agregaste productos a esta cotización</p>
-                            <small>Selecciona productos del catálogo izquierdo o agrega un <strong>Ítem Externo / Libre</strong>.</small>
+                            <small class="text-secondary">
+                                Haz clic en <strong>+ Agregar</strong> en los productos de la izquierda o añade un <strong>+ Ítem Libre / Externo</strong>.
+                            </small>
                         </div>
                     </div>
                 </div>
 
-                <!-- SECCIÓN 4: CONDICIONES, TOTALES Y ACCIONES -->
+                <!-- SECCIÓN 4: CONDICIONES, TOTALES Y ACCIÓN DE GUARDADO ÚNICA -->
                 <div class="card border-0 shadow-sm rounded-4">
                     <div class="card-body p-3 p-md-4">
                         <div class="row g-3">
                             <div class="col-md-6">
                                 <label class="form-label small fw-bold mb-1">Condiciones Comerciales y Validez</label>
                                 <textarea name="condiciones" id="inputCondiciones" rows="3" class="form-control form-control-sm mb-2"
-                                          placeholder="Ej. Pago al contado o transferencia. Entrega inmediata según disponibilidad de stock.">{{ old('condiciones', $cotizacion->condiciones ?? 'Precios vigentes hasta la fecha indicada. Sujeto a disponibilidad de stock.') }}</textarea>
-                                <label class="form-label small fw-bold mb-1">Observaciones Internas o para el Cliente</label>
+                                          placeholder="Ej. Precios válidos por 7 días. Sujeto a disponibilidad de stock.">{{ old('condiciones', $cotizacion->condiciones ?? 'Precios vigentes hasta la fecha indicada. Sujeto a disponibilidad de stock.') }}</textarea>
+                                <label class="form-label small fw-bold mb-1">Observaciones para el Cliente o Internas</label>
                                 <textarea name="observaciones" rows="2" class="form-control form-control-sm"
-                                          placeholder="Notas adicionales, tiempo de entrega, contacto...">{{ old('observaciones', $cotizacion->observaciones ?? '') }}</textarea>
+                                          placeholder="Notas adicionales, tiempo de entrega, datos bancarios...">{{ old('observaciones', $cotizacion->observaciones ?? '') }}</textarea>
                             </div>
 
                             <div class="col-md-6">
@@ -432,12 +505,12 @@
                                     <div>
                                         <div class="d-flex justify-content-between align-items-center mb-2">
                                             <span class="small fw-semibold text-muted">Subtotal</span>
-                                            <span class="fw-bold text-dark fs-6" id="lblSubtotalCot">{{ $monedaInicial === 'PEN' ? 'S/' : 'Bs.' }} 0.00</span>
+                                            <span class="fw-bold text-dark fs-6" id="lblSubtotalCot">{{ $simboloInicial }} 0.00</span>
                                         </div>
                                         <div class="d-flex justify-content-between align-items-center mb-2">
                                             <label class="small fw-semibold text-danger mb-0" for="inputDescuentoCot">Descuento (-)</label>
                                             <div class="input-group input-group-sm" style="width: 140px;">
-                                                <span class="input-group-text lbl-simbolo-moneda">{{ $monedaInicial === 'PEN' ? 'S/' : 'Bs.' }}</span>
+                                                <span class="input-group-text lbl-simbolo-moneda">{{ $simboloInicial }}</span>
                                                 <input type="number" step="0.01" min="0" name="descuento" id="inputDescuentoCot"
                                                        class="form-control text-end fw-bold text-danger" value="{{ $descuentoInicial }}">
                                             </div>
@@ -445,7 +518,7 @@
                                         <hr class="my-2">
                                         <div class="d-flex justify-content-between align-items-center">
                                             <span class="fw-extrabold text-primary fs-6">TOTAL COTIZADO</span>
-                                            <span class="fw-extrabold text-primary fs-4" id="lblTotalCot">{{ $monedaInicial === 'PEN' ? 'S/' : 'Bs.' }} 0.00</span>
+                                            <span class="fw-extrabold text-primary fs-4" id="lblTotalCot">{{ $simboloInicial }} 0.00</span>
                                         </div>
                                         <div class="d-flex justify-content-between align-items-center mt-1 small text-secondary" id="boxEquivalenteLive">
                                             <span>Equivalente ref.:</span>
@@ -453,29 +526,14 @@
                                         </div>
                                     </div>
 
-                                    <!-- Botonera de Acciones -->
-                                    <div class="d-grid gap-2 mt-3">
-                                        <div class="row g-2">
-                                            <div class="col-6">
-                                                <button type="button" onclick="enviarCotizacion('guardar')" class="btn btn-primary w-100 fw-bold py-2 shadow-sm">
-                                                    <i class="bi bi-check-circle-fill me-1"></i> Guardar
-                                                </button>
-                                            </div>
-                                            <div class="col-6">
-                                                <button type="button" onclick="enviarCotizacion('whatsapp')" class="btn btn-success w-100 fw-bold py-2 shadow-sm">
-                                                    <i class="bi bi-whatsapp me-1"></i> Guardar y WhatsApp
-                                                </button>
-                                            </div>
-                                            <div class="col-6">
-                                                <button type="button" onclick="enviarCotizacion('pdf')" class="btn btn-outline-danger w-100 fw-bold">
-                                                    <i class="bi bi-file-earmark-pdf-fill me-1"></i> Guardar y PDF
-                                                </button>
-                                            </div>
-                                            <div class="col-6">
-                                                <button type="button" onclick="enviarCotizacion('imprimir')" class="btn btn-outline-dark w-100 fw-bold">
-                                                    <i class="bi bi-printer-fill me-1"></i> Guardar e Imprimir
-                                                </button>
-                                            </div>
+                                    <!-- BOTÓN DE GUARDADO PRINCIPAL CLARO Y DIRECTO -->
+                                    <div class="mt-3">
+                                        <button type="button" onclick="guardarCotizacionDirecta()" class="btn btn-primary btn-lg w-100 fw-bold py-3 shadow-sm d-flex align-items-center justify-content-center gap-2">
+                                            <i class="bi bi-check2-circle fs-4"></i>
+                                            <span class="fs-5">{{ $esEdicion ? 'Actualizar Cotización' : 'Guardar Cotización' }}</span>
+                                        </button>
+                                        <div class="text-center text-muted small mt-2">
+                                            <i class="bi bi-info-circle me-1"></i> Al guardar se abrirá el panel para <strong>descargar PDF</strong>, <strong>imprimir</strong> o <strong>enviar por WhatsApp</strong>.
                                         </div>
                                     </div>
                                 </div>
@@ -493,18 +551,18 @@
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content border-0 shadow-lg rounded-4">
             <div class="modal-header border-0 bg-primary text-white rounded-top-4">
-                <h6 class="modal-title fw-bold">
+                <h6 class="modal-title fw-bold mb-0">
                     <i class="bi bi-plus-square-dotted me-2"></i>Agregar Producto Externo o Concepto Libre
                 </h6>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body p-4">
                 <p class="small text-muted mb-3">
-                    Útil para cotizar productos de terceros, tiendas externas, fletes o artículos que aún no están en tu inventario.
+                    Útil para cotizar productos de terceros, servicios, fletes o artículos que no están en tu inventario.
                 </p>
                 <div class="mb-2">
-                    <label class="form-label small fw-bold">Descripción del Producto o Servicio *</label>
-                    <input type="text" id="extNombre" class="form-control" placeholder="Ej. Taladro Percutor 800W / Servicio de envío">
+                    <label class="form-label small fw-bold">Descripción del Producto o Concepto *</label>
+                    <input type="text" id="extNombre" class="form-control" placeholder="Ej. Taladro Percutor 800W / Servicio de flete">
                 </div>
                 <div class="row g-2 mb-2">
                     <div class="col-6">
@@ -522,7 +580,7 @@
                         <input type="number" step="0.01" min="0.01" id="extCantidad" class="form-control" value="1">
                     </div>
                     <div class="col-6">
-                        <label class="form-label small fw-bold">Precio Unitario (<span class="lbl-simbolo-moneda">{{ $monedaInicial === 'PEN' ? 'S/' : 'Bs.' }}</span>) *</label>
+                        <label class="form-label small fw-bold">Precio Unitario (<span class="lbl-simbolo-moneda">{{ $simboloInicial }}</span>) *</label>
                         <input type="number" step="0.01" min="0" id="extPrecio" class="form-control" value="0.00">
                     </div>
                 </div>
@@ -536,15 +594,13 @@
         </div>
     </div>
 </div>
-@endsection
 
-@section('scripts')
+<!-- SCRIPTS DE COMPORTAMIENTO DIRECTO EN LA VISTA -->
 <script>
-    const PRODUCTOS_CATALOGO = @json($productosJson);
     const CLIENTES_LISTA = @json($clientesJson);
     const MONEDA_SISTEMA_BASE = @json($monedaPrincipal ?? 'BOB');
     let itemsCotizacion = @json($itemsParaJs);
-    let monedaAnterior = document.getElementById('selectMonedaCotizacion').value;
+    let monedaAnterior = document.getElementById('selectMonedaCotizacion') ? document.getElementById('selectMonedaCotizacion').value : 'BOB';
 
     function escHtml(str) {
         if (str === null || str === undefined) return '';
@@ -557,11 +613,13 @@
     }
 
     function simboloActual() {
-        return document.getElementById('selectMonedaCotizacion').value === 'PEN' ? 'S/' : 'Bs.';
+        const el = document.getElementById('selectMonedaCotizacion');
+        return (el && el.value === 'PEN') ? 'S/' : 'Bs.';
     }
 
     function simboloOpuesto() {
-        return document.getElementById('selectMonedaCotizacion').value === 'PEN' ? 'Bs.' : 'S/';
+        const el = document.getElementById('selectMonedaCotizacion');
+        return (el && el.value === 'PEN') ? 'Bs.' : 'S/';
     }
 
     function tasaCambioActual() {
@@ -570,7 +628,8 @@
     }
 
     function tarifaCatalogoActiva() {
-        return document.getElementById('tarifaCliente').checked ? 'cliente' : 'venta';
+        const rCli = document.getElementById('tarifaCliente');
+        return (rCli && rCli.checked) ? 'cliente' : 'venta';
     }
 
     function convertirDesdeSistemaACotizacion(montoBase) {
@@ -587,118 +646,129 @@
         return Math.round(res * 100) / 100;
     }
 
-    function renderizarCatalogo() {
+    function filtrarCatalogo() {
         const q = (document.getElementById('buscarCatalogo').value || '').toLowerCase().trim();
         const catId = document.getElementById('filtroCategoriaCatalogo').value;
+        const filas = document.querySelectorAll('.fila-catalogo-prod');
+        let visibles = 0;
+
+        filas.forEach(f => {
+            const fCat = f.getAttribute('data-categoria');
+            if (catId && String(fCat) !== String(catId)) {
+                f.style.display = 'none';
+                return;
+            }
+            if (q) {
+                const cod = f.getAttribute('data-codigo') || '';
+                const nom = f.getAttribute('data-nombre') || '';
+                const mar = f.getAttribute('data-marca') || '';
+                if (!cod.includes(q) && !nom.includes(q) && !mar.includes(q)) {
+                    f.style.display = 'none';
+                    return;
+                }
+            }
+            f.style.display = '';
+            visibles++;
+        });
+
+        const noRes = document.getElementById('noResultadosCatalogo');
+        if (noRes) {
+            noRes.classList.toggle('d-none', visibles > 0);
+        }
+        const badge = document.getElementById('badgeTotalCatalogo');
+        if (badge) {
+            badge.textContent = visibles;
+        }
+    }
+
+    function actualizarPreciosCatalogo() {
         const tarifa = tarifaCatalogoActiva();
         const sim = simboloActual();
         const monCot = document.getElementById('selectMonedaCotizacion').value;
 
         const aviso = document.getElementById('avisoConversionCatalogo');
-        if (MONEDA_SISTEMA_BASE !== monCot) {
-            document.getElementById('monedaCotDestinoLbl').textContent = monCot === 'PEN' ? 'Soles (S/)' : 'Bolivianos (Bs.)';
-            aviso.classList.remove('d-none');
-        } else {
-            aviso.classList.add('d-none');
-        }
-
-        const filtrados = PRODUCTOS_CATALOGO.filter(p => {
-            if (catId && String(p.categoria_id) !== String(catId)) return false;
-            if (!q) return true;
-            const hay = `${p.codigo} ${p.nombre} ${p.marca} ${p.categoria}`.toLowerCase();
-            return hay.includes(q);
-        });
-
-        const cont = document.getElementById('contenedorCatalogo');
-        if (filtrados.length === 0) {
-            cont.innerHTML = `
-                <div class="text-center py-5 text-muted">
-                    <i class="bi bi-search fs-3 opacity-50"></i>
-                    <p class="small mt-2 mb-0">No se encontraron productos con ese criterio.</p>
-                </div>`;
-            return;
-        }
-
-        const limite = filtrados.slice(0, 80);
-        let html = '';
-        limite.forEach(p => {
-            const baseRaw = tarifa === 'cliente' ? p.precio_cliente : p.precio_venta;
-            const precioBase = convertirDesdeSistemaACotizacion(baseRaw);
-            const stockBadge = p.stock > 0
-                ? `<span class="badge bg-success-subtle text-success border border-success-subtle">Stock: ${p.stock}</span>`
-                : `<span class="badge bg-danger-subtle text-danger border border-danger-subtle">Sin stock</span>`;
-
-            let btnSec = '';
-            if (p.tiene_secundaria && p.unidad_secundaria) {
-                const secRaw = tarifa === 'cliente' ? p.precio_cliente_secundario : p.precio_venta_secundario;
-                const precioSec = convertirDesdeSistemaACotizacion(secRaw);
-                btnSec = `
-                    <button type="button" class="btn btn-outline-secondary btn-sm fw-semibold" style="font-size:11px;"
-                            onclick="agregarProductoCatalogo(${p.id}, true)">
-                        + ${escHtml(p.unidad_secundaria)} (${sim} ${precioSec.toFixed(2)})
-                    </button>`;
+        if (aviso) {
+            if (MONEDA_SISTEMA_BASE !== monCot) {
+                document.getElementById('monedaCotDestinoLbl').textContent = monCot === 'PEN' ? 'Soles (S/)' : 'Bolivianos (Bs.)';
+                aviso.classList.remove('d-none');
+            } else {
+                aviso.classList.add('d-none');
             }
-
-            html += `
-                <div class="prod-catalog-card p-2 mb-2">
-                    <div class="d-flex justify-content-between align-items-start gap-2">
-                        <div style="min-width:0; flex:1;">
-                            <div class="d-flex flex-wrap align-items-center gap-1 mb-1">
-                                ${p.codigo ? `<span class="badge bg-light text-dark border" style="font-size:10px;">${escHtml(p.codigo)}</span>` : ''}
-                                ${stockBadge}
-                                ${p.marca ? `<span class="small text-muted" style="font-size:11px;">• ${escHtml(p.marca)}</span>` : ''}
-                            </div>
-                            <div class="fw-bold text-dark small text-truncate" title="${escHtml(p.nombre)}">${escHtml(p.nombre)}</div>
-                            <div class="text-muted" style="font-size:11px;">
-                                ${escHtml(p.unidad)} • P. Venta: ${sim} ${convertirDesdeSistemaACotizacion(p.precio_venta).toFixed(2)} | Cliente: ${sim} ${convertirDesdeSistemaACotizacion(p.precio_cliente).toFixed(2)}
-                            </div>
-                        </div>
-                        <div class="text-end flex-shrink-0 d-flex flex-column gap-1 align-items-end">
-                            <button type="button" class="btn btn-primary btn-sm fw-bold px-2 py-1" onclick="agregarProductoCatalogo(${p.id}, false)">
-                                <i class="bi bi-plus-lg"></i> ${sim} ${precioBase.toFixed(2)}
-                            </button>
-                            ${btnSec}
-                        </div>
-                    </div>
-                </div>`;
-        });
-
-        if (filtrados.length > 80) {
-            html += `<div class="text-center text-muted small py-2">Mostrando los primeros 80 de ${filtrados.length} resultados. Usa el buscador para filtrar mejor.</div>`;
         }
-        cont.innerHTML = html;
+
+        document.querySelectorAll('.lbl-simbolo-moneda').forEach(el => el.textContent = sim);
+
+        document.querySelectorAll('.fila-catalogo-prod').forEach(f => {
+            const pVenta = parseFloat(f.getAttribute('data-pventa-base')) || 0;
+            const pCli = parseFloat(f.getAttribute('data-pcliente-base')) || 0;
+            const montoBase = tarifa === 'cliente' ? pCli : pVenta;
+            const convertido = convertirDesdeSistemaACotizacion(montoBase);
+
+            const valNumEl = f.querySelector('.val-num-catalogo');
+            if (valNumEl) {
+                valNumEl.textContent = convertido.toFixed(2);
+            }
+            const tarifaLbl = f.querySelector('.tarifa-lbl-catalogo');
+            if (tarifaLbl) {
+                tarifaLbl.textContent = tarifa === 'cliente' ? 'P. Cliente' : 'P. Venta';
+            }
+        });
     }
 
-    function agregarProductoCatalogo(prodId, usarSecundaria) {
-        const prod = PRODUCTOS_CATALOGO.find(p => p.id === prodId);
-        if (!prod) return;
+    function agregarProductoDesdeFila(btn, usarSecundaria) {
+        const fila = btn.closest('.fila-catalogo-prod');
+        if (!fila) return;
 
+        const prodId = parseInt(fila.getAttribute('data-id'));
+        const nombre = fila.getAttribute('data-nombre-real');
+        const codigo = fila.getAttribute('data-codigo-real') || '';
         const tarifa = tarifaCatalogoActiva();
-        const unidad = usarSecundaria ? (prod.unidad_secundaria || prod.unidad) : prod.unidad;
-        const precioSistema = usarSecundaria
-            ? (tarifa === 'cliente' ? prod.precio_cliente_secundario : prod.precio_venta_secundario)
-            : (tarifa === 'cliente' ? prod.precio_cliente : prod.precio_venta);
-        const precioCot = convertirDesdeSistemaACotizacion(precioSistema);
+
+        let unidad = fila.getAttribute('data-unidad-base');
+        let precioBase = tarifa === 'cliente'
+            ? parseFloat(fila.getAttribute('data-pcliente-base'))
+            : parseFloat(fila.getAttribute('data-pventa-base'));
+
+        if (usarSecundaria) {
+            unidad = fila.getAttribute('data-unidad-sec') || unidad;
+            precioBase = tarifa === 'cliente'
+                ? parseFloat(fila.getAttribute('data-pcliente-sec'))
+                : parseFloat(fila.getAttribute('data-pventa-sec'));
+        }
+
+        const precioFinal = convertirDesdeSistemaACotizacion(precioBase);
 
         const existente = itemsCotizacion.find(it =>
-            it.id_producto === prod.id && !it.es_externo && it.unidad === unidad
+            it.id_producto === prodId && !it.es_externo && it.unidad === unidad
         );
 
         if (existente) {
             existente.cantidad = Math.round((parseFloat(existente.cantidad) + 1) * 100) / 100;
         } else {
             itemsCotizacion.push({
-                key: 'prod_' + prod.id + '_' + Date.now() + '_' + Math.floor(Math.random() * 1000),
-                id_producto: prod.id,
-                codigo: prod.codigo || '',
-                nombre: prod.nombre,
+                key: 'prod_' + prodId + '_' + Date.now() + '_' + Math.floor(Math.random() * 1000),
+                id_producto: prodId,
+                codigo: codigo,
+                nombre: nombre,
                 unidad: unidad || 'Pieza',
                 es_externo: false,
                 cantidad: 1,
-                precio_unitario: precioCot,
+                precio_unitario: precioFinal,
             });
         }
+
         renderizarItems();
+
+        if (typeof Swal !== 'undefined') {
+            Swal.fire({
+                toast: true,
+                position: 'top-end',
+                icon: 'success',
+                title: `Agregado: ${nombre}`,
+                showConfirmButton: false,
+                timer: 1200
+            });
+        }
     }
 
     function agregarItemExterno() {
@@ -752,6 +822,14 @@
         }
     }
 
+    function pasoCantidad(index, delta) {
+        if (!itemsCotizacion[index]) return;
+        const actual = parseFloat(itemsCotizacion[index].cantidad) || 0;
+        const nuevo = Math.max(1, actual + delta);
+        itemsCotizacion[index].cantidad = Math.round(nuevo * 100) / 100;
+        renderizarItems();
+    }
+
     function recalcularFilaYTotales(index) {
         const item = itemsCotizacion[index];
         if (item) {
@@ -792,7 +870,10 @@
         empty.classList.add('d-none');
         let html = '';
         itemsCotizacion.forEach((it, idx) => {
-            const sub = (parseFloat(it.cantidad) || 0) * (parseFloat(it.precio_unitario) || 0);
+            const cant = parseFloat(it.cantidad) || 0;
+            const pu = parseFloat(it.precio_unitario) || 0;
+            const sub = cant * pu;
+
             html += `
                 <tr>
                     <td>
@@ -811,18 +892,22 @@
                                value="${escHtml(it.unidad)}" onchange="actualizarCampoItem(${idx}, 'unidad', this.value)">
                     </td>
                     <td>
-                        <input type="number" step="0.01" min="0.01" name="items[${idx}][cantidad]"
-                               class="form-control form-control-sm text-center fw-bold"
-                               value="${it.cantidad}" oninput="actualizarCampoItem(${idx}, 'cantidad', this.value)" required>
+                        <div class="input-group input-group-sm">
+                            <button type="button" class="btn btn-outline-secondary btn-cantidad-step" onclick="pasoCantidad(${idx}, -1)">-</button>
+                            <input type="number" step="0.01" min="0.01" name="items[${idx}][cantidad]"
+                                   class="form-control form-control-sm text-center fw-bold"
+                                   value="${cant}" oninput="actualizarCampoItem(${idx}, 'cantidad', this.value)" required>
+                            <button type="button" class="btn btn-outline-secondary btn-cantidad-step" onclick="pasoCantidad(${idx}, 1)">+</button>
+                        </div>
                     </td>
                     <td>
                         <input type="number" step="0.01" min="0" name="items[${idx}][precio_unitario]"
                                class="form-control form-control-sm text-end fw-bold"
-                               value="${Number(it.precio_unitario).toFixed(2)}" oninput="actualizarCampoItem(${idx}, 'precio_unitario', this.value)" required>
+                               value="${pu.toFixed(2)}" oninput="actualizarCampoItem(${idx}, 'precio_unitario', this.value)" required>
                     </td>
                     <td class="text-end fw-bold text-dark" id="sub_item_${idx}">${sim} ${sub.toFixed(2)}</td>
                     <td class="text-center">
-                        <button type="button" class="btn btn-sm btn-link text-danger p-0" onclick="eliminarItem(${idx})" title="Quitar ítem">
+                        <button type="button" class="btn btn-sm btn-link text-danger p-0" onclick="eliminarItem(${idx})" title="Quitar">
                             <i class="bi bi-x-circle-fill fs-6"></i>
                         </button>
                     </td>
@@ -883,137 +968,106 @@
         }
     }
 
-    function convertirTodosLosPrecios(monOrigenForzada) {
-        if (itemsCotizacion.length === 0) {
-            renderizarCatalogo();
-            recalcularTotales();
-            return;
-        }
-        const monNueva = document.getElementById('selectMonedaCotizacion').value;
-        const tasa = tasaCambioActual();
-        const factor = (monOrigenForzada === 'PEN' && monNueva === 'BOB')
-            ? tasa
-            : ((monOrigenForzada === 'BOB' && monNueva === 'PEN') ? (1 / tasa) : null);
-
-        if (factor === null) {
-            // Botón manual de conversión usando tasa
-            Swal.fire({
-                title: 'Recalcular precios del detalle',
-                text: `¿Deseas convertir los precios actuales según la tasa (1 S/ = Bs. ${tasa.toFixed(2)})?`,
-                icon: 'question',
-                showCancelButton: true,
-                showDenyButton: true,
-                confirmButtonText: 'De S/ a Bs. (× ' + tasa.toFixed(2) + ')',
-                denyButtonText: 'De Bs. a S/ (÷ ' + tasa.toFixed(2) + ')',
-                cancelButtonText: 'Cancelar'
-            }).then(res => {
-                if (res.isConfirmed) {
-                    aplicarFactorPrecios(tasa);
-                } else if (res.isDenied) {
-                    aplicarFactorPrecios(1 / tasa);
-                }
-            });
-            return;
-        }
-
-        aplicarFactorPrecios(factor);
-    }
-
-    function aplicarFactorPrecios(factor) {
-        itemsCotizacion = itemsCotizacion.map(it => ({
-            ...it,
-            precio_unitario: Math.round((parseFloat(it.precio_unitario) || 0) * factor * 100) / 100
-        }));
-        const descInput = document.getElementById('inputDescuentoCot');
-        const desc = parseFloat(descInput.value) || 0;
-        if (desc > 0) {
-            descInput.value = (Math.round(desc * factor * 100) / 100).toFixed(2);
-        }
-        renderizarItems();
-    }
-
-    function enviarCotizacion(accion) {
+    function guardarCotizacionDirecta() {
         const nombre = document.getElementById('destinatarioNombre').value.trim();
         if (!nombre) {
-            Swal.fire({ icon: 'warning', title: 'Falta destinatario', text: 'Ingresa el nombre del cliente o contacto de la tienda.' });
+            Swal.fire({
+                icon: 'warning',
+                title: 'Falta Destinatario',
+                text: 'Ingresa el nombre del cliente o contacto de la tienda.'
+            });
             document.getElementById('destinatarioNombre').focus();
             return;
         }
         if (itemsCotizacion.length === 0) {
-            Swal.fire({ icon: 'warning', title: 'Cotización vacía', text: 'Agrega al menos un producto o ítem antes de guardar.' });
-            return;
-        }
-        if (accion === 'whatsapp' && !document.getElementById('destinatarioTelefono').value.trim()) {
             Swal.fire({
-                icon: 'info',
-                title: 'Sin número de WhatsApp',
-                text: 'Se guardará la cotización y podrás ingresar el número de WhatsApp en la ventana de envío.',
-                confirmButtonText: 'Continuar'
-            }).then(() => {
-                document.getElementById('accionPostInput').value = accion;
-                document.getElementById('formCotizacion').submit();
+                icon: 'warning',
+                title: 'Cotización Vacía',
+                text: 'Agrega al menos un producto del catálogo o un ítem libre antes de guardar.'
             });
             return;
         }
 
-        document.getElementById('accionPostInput').value = accion;
+        document.getElementById('accionPostInput').value = 'guardar';
         document.getElementById('formCotizacion').submit();
     }
 
-    // Listeners iniciales
-    document.getElementById('buscarCatalogo').addEventListener('input', renderizarCatalogo);
-    document.getElementById('filtroCategoriaCatalogo').addEventListener('change', renderizarCatalogo);
-    document.getElementById('tarifaVenta').addEventListener('change', renderizarCatalogo);
-    document.getElementById('tarifaCliente').addEventListener('change', renderizarCatalogo);
-    document.getElementById('inputDescuentoCot').addEventListener('input', recalcularTotales);
-    document.getElementById('inputTasaCambio').addEventListener('input', function () {
-        renderizarCatalogo();
-        recalcularTotales();
-    });
-    document.getElementById('chkMostrarEquivalente').addEventListener('change', recalcularTotales);
+    // Event listeners
+    document.addEventListener('DOMContentLoaded', function () {
+        const buscador = document.getElementById('buscarCatalogo');
+        if (buscador) buscador.addEventListener('input', filtrarCatalogo);
 
-    document.getElementById('selectorClienteRegistrado').addEventListener('change', function () {
-        const idSel = parseInt(this.value);
-        document.getElementById('idClienteInput').value = idSel || '';
-        if (!idSel) return;
-        const cli = CLIENTES_LISTA.find(c => c.id === idSel);
-        if (!cli) return;
-        document.getElementById('destinatarioNombre').value = cli.nombre || '';
-        document.getElementById('destinatarioTelefono').value = cli.telefono || '';
-        document.getElementById('destinatarioNit').value = cli.ci_nit || '';
-        document.getElementById('destinatarioDireccion').value = cli.direccion || '';
-    });
+        const filtroCat = document.getElementById('filtroCategoriaCatalogo');
+        if (filtroCat) filtroCat.addEventListener('change', filtrarCatalogo);
 
-    document.getElementById('selectMonedaCotizacion').addEventListener('change', function () {
-        const monNueva = this.value;
-        const monOrig = monedaAnterior;
-        monedaAnterior = monNueva;
+        const rVenta = document.getElementById('tarifaVenta');
+        if (rVenta) rVenta.addEventListener('change', actualizarPreciosCatalogo);
 
-        renderizarCatalogo();
+        const rCli = document.getElementById('tarifaCliente');
+        if (rCli) rCli.addEventListener('change', actualizarPreciosCatalogo);
 
-        if (itemsCotizacion.length > 0 && monOrig !== monNueva) {
-            const tasa = tasaCambioActual();
-            Swal.fire({
-                title: `Moneda cambiada a ${monNueva === 'PEN' ? 'Soles (S/)' : 'Bolivianos (Bs.)'}`,
-                text: `¿Deseas convertir automáticamente los precios de los ${itemsCotizacion.length} ítem(s) agregados usando la tasa 1 S/ = Bs. ${tasa.toFixed(2)}?`,
-                icon: 'question',
-                showCancelButton: true,
-                confirmButtonText: 'Sí, convertir precios',
-                cancelButtonText: 'No, mantener montos'
-            }).then(res => {
-                if (res.isConfirmed) {
-                    convertirTodosLosPrecios(monOrig);
+        const descInput = document.getElementById('inputDescuentoCot');
+        if (descInput) descInput.addEventListener('input', recalcularTotales);
+
+        const tasaInput = document.getElementById('inputTasaCambio');
+        if (tasaInput) tasaInput.addEventListener('input', function () {
+            actualizarPreciosCatalogo();
+            recalcularTotales();
+        });
+
+        const chkEquiv = document.getElementById('chkMostrarEquivalente');
+        if (chkEquiv) chkEquiv.addEventListener('change', recalcularTotales);
+
+        const selCli = document.getElementById('selectorClienteRegistrado');
+        if (selCli) {
+            selCli.addEventListener('change', function () {
+                const idSel = parseInt(this.value);
+                document.getElementById('idClienteInput').value = idSel || '';
+                if (!idSel) return;
+                const cli = CLIENTES_LISTA.find(c => c.id === idSel);
+                if (!cli) return;
+                document.getElementById('destinatarioNombre').value = cli.nombre || '';
+                document.getElementById('destinatarioTelefono').value = cli.telefono || '';
+                document.getElementById('destinatarioNit').value = cli.ci_nit || '';
+                document.getElementById('destinatarioDireccion').value = cli.direccion || '';
+            });
+        }
+
+        const selMon = document.getElementById('selectMonedaCotizacion');
+        if (selMon) {
+            selMon.addEventListener('change', function () {
+                const monNueva = this.value;
+                const monOrig = monedaAnterior;
+                monedaAnterior = monNueva;
+
+                actualizarPreciosCatalogo();
+
+                if (itemsCotizacion.length > 0 && monOrig !== monNueva) {
+                    const tasa = tasaCambioActual();
+                    Swal.fire({
+                        title: `Moneda cambiada a ${monNueva === 'PEN' ? 'Soles (S/)' : 'Bolivianos (Bs.)'}`,
+                        text: `¿Deseas convertir automáticamente los precios de los ${itemsCotizacion.length} ítem(s) usando la tasa 1 S/ = Bs. ${tasa.toFixed(2)}?`,
+                        icon: 'question',
+                        showCancelButton: true,
+                        confirmButtonText: 'Sí, convertir',
+                        cancelButtonText: 'No, mantener números'
+                    }).then(res => {
+                        if (res.isConfirmed) {
+                            const factor = (monOrig === 'PEN' && monNueva === 'BOB') ? tasa : (1 / tasa);
+                            itemsCotizacion = itemsCotizacion.map(it => ({
+                                ...it,
+                                precio_unitario: Math.round((parseFloat(it.precio_unitario) || 0) * factor * 100) / 100
+                            }));
+                        }
+                        renderizarItems();
+                    });
                 } else {
                     renderizarItems();
                 }
             });
-        } else {
-            renderizarItems();
         }
-    });
 
-    document.addEventListener('DOMContentLoaded', function () {
-        renderizarCatalogo();
+        actualizarPreciosCatalogo();
         renderizarItems();
     });
 </script>

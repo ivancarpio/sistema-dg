@@ -443,7 +443,9 @@ class CotizacionController extends Controller
 
     private function redirigirSegunAccion(Cotizacion $cotizacion, string $accion, string $mensaje)
     {
-        $redirect = redirect()->route('cotizaciones.index')->with('success', $mensaje);
+        $redirect = redirect()->route('cotizaciones.index')
+            ->with('success', $mensaje)
+            ->with('cotizacion_guardada_id', $cotizacion->id);
 
         if ($accion === 'pdf') {
             return $redirect->with('abrir_pdf_id', $cotizacion->id);
@@ -455,7 +457,7 @@ class CotizacionController extends Controller
             return $redirect->with('abrir_wa_id', $cotizacion->id);
         }
 
-        return $redirect->with('abrir_detalle_id', $cotizacion->id);
+        return $redirect->with('abrir_exito_id', $cotizacion->id);
     }
 
     private function generarNumeroCotizacion(): string
