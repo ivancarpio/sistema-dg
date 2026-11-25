@@ -564,12 +564,24 @@
                     <!-- Precio de Venta (Ocasional) -->
                     <td class="text-end col-precio-venta" data-sort-value="{{ $producto->precio_venta ?? 0 }}">
                         <div class="prod-precio">
-                            Bs. {{ number_format($producto->precio_venta ?? 0, 2) }}
+                            {{ $monedaSimbolo }} {{ number_format($producto->precio_venta ?? 0, 2) }}
                         </div>
+                        @if(isset($tipoCambio) && $tipoCambio->tasa_venta > 0 && ($producto->precio_venta ?? 0) > 0)
+                            @php
+                                $equivVenta = ($paisOperacion ?? 'BO') === 'PE' 
+                                    ? ($producto->precio_venta * $tipoCambio->tasa_venta) 
+                                    : ($producto->precio_venta / $tipoCambio->tasa_venta);
+                                $flagEquiv = ($paisOperacion ?? 'BO') === 'PE' ? '🇧🇴 Bs.' : '🇵🇪 S/';
+                                $paisEquivNom = ($paisOperacion ?? 'BO') === 'PE' ? 'Bolivia' : 'Perú';
+                            @endphp
+                            <div class="badge bg-light text-secondary border px-1.5 py-0.5 mt-0.5" style="font-size: 0.67rem; font-weight: 700;" title="Equivalente en {{ $paisEquivNom }} (Tasa: {{ $tipoCambio->tasa_venta }})">
+                                {{ $flagEquiv }} {{ number_format($equivVenta, 2) }}
+                            </div>
+                        @endif
                         <small class="text-muted d-block" style="font-size: 0.70rem;">Ocasional ({{ $producto->unidad->nombre ?? 'Base' }})</small>
                         @if($producto->precio_venta_secundario)
                             <div class="mt-1 pt-1 border-top border-light-subtle" title="Precio por {{ $producto->unidadSecundaria->nombre ?? 'Empaque' }}">
-                                <span class="fw-bold text-primary" style="font-size: 0.82rem;">Bs. {{ number_format($producto->precio_venta_secundario, 2) }}</span>
+                                <span class="fw-bold text-primary" style="font-size: 0.82rem;">{{ $monedaSimbolo }} {{ number_format($producto->precio_venta_secundario, 2) }}</span>
                                 <small class="text-muted d-block" style="font-size: 0.65rem;">/ {{ $producto->unidadSecundaria->nombre ?? 'Empaque' }}</small>
                             </div>
                         @endif
@@ -579,8 +591,18 @@
                     <td class="text-end col-precio-cliente" data-sort-value="{{ $producto->precio_cliente ?? ($producto->precio_venta ?? 0) }}">
                         @if($producto->precio_cliente !== null && $producto->precio_cliente > 0)
                             <div class="prod-precio-cliente">
-                                Bs. {{ number_format($producto->precio_cliente, 2) }}
+                                {{ $monedaSimbolo }} {{ number_format($producto->precio_cliente, 2) }}
                             </div>
+                            @if(isset($tipoCambio) && $tipoCambio->tasa_venta > 0)
+                                @php
+                                    $equivCliente = ($paisOperacion ?? 'BO') === 'PE' 
+                                        ? ($producto->precio_cliente * $tipoCambio->tasa_venta) 
+                                        : ($producto->precio_cliente / $tipoCambio->tasa_venta);
+                                @endphp
+                                <div class="badge bg-light text-secondary border px-1.5 py-0.5 mt-0.5" style="font-size: 0.67rem; font-weight: 700;">
+                                    {{ $flagEquiv ?? '≈' }} {{ number_format($equivCliente, 2) }}
+                                </div>
+                            @endif
                             <span class="badge-precio-cliente d-inline-flex align-items-center gap-1">
                                 <i class="bi bi-tag-fill" style="font-size: 0.62rem;"></i> Regular
                             </span>
@@ -592,7 +614,7 @@
                         @endif
                         @if($producto->precio_cliente_secundario)
                             <div class="mt-1 pt-1 border-top border-light-subtle" title="Precio cliente por {{ $producto->unidadSecundaria->nombre ?? 'Empaque' }}">
-                                <span class="fw-bold" style="font-size: 0.82rem; color: #0284c7;">Bs. {{ number_format($producto->precio_cliente_secundario, 2) }}</span>
+                                <span class="fw-bold" style="font-size: 0.82rem; color: #0284c7;">{{ $monedaSimbolo }} {{ number_format($producto->precio_cliente_secundario, 2) }}</span>
                                 <small class="text-muted d-block" style="font-size: 0.65rem;">/ {{ $producto->unidadSecundaria->nombre ?? 'Empaque' }} (Reg)</small>
                             </div>
                         @endif
@@ -601,7 +623,7 @@
                     <!-- Costo -->
                     <td class="text-end col-costo" data-sort-value="{{ $producto->costo ?? 0 }}">
                         <div class="prod-costo">
-                            Bs. {{ number_format($producto->costo ?? 0, 2) }}
+                            {{ $monedaSimbolo }} {{ number_format($producto->costo ?? 0, 2) }}
                         </div>
                     </td>
 
@@ -1200,9 +1222,25 @@ document.addEventListener('DOMContentLoaded', function() {
         return d.innerHTML;
     }
 
+    const monedaSimbolo = '{{ $monedaSimbolo ?? "Bs." }}';
+    const paisOperacion = '{{ $paisOperacion ?? "BO" }}';
+    const tasaVentaActual = {{ (float)($tipoCambio->tasa_venta ?? 3.6) }};
+
     function formatMoneda(val) {
         const num = parseFloat(val) || 0;
-        return 'Bs. ' + num.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        return monedaSimbolo + ' ' + num.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    }
+
+    function formatMonedaSecundaria(val) {
+        const num = parseFloat(val) || 0;
+        if (num <= 0 || !tasaVentaActual) return '';
+        if (paisOperacion === 'PE') {
+            const bs = num * tasaVentaActual;
+            return `🇧🇴 Bs. ${bs.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+        } else {
+            const sol = num / tasaVentaActual;
+            return `🇵🇪 S/ ${sol.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+        }
     }
 
     function formatEntero(val) {
@@ -1268,8 +1306,10 @@ document.addEventListener('DOMContentLoaded', function() {
         const tdPrecioVenta = tr.querySelector('.col-precio-venta');
         if (tdPrecioVenta) {
             tdPrecioVenta.setAttribute('data-sort-value', p.precio_venta || 0);
+            const secBadgePV = formatMonedaSecundaria(p.precio_venta);
             let htmlPV = `
                 <div class="prod-precio">${formatMoneda(p.precio_venta)}</div>
+                ${secBadgePV ? `<div class="badge bg-light text-secondary border px-1.5 py-0.5 mt-0.5" style="font-size: 0.67rem; font-weight: 700;">${secBadgePV}</div>` : ''}
                 <small class="text-muted d-block" style="font-size: 0.70rem;">Ocasional (${escapeHtml(p.unidad_nombre || 'Base')})</small>
             `;
             if (p.precio_venta_secundario && p.precio_venta_secundario > 0) {
@@ -1288,10 +1328,12 @@ document.addEventListener('DOMContentLoaded', function() {
         if (tdPrecioCliente) {
             const valSort = (p.precio_cliente !== null && p.precio_cliente > 0) ? p.precio_cliente : p.precio_venta;
             tdPrecioCliente.setAttribute('data-sort-value', valSort);
+            const secBadgePC = formatMonedaSecundaria(p.precio_cliente);
             let htmlPC = '';
             if (p.precio_cliente !== null && p.precio_cliente > 0) {
                 htmlPC += `
                     <div class="prod-precio-cliente">${formatMoneda(p.precio_cliente)}</div>
+                    ${secBadgePC ? `<div class="badge bg-light text-secondary border px-1.5 py-0.5 mt-0.5" style="font-size: 0.67rem; font-weight: 700;">${secBadgePC}</div>` : ''}
                     <span class="badge-precio-cliente d-inline-flex align-items-center gap-1">
                         <i class="bi bi-tag-fill" style="font-size: 0.62rem;"></i> Regular
                     </span>

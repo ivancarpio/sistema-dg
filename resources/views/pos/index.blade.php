@@ -636,7 +636,7 @@
                                     <!-- Tarifa Venta Ocasional -->
                                     <div class="linea-precio-venta d-flex align-items-center justify-content-end gap-1">
                                         <span class="fw-bold text-dark val-precio-venta" style="font-size: 0.94rem;">
-                                            Bs. {{ number_format($producto->precio_venta, 2) }}
+                                            {{ $monedaSimbolo }} {{ number_format($producto->precio_venta, 2) }}
                                         </span>
                                         <span class="badge bg-light text-secondary border py-0 px-1" style="font-size: 0.64rem;">Venta</span>
                                     </div>
@@ -644,7 +644,7 @@
                                     <div class="linea-precio-cliente box-pcliente-wrap d-flex align-items-center justify-content-end gap-1 mt-0.5" style="color: #0284c7; {{ $tienePClienteBase ? '' : 'display:none !important;' }}">
                                         <i class="bi bi-tag-fill" style="font-size: 0.65rem;"></i>
                                         <span class="fw-bold val-precio-cliente" style="font-size: 0.88rem;">
-                                            Bs. {{ number_format($pClienteBase, 2) }}
+                                            {{ $monedaSimbolo }} {{ number_format($pClienteBase, 2) }}
                                         </span>
                                         <span class="badge py-0 px-1" style="font-size: 0.64rem; background: #e0f2fe; color: #0369a1; border: 1px solid #bae6fd;">Cliente</span>
                                     </div>
@@ -758,11 +758,24 @@
                     <div class="box-total-pos mb-3">
                         <div class="d-flex justify-content-between align-items-center mb-1 text-muted small fw-bold">
                             <span>SUBTOTAL:</span>
-                            <span id="txtSubtotal">Bs. 0.00</span>
+                            <span id="txtSubtotal">{{ $monedaSimbolo }} 0.00</span>
                         </div>
                         <div class="d-flex justify-content-between align-items-center">
                             <span class="fs-5 fw-bold text-dark">TOTAL A PAGAR:</span>
-                            <span class="fs-3 fw-bold text-success" id="txtTotal">Bs. 0.00</span>
+                            <span class="fs-3 fw-bold text-success" id="txtTotal">{{ $monedaSimbolo }} 0.00</span>
+                        </div>
+                        <!-- Conversión Multimoneda en Tiempo Real (Ragnar Capital) -->
+                        <div class="d-flex justify-content-between align-items-center pt-2 mt-2 border-top border-success-subtle" style="font-size: 0.85rem;">
+                            <span class="text-secondary fw-bold d-flex align-items-center gap-1">
+                                <span id="badgeFlagEquiv">{{ ($paisOperacion ?? 'BO') === 'PE' ? '🇧🇴 Equivalente Bolivia:' : '🇵🇪 Equivalente Perú:' }}</span>
+                            </span>
+                            <span class="fw-extrabold text-primary fs-6" id="txtTotalEquivalente">
+                                {{ ($paisOperacion ?? 'BO') === 'PE' ? 'Bs. 0.00' : 'S/ 0.00' }}
+                            </span>
+                        </div>
+                        <div class="d-flex justify-content-between align-items-center text-muted mt-1" style="font-size: 0.68rem;">
+                            <span><i class="bi bi-arrow-repeat text-success me-0.5"></i> Cotización Ragnar</span>
+                            <span>Tasa Venta: 1 Sol = <strong>Bs. {{ number_format($tipoCambio->tasa_venta ?? 3.6, 2) }}</strong></span>
                         </div>
                     </div>
                     
@@ -1017,7 +1030,12 @@
                          onerror="this.src='https://api.qrserver.com/v1/create-qr-code/?size=240x240&data=SISTEMA_DG_PAGO'">
                 </div>
                 <p class="text-muted small mb-0 fw-bold text-uppercase" style="font-size: 0.75rem;">Monto a transferir:</p>
-                <h3 class="fw-bold text-success mb-2" id="totalModalQR">Bs. 0.00</h3>
+                <h3 class="fw-bold text-success mb-1" id="totalModalQR">{{ $monedaSimbolo }} 0.00</h3>
+                <div class="mb-2" id="boxEquivModalQR">
+                    <span class="badge bg-light text-primary border border-primary-subtle px-2.5 py-1" style="font-size: 0.80rem;" id="equivModalQR">
+                        <i class="bi bi-arrow-repeat me-1"></i> Equivalente
+                    </span>
+                </div>
                 <div class="bg-light rounded-3 p-2 text-start small border">
                     <div><strong>Beneficiario:</strong> Distribuidora Guadalupe</div>
                     <div class="text-muted" style="font-size: 0.75rem;">Transferencia QR Simple Inmediata</div>
@@ -1141,6 +1159,27 @@ document.addEventListener('DOMContentLoaded', function() {
     const VENTA_COMPLETADA_EXITOSA = @if(session('success_venta_id')) true @else false @endif;
     const VENTA_REHACER = @json($ventaRehacer ?? null);
     const CARRITO_REHACER = @json($carritoRehacer ?? []);
+
+    // Configuración Multimoneda y Tipo de Cambio Ragnar Capital
+    const monedaSimbolo = '{{ $monedaSimbolo ?? "Bs." }}';
+    const paisOperacion = '{{ $paisOperacion ?? "BO" }}';
+    const tasaVentaPos = {{ (float)($tipoCambio->tasa_venta ?? 3.6) }};
+    const txtTotalEquivalente = document.getElementById('txtTotalEquivalente');
+
+    function calcularEquivalente(total) {
+        if (!txtTotalEquivalente) return;
+        if (total <= 0) {
+            txtTotalEquivalente.textContent = paisOperacion === 'PE' ? 'Bs. 0.00' : 'S/ 0.00';
+            return;
+        }
+        if (paisOperacion === 'PE') {
+            const bs = total * tasaVentaPos;
+            txtTotalEquivalente.textContent = `Bs. ${bs.toFixed(2)}`;
+        } else {
+            const sol = tasaVentaPos > 0 ? (total / tasaVentaPos) : 0;
+            txtTotalEquivalente.textContent = `S/ ${sol.toFixed(2)}`;
+        }
+    }
 
     // Elementos DOM
     const listaCarrito = document.getElementById('listaCarrito');
@@ -1345,6 +1384,10 @@ document.addEventListener('DOMContentLoaded', function() {
     window.abrirModalQRManual = function() {
         if (totalModalQR && txtTotal) {
             totalModalQR.textContent = txtTotal.textContent;
+            const equivModal = document.getElementById('equivModalQR');
+            if (equivModal && txtTotalEquivalente) {
+                equivModal.innerHTML = `<i class="bi bi-arrow-repeat me-1"></i> ${txtTotalEquivalente.textContent} (Tasa: ${tasaVentaPos.toFixed(2)})`;
+            }
         }
         const modalEl = document.getElementById('modalQR');
         if (modalEl && typeof bootstrap !== 'undefined') {
@@ -1583,10 +1626,10 @@ document.addEventListener('DOMContentLoaded', function() {
 
         // Actualizar valores visuales de precios en la fila
         const elPVenta = fila.querySelector('.val-precio-venta');
-        if (elPVenta) elPVenta.textContent = `Bs. ${pVenta.toFixed(2)}`;
+        if (elPVenta) elPVenta.textContent = `${monedaSimbolo} ${pVenta.toFixed(2)}`;
 
         const elPCliente = fila.querySelector('.val-precio-cliente');
-        if (elPCliente) elPCliente.textContent = `Bs. ${pCliente.toFixed(2)}`;
+        if (elPCliente) elPCliente.textContent = `${monedaSimbolo} ${pCliente.toFixed(2)}`;
 
         const wrapPC = fila.querySelector('.box-pcliente-wrap');
         const wrapMismo = fila.querySelector('.linea-precio-cliente-mismo');
@@ -2277,8 +2320,9 @@ document.addEventListener('DOMContentLoaded', function() {
         if (carrito.length === 0) {
             mensajeVacio.style.display = 'block';
             if (btnVaciar) btnVaciar.style.display = 'none';
-            txtSubtotal.textContent = 'Bs. 0.00';
-            txtTotal.textContent = 'Bs. 0.00';
+            txtSubtotal.textContent = `${monedaSimbolo} 0.00`;
+            txtTotal.textContent = `${monedaSimbolo} 0.00`;
+            calcularEquivalente(0);
             inputTotalVenta.value = 0;
             actualizarSaldoPendiente();
             validarBotonCobrar();
@@ -2353,9 +2397,9 @@ document.addEventListener('DOMContentLoaded', function() {
                             <span onclick="togglePrecioItem(${index})" style="cursor: pointer;">
                                 ${badgeTarifaItem}
                             </span>
-                            <small class="text-muted" style="font-size: 0.75rem;">U: Bs. ${item.precio.toFixed(2)}</small>
+                            <small class="text-muted" style="font-size: 0.75rem;">U: ${monedaSimbolo} ${item.precio.toFixed(2)}</small>
                         </div>
-                        <span class="text-success fw-bold" style="font-size: 0.92rem;">Bs. ${subtotalItem.toFixed(2)}</span>
+                        <span class="text-success fw-bold" style="font-size: 0.92rem;">${monedaSimbolo} ${subtotalItem.toFixed(2)}</span>
                     </div>
                 </div>
             `;
@@ -2371,8 +2415,9 @@ document.addEventListener('DOMContentLoaded', function() {
             `;
         });
 
-        txtSubtotal.textContent = `Bs. ${total.toFixed(2)}`;
-        txtTotal.textContent = `Bs. ${total.toFixed(2)}`;
+        txtSubtotal.textContent = `${monedaSimbolo} ${total.toFixed(2)}`;
+        txtTotal.textContent = `${monedaSimbolo} ${total.toFixed(2)}`;
+        calcularEquivalente(total);
         inputTotalVenta.value = total;
 
         actualizarSaldoPendiente();

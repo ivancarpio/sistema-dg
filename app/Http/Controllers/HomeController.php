@@ -230,6 +230,9 @@ class HomeController extends Controller
             ->limit(6)
             ->get();
 
+        // C) Tipo de cambio oficial en vivo (Ragnar Capital BOB / PEN)
+        $tipoCambio = app(\App\Services\TipoCambioService::class)->actual();
+
         return view('inicio.index', compact(
             'mesSeleccionado',
             'fechaMes',
@@ -262,7 +265,8 @@ class HomeController extends Controller
             'rangosDiarios',
             'productosBajoStock',
             'conteoBajoStock',
-            'ultimasVentas'
+            'ultimasVentas',
+            'tipoCambio'
         ));
     }
 

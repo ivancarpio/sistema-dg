@@ -44,11 +44,12 @@ class ProductoController extends Controller
         $productosAgotados = $stats->agotados ?? 0;
         $productosStockBajo = $productosCriticos;
         $valorInventario = $stats->valor_inventario ?? 0;
+        $tipoCambio = app(\App\Services\TipoCambioService::class)->actual();
 
         return view('productos.index', compact(
             'productos', 'marcas', 'unidades', 'categorias',
             'totalProductos', 'totalStockUnidades', 'productosCriticos', 'productosAlerta',
-            'productosAgotados', 'productosStockBajo', 'valorInventario'
+            'productosAgotados', 'productosStockBajo', 'valorInventario', 'tipoCambio'
         ));
     }
 

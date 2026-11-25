@@ -176,6 +176,91 @@
         box-shadow: 0 3px 10px rgba(2, 132, 199, 0.35);
     }
 
+    /* Widget Cotización Tipo de Cambio Ragnar Capital */
+    .widget-tc-toolbar {
+        background: #ffffff;
+        border: 1px solid #e2e8f0;
+        border-radius: 14px;
+        padding: 4px 12px;
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+        box-shadow: 0 2px 10px rgba(15, 23, 42, 0.04);
+        transition: all 0.2s ease;
+        height: 48px;
+    }
+    .widget-tc-toolbar:hover {
+        border-color: #cbd5e1;
+        box-shadow: 0 4px 14px rgba(15, 23, 42, 0.08);
+    }
+    .tc-flag-tag {
+        background: #f1f5f9;
+        border: 1px solid #e2e8f0;
+        border-radius: 8px;
+        padding: 3px 7px;
+        font-size: 0.72rem;
+        font-weight: 800;
+        color: #1e293b;
+        display: flex;
+        align-items: center;
+        gap: 4px;
+        white-space: nowrap;
+    }
+    .tc-rate-col {
+        display: flex;
+        flex-direction: column;
+        line-height: 1.15;
+    }
+    .tc-rate-col .tc-label {
+        font-size: 0.60rem;
+        font-weight: 800;
+        color: #64748b;
+        text-transform: uppercase;
+        letter-spacing: 0.4px;
+    }
+    .tc-rate-col .tc-val {
+        font-size: 0.85rem;
+        font-weight: 800;
+        color: #0f172a;
+        white-space: nowrap;
+    }
+    .tc-rate-col .tc-val span {
+        color: #0284c7;
+        font-weight: 700;
+        font-size: 0.70rem;
+    }
+    .btn-tc-action {
+        width: 30px;
+        height: 30px;
+        border-radius: 8px;
+        border: 1px solid #e2e8f0;
+        background: #f8fafc;
+        color: #475569;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.82rem;
+        cursor: pointer;
+        transition: all 0.18s ease;
+    }
+    .btn-tc-action:hover {
+        background: #e0f2fe;
+        color: #0284c7;
+        border-color: #bae6fd;
+    }
+    .btn-tc-action.spinning i {
+        animation: spinTcAnim 0.75s linear infinite;
+    }
+    @keyframes spinTcAnim {
+        100% { transform: rotate(360deg); }
+    }
+    @media (max-width: 767.98px) {
+        .widget-tc-toolbar {
+            width: 100%;
+            justify-content: space-between;
+        }
+    }
+
     /* ============================================================ */
     /* 4 TARJETAS KPI (ESTILO EMS HIGH CONTRAST / LUXURY OCEANIC)   */
     /* ============================================================ */
@@ -452,8 +537,33 @@
         </p>
     </div>
 
-    <!-- TOOLBAR SELECTOR DE PERÍODO (ESTILO FIGMA) -->
+    <!-- TOOLBAR SELECTOR DE PERÍODO Y TIPO DE CAMBIO (ESTILO FIGMA) -->
     <div class="d-flex align-items-center flex-wrap gap-2">
+        <!-- Widget Cotización en Tiempo Real Ragnar Capital (Perú / Bolivia) -->
+        <div class="widget-tc-toolbar" id="widgetTipoCambio" title="Tipo de cambio oficial Ragnar Capital">
+            <div class="tc-flag-tag">
+                <span class="ems-pulse-dot" style="width: 6px; height: 6px; background-color: #10b981;"></span>
+                <span>🇵🇪 S/ &harr; 🇧🇴 Bs.</span>
+            </div>
+            <div class="tc-rate-col" title="Tasa Venta: 1 Sol = {{ number_format($tipoCambio->tasa_venta ?? 3.6, 2) }} Bs.">
+                <span class="tc-label">Venta (Bolivia)</span>
+                <span class="tc-val" id="tcTxtVenta"><span>Bs.</span> {{ number_format($tipoCambio->tasa_venta ?? 3.6, 2) }}</span>
+            </div>
+            <div class="border-start h-50 mx-0.5" style="border-color: #e2e8f0 !important;"></div>
+            <div class="tc-rate-col" title="Tasa Compra: 1 Sol = {{ number_format($tipoCambio->tasa_compra ?? 3.37, 2) }} Bs.">
+                <span class="tc-label">Compra</span>
+                <span class="tc-val" id="tcTxtCompra"><span>Bs.</span> {{ number_format($tipoCambio->tasa_compra ?? 3.37, 2) }}</span>
+            </div>
+            <div class="d-flex align-items-center gap-1 ms-1">
+                <button type="button" class="btn-tc-action" id="btnSyncTc" onclick="sincronizarTipoCambio()" title="Sincronizar en vivo con Ragnar Capital">
+                    <i class="bi bi-arrow-repeat"></i>
+                </button>
+                <button type="button" class="btn-tc-action" onclick="abrirModalCalculadoraTc()" title="Calculadora rápida de divisas Soles / Bolivianos">
+                    <i class="bi bi-calculator"></i>
+                </button>
+            </div>
+        </div>
+
         <div class="dropdown position-relative" id="dropdownPeriodoContainer">
             <button type="button" class="btn-periodo-toolbar" id="btnDropdownPeriodo" 
                     data-bs-toggle="dropdown" data-bs-auto-close="outside" aria-expanded="false">
@@ -1390,5 +1500,210 @@ function seleccionarMesDirecto(mesDosDigitos) {
     const mesFinal = `${anioActualPicker}-${mesDosDigitos}`;
     window.location.href = `/inicio?mes=${mesFinal}`;
 }
+
+// ============================================================
+// CALCULADORA Y SINCRONIZACIÓN EN VIVO DE TIPO DE CAMBIO
+// ============================================================
+let tcVentaActual = {{ (float)($tipoCambio->tasa_venta ?? 3.6) }};
+let tcCompraActual = {{ (float)($tipoCambio->tasa_compra ?? 3.37) }};
+let modoCalculadora = 'venta'; // 'venta' o 'compra'
+
+function abrirModalCalculadoraTc() {
+    const modalEl = document.getElementById('modalCalculadoraTc');
+    if (modalEl) {
+        const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
+        modal.show();
+        setTimeout(() => {
+            const inputSoles = document.getElementById('calcInputSoles');
+            if (inputSoles) inputSoles.focus();
+        }, 300);
+    }
+}
+
+function cambiarModoCalculadora(modo) {
+    modoCalculadora = modo;
+    const btnV = document.getElementById('btnModoCalcVenta');
+    const btnC = document.getElementById('btnModoCalcCompra');
+    const txtTasaActiva = document.getElementById('calcTxtTasaActiva');
+    
+    if (modo === 'venta') {
+        btnV.classList.add('active', 'btn-primary');
+        btnV.classList.remove('btn-outline-primary');
+        btnC.classList.remove('active', 'btn-primary');
+        btnC.classList.add('btn-outline-primary');
+        if (txtTasaActiva) txtTasaActiva.textContent = `Tasa Venta: 1 Sol = Bs. ${tcVentaActual.toFixed(2)}`;
+    } else {
+        btnC.classList.add('active', 'btn-primary');
+        btnC.classList.remove('btn-outline-primary');
+        btnV.classList.remove('active', 'btn-primary');
+        btnV.classList.add('btn-outline-primary');
+        if (txtTasaActiva) txtTasaActiva.textContent = `Tasa Compra: 1 Sol = Bs. ${tcCompraActual.toFixed(2)}`;
+    }
+    calcularDesdeSoles();
+}
+
+function calcularDesdeSoles() {
+    const inputSoles = document.getElementById('calcInputSoles');
+    const inputBs = document.getElementById('calcInputBs');
+    if (!inputSoles || !inputBs) return;
+    
+    const soles = parseFloat(inputSoles.value) || 0;
+    const tasa = modoCalculadora === 'compra' ? tcCompraActual : tcVentaActual;
+    const bs = soles * tasa;
+    inputBs.value = soles > 0 ? bs.toFixed(2) : '';
+}
+
+function calcularDesdeBs() {
+    const inputSoles = document.getElementById('calcInputSoles');
+    const inputBs = document.getElementById('calcInputBs');
+    if (!inputSoles || !inputBs) return;
+    
+    const bs = parseFloat(inputBs.value) || 0;
+    const tasa = modoCalculadora === 'compra' ? tcCompraActual : tcVentaActual;
+    const soles = tasa > 0 ? bs / tasa : 0;
+    inputSoles.value = bs > 0 ? soles.toFixed(2) : '';
+}
+
+function setPresetSoles(monto) {
+    const inputSoles = document.getElementById('calcInputSoles');
+    if (inputSoles) {
+        inputSoles.value = monto;
+        calcularDesdeSoles();
+    }
+}
+
+function sincronizarTipoCambio() {
+    const btn = document.getElementById('btnSyncTc');
+    if (btn) btn.classList.add('spinning');
+    
+    fetch('/tipo-cambio/actualizar', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json',
+            'X-CSRF-TOKEN': '{{ csrf_token() }}'
+        }
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (btn) btn.classList.remove('spinning');
+        if (data.success) {
+            tcVentaActual = parseFloat(data.tasa_venta) || tcVentaActual;
+            tcCompraActual = parseFloat(data.tasa_compra) || tcCompraActual;
+            
+            const elVenta = document.getElementById('tcTxtVenta');
+            const elCompra = document.getElementById('tcTxtCompra');
+            if (elVenta) elVenta.innerHTML = `<span>Bs.</span> ${tcVentaActual.toFixed(2)}`;
+            if (elCompra) elCompra.innerHTML = `<span>Bs.</span> ${tcCompraActual.toFixed(2)}`;
+            
+            const txtTasaActiva = document.getElementById('calcTxtTasaActiva');
+            if (txtTasaActiva) {
+                const tasa = modoCalculadora === 'compra' ? tcCompraActual : tcVentaActual;
+                txtTasaActiva.textContent = `Tasa ${modoCalculadora === 'compra' ? 'Compra' : 'Venta'}: 1 Sol = Bs. ${tasa.toFixed(2)}`;
+            }
+            calcularDesdeSoles();
+            
+            const elHora = document.getElementById('calcTxtHoraSync');
+            if (elHora) elHora.textContent = data.consultado_en;
+
+            // Toast feedback
+            if (typeof Swal !== 'undefined') {
+                Swal.fire({
+                    toast: true,
+                    position: 'top-end',
+                    icon: 'success',
+                    title: 'Cotización actualizada',
+                    text: `Venta: Bs. ${tcVentaActual.toFixed(2)} | Compra: Bs. ${tcCompraActual.toFixed(2)}`,
+                    showConfirmButton: false,
+                    timer: 3000
+                });
+            }
+        }
+    })
+    .catch(err => {
+        if (btn) btn.classList.remove('spinning');
+        console.error('Error al sincronizar tipo de cambio:', err);
+    });
+}
 </script>
+
+<!-- MODAL CALCULADORA DE DIVISAS (SOLES <-> BOLIVIANOS) -->
+<div class="modal fade" id="modalCalculadoraTc" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" style="max-width: 440px;">
+        <div class="modal-content border-0 shadow-lg rounded-4 overflow-hidden">
+            <div class="modal-header border-0 bg-light p-3 px-4 pb-2">
+                <div>
+                    <h6 class="modal-title fw-bold text-dark d-flex align-items-center gap-2 m-0">
+                        <i class="bi bi-calculator-fill text-primary"></i> Calculadora de Cotización
+                    </h6>
+                    <small class="text-muted" style="font-size: 0.72rem;">Sincronizado con Ragnar Capital</small>
+                </div>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body p-4 pt-2">
+                <!-- Selector Modo Venta / Compra -->
+                <div class="d-flex gap-2 mb-3 mt-1">
+                    <button type="button" class="btn btn-sm btn-primary active w-50 fw-bold rounded-3" id="btnModoCalcVenta" onclick="cambiarModoCalculadora('venta')">
+                        <i class="bi bi-arrow-up-right me-1"></i> Venta (A Bolivia)
+                    </button>
+                    <button type="button" class="btn btn-sm btn-outline-primary w-50 fw-bold rounded-3" id="btnModoCalcCompra" onclick="cambiarModoCalculadora('compra')">
+                        <i class="bi bi-arrow-down-left me-1"></i> Compra (Recibir Soles)
+                    </button>
+                </div>
+
+                <div class="text-center mb-3 py-1 px-2 rounded-3 bg-light border">
+                    <span class="fw-bold text-dark small" id="calcTxtTasaActiva">
+                        Tasa Venta: 1 Sol = Bs. {{ number_format($tipoCambio->tasa_venta ?? 3.6, 2) }}
+                    </span>
+                </div>
+
+                <!-- Input Soles -->
+                <div class="mb-3">
+                    <label class="form-label text-dark fw-bold small mb-1">
+                        🇵🇪 Monto en Soles (PEN - S/)
+                    </label>
+                    <div class="input-group">
+                        <span class="input-group-text bg-white fw-bold text-primary border-end-0">S/</span>
+                        <input type="number" step="any" class="form-control fw-extrabold fs-5 border-start-0 text-primary" 
+                               id="calcInputSoles" placeholder="0.00" oninput="calcularDesdeSoles()">
+                    </div>
+                    <!-- Presets rápidos -->
+                    <div class="d-flex gap-1.5 mt-1.5 flex-wrap">
+                        <button type="button" class="btn btn-xs btn-light border py-0 px-2 rounded-pill small" onclick="setPresetSoles(10)">S/ 10</button>
+                        <button type="button" class="btn btn-xs btn-light border py-0 px-2 rounded-pill small" onclick="setPresetSoles(50)">S/ 50</button>
+                        <button type="button" class="btn btn-xs btn-light border py-0 px-2 rounded-pill small" onclick="setPresetSoles(100)">S/ 100</button>
+                        <button type="button" class="btn btn-xs btn-light border py-0 px-2 rounded-pill small" onclick="setPresetSoles(250)">S/ 250</button>
+                        <button type="button" class="btn btn-xs btn-light border py-0 px-2 rounded-pill small" onclick="setPresetSoles(500)">S/ 500</button>
+                    </div>
+                </div>
+
+                <!-- Icono de equivalencia -->
+                <div class="text-center my-2 text-muted">
+                    <i class="bi bi-arrow-down-up fs-6"></i>
+                </div>
+
+                <!-- Input Bolivianos -->
+                <div class="mb-3">
+                    <label class="form-label text-dark fw-bold small mb-1">
+                        🇧🇴 Equivalente en Bolivianos (BOB - Bs.)
+                    </label>
+                    <div class="input-group">
+                        <span class="input-group-text bg-white fw-bold text-success border-end-0">Bs.</span>
+                        <input type="number" step="any" class="form-control fw-extrabold fs-5 border-start-0 text-success" 
+                               id="calcInputBs" placeholder="0.00" oninput="calcularDesdeBs()">
+                    </div>
+                </div>
+
+                <!-- Footer del modal -->
+                <div class="d-flex justify-content-between align-items-center pt-2 border-top text-muted" style="font-size: 0.72rem;">
+                    <span><i class="bi bi-clock-history me-1"></i> <span id="calcTxtHoraSync">{{ isset($tipoCambio) ? $tipoCambio->consultado_en->format('d/m/Y H:i') : '' }}</span></span>
+                    <button type="button" class="btn btn-sm btn-link p-0 text-decoration-none fw-bold" onclick="sincronizarTipoCambio()">
+                        <i class="bi bi-arrow-repeat me-1"></i> Actualizar tasa
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
 @endsection

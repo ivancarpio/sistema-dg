@@ -213,6 +213,24 @@ class ConfiguracionController extends Controller
         $mostrarModalQr = $request->has('mostrar_modal_qr') ? '1' : '0';
         Configuracion::set('mostrar_modal_qr', $mostrarModalQr, 'Mostrar modal QR en POS');
 
+        // Configuración de País y Moneda Base
+        if ($request->has('pais_operacion')) {
+            $pais = $request->input('pais_operacion');
+            Configuracion::set('pais_operacion', $pais, 'País de operación principal');
+
+            if ($pais === 'PE') {
+                Configuracion::set('moneda_principal', 'PEN', 'Código ISO moneda principal');
+                Configuracion::set('moneda_simbolo', 'S/', 'Símbolo moneda principal');
+                Configuracion::set('moneda_secundaria', 'BOB', 'Código ISO moneda secundaria');
+                Configuracion::set('moneda_secundaria_simbolo', 'Bs.', 'Símbolo moneda secundaria');
+            } else {
+                Configuracion::set('moneda_principal', 'BOB', 'Código ISO moneda principal');
+                Configuracion::set('moneda_simbolo', 'Bs.', 'Símbolo moneda principal');
+                Configuracion::set('moneda_secundaria', 'PEN', 'Código ISO moneda secundaria');
+                Configuracion::set('moneda_secundaria_simbolo', 'S/', 'Símbolo moneda secundaria');
+            }
+        }
+
         // Datos del negocio
         if ($request->has('nombre_empresa')) {
             Configuracion::set('nombre_empresa', $request->input('nombre_empresa'));

@@ -14,6 +14,7 @@ use App\Http\Controllers\GastoController;
 use App\Http\Controllers\CajaChicaController;
 use App\Http\Controllers\ReporteController;
 use App\Http\Controllers\ClienteController;
+use App\Http\Controllers\TipoCambioController;
 
 // ============================================================
 // 1. RUTAS PÚBLICAS DE AUTENTICACIÓN (LOGIN)
@@ -39,6 +40,11 @@ Route::middleware(['auth'])->group(function () {
         return redirect()->route('inicio');
     });
     Route::get('/inicio', [HomeController::class, 'index'])->name('inicio');
+
+    // Rutas para Cotización y Tipo de Cambio en Vivo (Ragnar Capital BOB / PEN)
+    Route::get('/tipo-cambio/actual', [TipoCambioController::class, 'actual'])->name('tipo-cambio.actual');
+    Route::post('/tipo-cambio/actualizar', [TipoCambioController::class, 'actualizarAjax'])->name('tipo-cambio.actualizar');
+    Route::post('/tipo-cambio/convertir', [TipoCambioController::class, 'convertirAjax'])->name('tipo-cambio.convertir');
 
     // ============================================================
     // MÓDULO 1: PUNTO DE VENTA (POS)

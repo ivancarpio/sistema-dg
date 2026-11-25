@@ -699,6 +699,29 @@
                                 <form action="/configuracion/ajustes" method="POST">
                                     @csrf
                                     <div class="row g-3">
+                                        <div class="col-12">
+                                            <div class="p-3 rounded-3 border bg-light d-flex flex-column flex-md-row align-items-start align-items-md-center justify-content-between gap-3">
+                                                <div>
+                                                    <label class="form-label text-dark small fw-bold mb-1 d-flex align-items-center gap-1.5">
+                                                        <i class="bi bi-globe-americas text-primary fs-6"></i> País de Operación y Moneda Base
+                                                    </label>
+                                                    <p class="text-muted small m-0" style="font-size: 0.78rem;">
+                                                        Define la moneda principal del negocio y activa la conversión en tiempo real con <strong>Ragnar Capital</strong>.
+                                                    </p>
+                                                </div>
+                                                <div style="min-width: 260px;">
+                                                    <select name="pais_operacion" class="form-select form-select-sm fw-bold border-primary shadow-sm" id="selectPaisOperacion">
+                                                        <option value="BO" {{ ($configuraciones['pais_operacion'] ?? 'BO') == 'BO' ? 'selected' : '' }}>
+                                                            🇧🇴 Bolivia &bull; Base en Bolivianos (Bs.)
+                                                        </option>
+                                                        <option value="PE" {{ ($configuraciones['pais_operacion'] ?? 'BO') == 'PE' ? 'selected' : '' }}>
+                                                            🇵🇪 Perú &bull; Base en Soles (S/)
+                                                        </option>
+                                                    </select>
+                                                </div>
+                                            </div>
+                                        </div>
+
                                         <div class="col-md-8">
                                             <label class="form-label text-muted small fw-bold">Nombre Comercial de la Empresa / Ferretería *</label>
                                             <input type="text" name="nombre_empresa" class="form-control fw-bold" 

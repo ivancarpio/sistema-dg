@@ -113,8 +113,9 @@ class PosController extends Controller
         }
 
         $arqueoActivo = ArqueoCaja::sesionActiva();
+        $tipoCambio = app(\App\Services\TipoCambioService::class)->actual();
 
-        return view('pos.index', compact('productos', 'categorias', 'clientes', 'clientesHistorial', 'ventaRehacer', 'carritoRehacer', 'arqueoActivo'));
+        return view('pos.index', compact('productos', 'categorias', 'clientes', 'clientesHistorial', 'ventaRehacer', 'carritoRehacer', 'arqueoActivo', 'tipoCambio'));
     }
 
     /**
