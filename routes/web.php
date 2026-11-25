@@ -14,6 +14,7 @@ use App\Http\Controllers\GastoController;
 use App\Http\Controllers\CajaChicaController;
 use App\Http\Controllers\ReporteController;
 use App\Http\Controllers\ClienteController;
+use App\Http\Controllers\CotizacionController;
 use App\Http\Controllers\TipoCambioController;
 
 // ============================================================
@@ -101,6 +102,22 @@ Route::middleware(['auth'])->group(function () {
     });
 
     // ============================================================
+    // MÓDULO 5B: COTIZACIONES (CLIENTES Y TIENDAS EXTERNAS)
+    // ============================================================
+    Route::middleware(['permiso:cotizaciones'])->group(function () {
+        Route::get('/cotizaciones', [CotizacionController::class, 'index'])->name('cotizaciones.index');
+        Route::get('/cotizaciones/crear', [CotizacionController::class, 'create'])->name('cotizaciones.create');
+        Route::post('/cotizaciones', [CotizacionController::class, 'store'])->name('cotizaciones.store');
+        Route::get('/cotizaciones/{id}/pdf', [CotizacionController::class, 'pdf'])->name('cotizaciones.pdf');
+        Route::get('/cotizaciones/{id}/imprimir', [CotizacionController::class, 'imprimir'])->name('cotizaciones.imprimir');
+        Route::get('/cotizaciones/{id}/editar', [CotizacionController::class, 'edit'])->name('cotizaciones.edit');
+        Route::get('/cotizaciones/{id}', [CotizacionController::class, 'show'])->name('cotizaciones.show');
+        Route::put('/cotizaciones/{id}', [CotizacionController::class, 'update'])->name('cotizaciones.update');
+        Route::post('/cotizaciones/{id}/estado', [CotizacionController::class, 'cambiarEstado'])->name('cotizaciones.estado');
+        Route::delete('/cotizaciones/{id}', [CotizacionController::class, 'destroy'])->name('cotizaciones.destroy');
+    });
+
+    // ============================================================
     // MÓDULO 6: CAJA Y FINANZAS (TURNOS, GASTOS Y CAJA CHICA)
     // ============================================================
     Route::middleware(['permiso:arqueos'])->group(function () {
@@ -185,6 +202,7 @@ Route::middleware(['auth'])->group(function () {
         Route::post('/configuracion/qr-toggle', [ConfiguracionController::class, 'toggleQrModal']);
         Route::post('/configuracion/logo', [ConfiguracionController::class, 'updateLogo']);
         Route::post('/configuracion/ajustes', [ConfiguracionController::class, 'updateAjustes']);
+        Route::post('/configuracion/moneda', [ConfiguracionController::class, 'updateMoneda'])->name('configuracion.moneda');
     });
 
 });

@@ -67,7 +67,7 @@
                     </span>
                 </div>
                 <h3 class="fw-bold {{ $saldoActual <= 50 ? 'text-danger' : 'text-success' }} mb-1 fs-4 fs-md-3">
-                    Bs. {{ number_format($saldoActual, 2) }}
+                    {{ $monedaSimbolo }} {{ number_format($saldoActual, 2) }}
                 </h3>
                 <span class="text-muted small">Efectivo físico disponible en caja chica</span>
             </div>
@@ -80,7 +80,7 @@
                     <span class="text-muted small fw-semibold text-uppercase">Reposiciones Mes</span>
                     <i class="bi bi-arrow-up-circle-fill text-success fs-5"></i>
                 </div>
-                <h3 class="fw-bold text-dark mb-1 fs-4 fs-md-3">+Bs. {{ number_format($reposicionesMes, 2) }}</h3>
+                <h3 class="fw-bold text-dark mb-1 fs-4 fs-md-3">+{{ $monedaSimbolo }} {{ number_format($reposicionesMes, 2) }}</h3>
                 <span class="text-muted small">Fondos inyectados este mes</span>
             </div>
         </div>
@@ -92,7 +92,7 @@
                     <span class="text-muted small fw-semibold text-uppercase">Gastos Pagados Mes</span>
                     <i class="bi bi-arrow-down-circle-fill text-danger fs-5"></i>
                 </div>
-                <h3 class="fw-bold text-danger mb-1 fs-4 fs-md-3">-Bs. {{ number_format($gastosMes, 2) }}</h3>
+                <h3 class="fw-bold text-danger mb-1 fs-4 fs-md-3">-{{ $monedaSimbolo }} {{ number_format($gastosMes, 2) }}</h3>
                 <span class="text-muted small">Egresos operativos menores</span>
             </div>
         </div>
@@ -215,13 +215,13 @@
                             </td>
                             <td class="text-end fw-bold fs-6">
                                 @if(in_array($m->tipo, ['apertura_o_reposicion', 'reversion_gasto', 'ajuste_ingreso']))
-                                    <span class="text-success">+Bs. {{ number_format($m->monto, 2) }}</span>
+                                    <span class="text-success">+{{ $monedaSimbolo }} {{ number_format($m->monto, 2) }}</span>
                                 @else
-                                    <span class="text-danger">-Bs. {{ number_format($monto = $m->monto, 2) }}</span>
+                                    <span class="text-danger">-{{ $monedaSimbolo }} {{ number_format($monto = $m->monto, 2) }}</span>
                                 @endif
                             </td>
                             <td class="text-end fw-bold text-dark fs-6 bg-light bg-opacity-25">
-                                Bs. {{ number_format($m->saldo_resultante, 2) }}
+                                {{ $monedaSimbolo }} {{ number_format($m->saldo_resultante, 2) }}
                             </td>
                             <td class="small text-muted">
                                 @if($m->comprobante)
@@ -289,9 +289,9 @@
                 <div class="modal-body p-4">
                     <div class="row g-3">
                         <div class="col-12">
-                            <label class="form-label small fw-semibold text-dark mb-1">Monto a Inyectar (Bs.) <span class="text-danger">*</span></label>
+                            <label class="form-label small fw-semibold text-dark mb-1">Monto a Inyectar ({{ $monedaSimbolo }}) <span class="text-danger">*</span></label>
                             <div class="input-group">
-                                <span class="input-group-text bg-light border-end-0 fw-bold">Bs.</span>
+                                <span class="input-group-text bg-light border-end-0 fw-bold">{{ $monedaSimbolo }}</span>
                                 <input type="number" step="0.5" min="0.5" name="monto" class="form-control rounded-end-3" placeholder="0.00" required>
                             </div>
                         </div>
@@ -355,14 +355,14 @@
                 <div class="modal-body p-4">
                     <div class="alert alert-light border small text-muted d-flex align-items-center gap-2 mb-3">
                         <i class="bi bi-wallet2 text-success fs-5"></i>
-                        <div>Saldo disponible en Caja Chica: <strong class="text-success fs-6">Bs. {{ number_format($saldoActual, 2) }}</strong></div>
+                        <div>Saldo disponible en Caja Chica: <strong class="text-success fs-6">{{ $monedaSimbolo }} {{ number_format($saldoActual, 2) }}</strong></div>
                     </div>
 
                     <div class="row g-3">
                         <div class="col-12 col-sm-6">
-                            <label class="form-label small fw-semibold text-dark mb-1">Monto a Pagar (Bs.) <span class="text-danger">*</span></label>
+                            <label class="form-label small fw-semibold text-dark mb-1">Monto a Pagar ({{ $monedaSimbolo }}) <span class="text-danger">*</span></label>
                             <div class="input-group">
-                                <span class="input-group-text bg-light border-end-0 fw-bold">Bs.</span>
+                                <span class="input-group-text bg-light border-end-0 fw-bold">{{ $monedaSimbolo }}</span>
                                 <input type="number" step="0.01" min="0.01" max="{{ $saldoActual }}" name="monto" class="form-control rounded-end-3" placeholder="0.00" required>
                             </div>
                         </div>
@@ -438,9 +438,9 @@
                         </div>
 
                         <div class="col-12 col-sm-6">
-                            <label class="form-label small fw-semibold text-dark mb-1">Monto del Ajuste (Bs.) <span class="text-danger">*</span></label>
+                            <label class="form-label small fw-semibold text-dark mb-1">Monto del Ajuste ({{ $monedaSimbolo }}) <span class="text-danger">*</span></label>
                             <div class="input-group">
-                                <span class="input-group-text bg-light border-end-0 fw-bold">Bs.</span>
+                                <span class="input-group-text bg-light border-end-0 fw-bold">{{ $monedaSimbolo }}</span>
                                 <input type="number" step="0.01" min="0.01" name="monto" class="form-control rounded-end-3" placeholder="0.00" required>
                             </div>
                         </div>

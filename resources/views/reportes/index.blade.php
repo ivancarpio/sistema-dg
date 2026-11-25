@@ -322,8 +322,8 @@
                 <div class="metric-icon"><i class="bi bi-cash-stack"></i></div>
                 <div>
                     <div class="metric-label">Efectivo</div>
-                    <div class="metric-value">Bs. {{ number_format($totales['efectivo'], 2) }}</div>
-                    <div class="metric-sub" title="Contado: Bs. {{ number_format($totales['efectivo_directo'] ?? 0, 2) }} | Créditos cobrados: Bs. {{ number_format($totales['efectivo_credito'] ?? 0, 2) }}">
+                    <div class="metric-value">{{ $monedaSimbolo }} {{ number_format($totales['efectivo'], 2) }}</div>
+                    <div class="metric-sub" title="Contado: {{ $monedaSimbolo }} {{ number_format($totales['efectivo_directo'] ?? 0, 2) }} | Créditos cobrados: {{ $monedaSimbolo }} {{ number_format($totales['efectivo_credito'] ?? 0, 2) }}">
                         {{ $totales['con_efectivo'] ?? 0 }} ventas
                         @if(($totales['cant_efectivo_credito'] ?? 0) > 0)
                             <small class="text-muted d-block" style="font-size:0.65rem;">({{ $totales['cant_efectivo_directo'] }} contado + {{ $totales['cant_efectivo_credito'] }} crédito)</small>
@@ -346,8 +346,8 @@
                 <div class="metric-icon"><i class="bi bi-qr-code-scan"></i></div>
                 <div>
                     <div class="metric-label">QR / Transferencia</div>
-                    <div class="metric-value">Bs. {{ number_format($totales['qr'], 2) }}</div>
-                    <div class="metric-sub" title="Directas: Bs. {{ number_format($totales['qr_directo'] ?? 0, 2) }} | Créditos cobrados: Bs. {{ number_format($totales['qr_credito'] ?? 0, 2) }}">
+                    <div class="metric-value">{{ $monedaSimbolo }} {{ number_format($totales['qr'], 2) }}</div>
+                    <div class="metric-sub" title="Directas: {{ $monedaSimbolo }} {{ number_format($totales['qr_directo'] ?? 0, 2) }} | Créditos cobrados: {{ $monedaSimbolo }} {{ number_format($totales['qr_credito'] ?? 0, 2) }}">
                         {{ $totales['con_qr'] ?? 0 }} ventas
                         @if(($totales['cant_qr_credito'] ?? 0) > 0)
                             <small class="text-muted d-block" style="font-size:0.65rem;">({{ $totales['cant_qr_directo'] }} directo + {{ $totales['cant_qr_credito'] }} crédito)</small>
@@ -372,7 +372,7 @@
                 </div>
                 <div>
                     <div class="metric-label" style="color:#b45309;">Por Cobrar (Pendiente)</div>
-                    <div class="metric-value" style="color:#b45309;">Bs. {{ number_format($totales['por_pagar'] ?? 0, 2) }}</div>
+                    <div class="metric-value" style="color:#b45309;">{{ $monedaSimbolo }} {{ number_format($totales['por_pagar'] ?? 0, 2) }}</div>
                     <div class="metric-sub text-muted">
                         {{ $totales['por_pagar_con_deuda'] ?? 0 }} ventas con saldo
                     </div>
@@ -387,7 +387,7 @@
                 <div class="metric-icon"><i class="bi bi-wallet2"></i></div>
                 <div>
                     <div class="metric-label">Total Facturado</div>
-                    <div class="metric-value">Bs. {{ number_format($totales['general'], 2) }}</div>
+                    <div class="metric-value">{{ $monedaSimbolo }} {{ number_format($totales['general'], 2) }}</div>
                     <div class="metric-sub">{{ $totales['cantidad'] }} ventas · {{ number_format($totales['productos'], 0) }} arts.</div>
                 </div>
             </div>
@@ -484,9 +484,9 @@
                                     <span class="badge" style="background:#fee2e2; color:#b91c1c; border:1px solid #fecaca; font-size:0.75rem;">
                                         <i class="bi bi-hourglass-split me-1"></i>Crédito Pendiente
                                     </span>
-                                    <small class="text-danger fw-bold d-block" style="font-size:0.75rem;">Debe: Bs. {{ number_format($venta->saldo_pendiente, 2) }}</small>
+                                    <small class="text-danger fw-bold d-block" style="font-size:0.75rem;">Debe: {{ $monedaSimbolo }} {{ number_format($venta->saldo_pendiente, 2) }}</small>
                                     @if(($venta->monto_pagado ?? 0) > 0)
-                                        <small class="text-muted d-block" style="font-size:0.70rem;">Abonado: Bs. {{ number_format($venta->monto_pagado, 2) }}</small>
+                                        <small class="text-muted d-block" style="font-size:0.70rem;">Abonado: {{ $monedaSimbolo }} {{ number_format($venta->monto_pagado, 2) }}</small>
                                     @endif
                                 @else
                                     <span class="badge" style="background:#dcfce7; color:#15803d; border:1px solid #bbf7d0; font-size:0.75rem;">
@@ -511,7 +511,7 @@
                             @endif
                         </td>
                         <td class="text-end pe-4 fw-bold text-success" style="font-size:1rem;">
-                            Bs. {{ number_format($venta->total, 2) }}
+                            {{ $monedaSimbolo }} {{ number_format($venta->total, 2) }}
                         </td>
                     </tr>
 
@@ -545,17 +545,17 @@
                                         </span>
                                     </span>
                                     <span style="flex:1.5; text-align:right; color:#64748b;">
-                                        Bs. {{ number_format($detalle->precio_unitario, 2) }}
+                                        {{ $monedaSimbolo }} {{ number_format($detalle->precio_unitario, 2) }}
                                     </span>
                                     <span style="flex:1.5; text-align:right; font-weight:700; color:#16a34a;">
-                                        Bs. {{ number_format($detalle->subtotal, 2) }}
+                                        {{ $monedaSimbolo }} {{ number_format($detalle->subtotal, 2) }}
                                     </span>
                                 </div>
                                 @endforeach
                                 {{-- Total de la nota en el desglose --}}
                                 <div style="display:flex; justify-content:flex-end; margin-top:8px; padding-top:8px; border-top:2px solid #bfdbfe;">
                                     <span style="font-weight:800; color:#1e40af; font-size:0.9rem;">
-                                        Total nota:&nbsp; Bs. {{ number_format($venta->total, 2) }}
+                                        Total nota:&nbsp; {{ $monedaSimbolo }} {{ number_format($venta->total, 2) }}
                                         &nbsp;·&nbsp;
                                         @if(strtolower($venta->metodo_pago) == 'efectivo')
                                             <span class="badge-efectivo"><i class="bi bi-cash me-1"></i>Efectivo</span>
@@ -563,7 +563,7 @@
                                             <span class="badge-qr"><i class="bi bi-qr-code me-1"></i>QR</span>
                                         @else
                                             @if(($venta->saldo_pendiente ?? 0) > 0)
-                                                <span class="badge" style="background:#fee2e2; color:#b91c1c; border:1px solid #fecaca;"><i class="bi bi-hourglass-split me-1"></i>Crédito Pendiente (Debe Bs. {{ number_format($venta->saldo_pendiente, 2) }})</span>
+                                                <span class="badge" style="background:#fee2e2; color:#b91c1c; border:1px solid #fecaca;"><i class="bi bi-hourglass-split me-1"></i>Crédito Pendiente (Debe {{ $monedaSimbolo }} {{ number_format($venta->saldo_pendiente, 2) }})</span>
                                             @else
                                                 <span class="badge" style="background:#dcfce7; color:#15803d; border:1px solid #bbf7d0;"><i class="bi bi-check2-circle me-1"></i>Crédito Liquidado</span>
                                             @endif
@@ -577,12 +577,12 @@
                                     <span class="fw-bold text-muted"><i class="bi bi-clock-history me-1"></i>Cobros registrados:</span>
                                     @if(!empty($venta->metodo_adelanto) && floatval($venta->monto_adelanto ?? 0) > 0)
                                         <span class="badge bg-light text-dark border">
-                                            Adelanto: Bs. {{ number_format($venta->monto_adelanto, 2) }} ({{ $venta->metodo_adelanto }})
+                                            Adelanto: {{ $monedaSimbolo }} {{ number_format($venta->monto_adelanto, 2) }} ({{ $venta->metodo_adelanto }})
                                         </span>
                                     @endif
                                     @foreach($venta->pagos as $p)
                                         <span class="badge bg-light text-dark border">
-                                            {{ \Carbon\Carbon::parse($p->fecha)->format('d/m/Y') }}: Bs. {{ number_format($p->monto, 2) }} ({{ $p->metodo_pago }})
+                                            {{ \Carbon\Carbon::parse($p->fecha)->format('d/m/Y') }}: {{ $monedaSimbolo }} {{ number_format($p->monto, 2) }} ({{ $p->metodo_pago }})
                                         </span>
                                     @endforeach
                                 </div>
@@ -613,14 +613,14 @@
                         </td>
                         <td colspan="2">
                             <span class="badge-efectivo me-2">
-                                <i class="bi bi-cash me-1"></i>Bs. {{ number_format($totales['efectivo'], 2) }}
+                                <i class="bi bi-cash me-1"></i>{{ $monedaSimbolo }} {{ number_format($totales['efectivo'], 2) }}
                             </span>
                             <span class="badge-qr">
-                                <i class="bi bi-qr-code me-1"></i>Bs. {{ number_format($totales['qr'], 2) }}
+                                <i class="bi bi-qr-code me-1"></i>{{ $monedaSimbolo }} {{ number_format($totales['qr'], 2) }}
                             </span>
                             @if(($totales['por_pagar'] ?? 0) > 0)
                             <span class="badge-por-pagar ms-2">
-                                <i class="bi bi-clock-history me-1"></i>Debe: Bs. {{ number_format($totales['por_pagar'], 2) }}
+                                <i class="bi bi-clock-history me-1"></i>Debe: {{ $monedaSimbolo }} {{ number_format($totales['por_pagar'], 2) }}
                             </span>
                             @endif
                         </td>
@@ -632,7 +632,7 @@
                         </td>
                         <td class="text-end pe-4">
                             <span class="fw-bold text-dark fs-5">
-                                Bs. {{ number_format($totales['general'], 2) }}
+                                {{ $monedaSimbolo }} {{ number_format($totales['general'], 2) }}
                             </span>
                         </td>
                     </tr>

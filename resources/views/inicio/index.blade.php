@@ -555,6 +555,16 @@
                 <span class="tc-val" id="tcTxtCompra"><span>Bs.</span> {{ number_format($tipoCambio->tasa_compra ?? 3.37, 2) }}</span>
             </div>
             <div class="d-flex align-items-center gap-1 ms-1">
+                @if(auth()->check() && auth()->user()->tienePermiso('configuracion'))
+                    <button type="button"
+                            class="btn btn-sm fw-bold px-2 py-1 rounded-2 border {{ ($paisOperacion ?? 'BO') === 'PE' ? 'bg-primary text-white border-primary' : 'bg-light text-dark' }}"
+                            style="font-size: 0.72rem; height: 30px;"
+                            id="btnAlternarMonedaInicio"
+                            onclick="alternarMonedaSistemaInicio('{{ ($paisOperacion ?? 'BO') === 'PE' ? 'BO' : 'PE' }}')"
+                            title="Cambiar moneda global del sistema a {{ ($paisOperacion ?? 'BO') === 'PE' ? 'Bolivianos (Bs.)' : 'Soles (S/)' }}">
+                        {{ ($paisOperacion ?? 'BO') === 'PE' ? '🇵🇪 S/' : '🇧🇴 Bs.' }} <i class="bi bi-arrow-left-right ms-0.5" style="font-size: 0.65rem;"></i>
+                    </button>
+                @endif
                 <button type="button" class="btn-tc-action" id="btnSyncTc" onclick="sincronizarTipoCambio()" title="Sincronizar en vivo con Ragnar Capital">
                     <i class="bi bi-arrow-repeat"></i>
                 </button>
@@ -661,7 +671,7 @@
                     </span>
                 </div>
                 <div class="my-2">
-                    <div class="kpi-ems-amount">Bs. {{ number_format($ventasMes, 2) }}</div>
+                    <div class="kpi-ems-amount">{{ $monedaSimbolo }} {{ number_format($ventasMes, 2) }}</div>
                 </div>
                 <div class="kpi-ems-footer">
                     <span class="kpi-ems-sub" title="Ventas del período">Ventas del período</span>
@@ -689,7 +699,7 @@
                     </span>
                 </div>
                 <div class="my-2">
-                    <div class="kpi-ems-amount">Bs. {{ number_format($margenEstimado, 2) }}</div>
+                    <div class="kpi-ems-amount">{{ $monedaSimbolo }} {{ number_format($margenEstimado, 2) }}</div>
                 </div>
                 <div class="kpi-ems-footer">
                     <span class="kpi-ems-sub" title="Margen comercial estimado">Margen comercial</span>
@@ -712,7 +722,7 @@
                     </span>
                 </div>
                 <div class="my-2">
-                    <div class="kpi-ems-amount">Bs. {{ number_format($esMesActual ? $ventasHoy : $promedioDiario, 2) }}</div>
+                    <div class="kpi-ems-amount">{{ $monedaSimbolo }} {{ number_format($esMesActual ? $ventasHoy : $promedioDiario, 2) }}</div>
                 </div>
                 <div class="kpi-ems-footer">
                     <span class="kpi-ems-sub" title="{{ $esMesActual ? 'Ventas de hoy' : 'Promedio diario' }}">{{ $esMesActual ? 'Ventas de hoy' : 'Promedio diario' }}</span>
@@ -733,7 +743,7 @@
                     </span>
                 </div>
                 <div class="my-2">
-                    <div class="kpi-ems-amount">Bs. {{ number_format($totalPorCobrar, 2) }}</div>
+                    <div class="kpi-ems-amount">{{ $monedaSimbolo }} {{ number_format($totalPorCobrar, 2) }}</div>
                 </div>
                 <div class="kpi-ems-footer">
                     <span class="kpi-ems-sub" title="Saldo por cobrar">Saldo por cobrar</span>
@@ -758,7 +768,7 @@
                     </div>
                     <div>
                         <h6 class="fw-bold m-0 text-dark" style="font-size: 0.95rem;">
-                            Ventas Mensuales (Bs.) &bull; Año {{ $anio }}
+                            Ventas Mensuales ({{ $monedaSimbolo }}) &bull; Año {{ $anio }}
                         </h6>
                         <small class="text-muted">Ingresos reales acumulados en cada mes del sistema</small>
                     </div>
@@ -936,7 +946,7 @@
                             </div>
                             <div class="text-end flex-shrink-0 ms-1">
                                 <span class="fw-bold" style="font-size: 0.83rem; color: {{ $estilo['texto'] }};">
-                                    Bs. {{ $tieneCliente ? number_format($cl->total_monto, 2) : '0.00' }}
+                                    {{ $monedaSimbolo }} {{ $tieneCliente ? number_format($cl->total_monto, 2) : '0.00' }}
                                 </span>
                             </div>
                         </div>
@@ -946,7 +956,7 @@
 
                 <div class="pt-2 border-top d-flex flex-wrap justify-content-between align-items-center text-muted small" style="font-size: 0.74rem;">
                     <span><i class="bi bi-cursor-fill me-1 text-primary"></i>Haz clic en cualquier puesto para ver detalles</span>
-                    <strong class="text-dark" title="Suma de compras de estos 10 clientes principales en el mes">Subtotal Top 10: Bs. {{ number_format($totalMontoTopClientes, 2) }} <span class="text-muted fw-normal">({{ round(($totalMontoTopClientes / ($ventasMes > 0 ? $ventasMes : 1)) * 100, 1) }}%)</span></strong>
+                    <strong class="text-dark" title="Suma de compras de estos 10 clientes principales en el mes">Subtotal Top 10: {{ $monedaSimbolo }} {{ number_format($totalMontoTopClientes, 2) }} <span class="text-muted fw-normal">({{ round(($totalMontoTopClientes / ($ventasMes > 0 ? $ventasMes : 1)) * 100, 1) }}%)</span></strong>
                 </div>
             </div>
         </div>
@@ -1040,7 +1050,7 @@
                             </small>
                         </div>
                         <div class="text-end flex-shrink-0">
-                            <div class="fw-bold text-dark small" style="font-size: 0.88rem;">Bs. {{ number_format($v->total, 2) }}</div>
+                            <div class="fw-bold text-dark small" style="font-size: 0.88rem;">{{ $monedaSimbolo }} {{ number_format($v->total, 2) }}</div>
                             <a href="/ventas/{{ $v->id }}/pdf" target="_blank" class="text-decoration-none text-muted small" style="font-size: 0.72rem;">
                                 <i class="bi bi-file-pdf text-danger me-0.5"></i> PDF
                             </a>
@@ -1095,7 +1105,7 @@
                     <div class="col-6">
                         <div class="p-3 rounded-3 h-100 border text-center" style="background: #f0f9ff; border-color: #bae6fd !important;">
                             <div class="text-muted small fw-bold" style="font-size: 0.70rem; text-transform: uppercase;">Total Comprado</div>
-                            <div class="fw-extrabold text-primary fs-5 mt-1" id="topModalTotalMonto">Bs. 0.00</div>
+                            <div class="fw-extrabold text-primary fs-5 mt-1" id="topModalTotalMonto">{{ $monedaSimbolo }} 0.00</div>
                             <small class="text-muted" style="font-size: 0.68rem;">Acumulado del mes</small>
                         </div>
                     </div>
@@ -1130,6 +1140,7 @@
 {{-- ======================================================== --}}
 <script>
 document.addEventListener('DOMContentLoaded', function() {
+    const simboloMonedaGlobal = '{{ $monedaSimbolo ?? "Bs." }}';
     
     // Configuración tipográfica ejecutiva
     Chart.defaults.font.family = "'Plus Jakarta Sans', 'Segoe UI', system-ui, -apple-system, sans-serif";
@@ -1151,7 +1162,7 @@ document.addEventListener('DOMContentLoaded', function() {
             data: {
                 labels: @json($mesesLabels),
                 datasets: [{
-                    label: 'Ventas Bs.',
+                    label: 'Ventas ' + simboloMonedaGlobal,
                     data: @json($ventasPorMesAnio), // Reales desde MySQL
                     backgroundColor: gradienteBarras,
                     hoverBackgroundColor: '#0369a1',
@@ -1171,7 +1182,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         cornerRadius: 8,
                         callbacks: {
                             label: function(context) {
-                                return ' Ventas: Bs. ' + context.parsed.y.toLocaleString('es-BO', { minimumFractionDigits: 2 });
+                                return ' Ventas: ' + simboloMonedaGlobal + ' ' + context.parsed.y.toLocaleString('es-BO', { minimumFractionDigits: 2 });
                             }
                         }
                     }
@@ -1185,7 +1196,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         grid: gridOptions,
                         ticks: {
                             callback: function(value) {
-                                return 'Bs. ' + value;
+                                return simboloMonedaGlobal + ' ' + value;
                             }
                         }
                     } 
@@ -1354,7 +1365,7 @@ document.addEventListener('DOMContentLoaded', function() {
             data: {
                 labels: datosIniciales.labels,
                 datasets: [{
-                    label: 'Ventas Bs.',
+                    label: 'Ventas ' + simboloMonedaGlobal,
                     data: datosIniciales.valores,
                     borderColor: '#0ea5e9',
                     backgroundColor: gradienteLinea,
@@ -1379,7 +1390,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         cornerRadius: 8,
                         callbacks: {
                             label: function(context) {
-                                return ' Total: Bs. ' + context.parsed.y.toLocaleString('es-BO', { minimumFractionDigits: 2 });
+                                return ' Total: ' + simboloMonedaGlobal + ' ' + context.parsed.y.toLocaleString('es-BO', { minimumFractionDigits: 2 });
                             }
                         }
                     }
@@ -1390,7 +1401,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         grid: gridOptions,
                         ticks: {
                             callback: function(value) {
-                                return 'Bs. ' + value;
+                                return simboloMonedaGlobal + ' ' + value;
                             }
                         }
                     } 
@@ -1449,7 +1460,7 @@ window.abrirModalTopCliente = function(rank, nombre, compras, monto, tieneClient
 
     if (tieneCliente && nombre) {
         if (nombreEl) nombreEl.textContent = nombre;
-        if (montoEl) montoEl.textContent = 'Bs. ' + monto;
+        if (montoEl) montoEl.textContent = '{{ $monedaSimbolo }} ' + monto;
         if (comprasEl) comprasEl.textContent = compras + ' nota(s)';
         if (metricasRow) metricasRow.style.display = '';
         if (mensajeVacio) mensajeVacio.style.display = 'none';
@@ -1623,6 +1634,30 @@ function sincronizarTipoCambio() {
     .catch(err => {
         if (btn) btn.classList.remove('spinning');
         console.error('Error al sincronizar tipo de cambio:', err);
+    });
+}
+
+function alternarMonedaSistemaInicio(nuevoPais) {
+    const btn = document.getElementById('btnAlternarMonedaInicio');
+    if (btn) btn.disabled = true;
+
+    fetch('{{ route('configuracion.moneda') }}', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json',
+            'X-CSRF-TOKEN': '{{ csrf_token() }}'
+        },
+        body: JSON.stringify({ pais_operacion: nuevoPais })
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (data.success) {
+            window.location.reload();
+        }
+    })
+    .catch(() => {
+        if (btn) btn.disabled = false;
     });
 }
 </script>

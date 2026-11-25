@@ -12,6 +12,7 @@ use App\Models\Cliente;
 use App\Models\ArqueoCaja;
 use App\Models\PagoVenta;
 use App\Models\MovimientoCaja;
+use App\Models\Configuracion;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
 
@@ -288,6 +289,7 @@ class PosController extends Controller
                 if ($diferencia > 0) {
                     // ESCENARIO B: El total SUBIÓ (el cliente paga la diferencia hoy)
                     $metodoDif = $request->input('metodo_diferencia', $metodoPago);
+                    $sim = Configuracion::monedaSimbolo();
                     PagoVenta::create([
                         'id_venta'       => $venta->id,
                         'arqueo_caja_id' => $arqueoActivo->id,
@@ -296,7 +298,7 @@ class PosController extends Controller
                         'monto'          => $diferencia,
                         'metodo_pago'    => $metodoDif,
                         'referencia'     => $request->input('referencia_diferencia', null),
-                        'observacion'    => "Diferencia por venta rehecha #{$ventaOrigen->numero_nota} (+Bs. " . number_format($diferencia, 2) . ")",
+                        'observacion'    => "Diferencia por venta rehecha #{$ventaOrigen->numero_nota} (+{$sim} " . number_format($diferencia, 2) . ")",
                         'fecha'          => now(),
                     ]);
 
@@ -306,12 +308,13 @@ class PosController extends Controller
                         $arqueoActivo->increment('total_efectivo_sistema', $diferencia);
                     }
 
-                    $mensajeDiferencia = " | Se cobró la diferencia de +Bs. " . number_format($diferencia, 2) . " mediante " . $metodoDif;
+                    $mensajeDiferencia = " | Se cobró la diferencia de +{$sim} " . number_format($diferencia, 2) . " mediante " . $metodoDif;
 
                 } elseif ($diferencia < 0) {
                     // ESCENARIO C: El total BAJÓ (hay dinero a favor del cliente)
                     $sobrante = abs($diferencia);
                     $resolucion = $request->input('resolucion_diferencia', 'saldo_favor');
+                    $sim = Configuracion::monedaSimbolo();
 
                     if ($resolucion === 'devolucion_efectivo') {
                         // Devolución en efectivo de caja de hoy
@@ -327,7 +330,7 @@ class PosController extends Controller
                         ]);
 
                         $arqueoActivo->increment('total_egresos', $sobrante);
-                        $mensajeDiferencia = " | Se registró egreso en caja de -Bs. " . number_format($sobrante, 2) . " por devolución física al cliente";
+                        $mensajeDiferencia = " | Se registró egreso en caja de -{$sim} " . number_format($sobrante, 2) . " por devolución física al cliente";
 
                     } else {
                         // Dejar como saldo a favor (crédito en cuenta)
@@ -337,7 +340,7 @@ class PosController extends Controller
                                 $cliObj->increment('saldo_favor', $sobrante);
                             }
                         }
-                        $mensajeDiferencia = " | Se abonaron Bs. " . number_format($sobrante, 2) . " como saldo a favor del cliente";
+                        $mensajeDiferencia = " | Se abonaron {$sim} " . number_format($sobrante, 2) . " como saldo a favor del cliente";
                     }
                 }
             } else {
@@ -381,8 +384,9 @@ class PosController extends Controller
 
             DB::commit();
 
+            $sim = Configuracion::monedaSimbolo();
             $mensaje = ($metodoPago === 'Por Pagar' && $saldoPendiente > 0)
-                ? '¡Venta Por Pagar registrada! Adelanto: Bs. ' . number_format($montoPagado, 2) . ' | Saldo Pendiente: Bs. ' . number_format($saldoPendiente, 2) . $mensajeDiferencia
+                ? "¡Venta Por Pagar registrada! Adelanto: {$sim} " . number_format($montoPagado, 2) . " | Saldo Pendiente: {$sim} " . number_format($saldoPendiente, 2) . $mensajeDiferencia
                 : '¡Venta cobrada con éxito!' . $mensajeDiferencia;
 
             return redirect('/pos')

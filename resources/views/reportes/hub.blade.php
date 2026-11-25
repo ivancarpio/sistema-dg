@@ -97,7 +97,7 @@
     </div>
     <div class="stat-pill">
         <i class="bi bi-cash-stack text-success"></i>
-        Recaudado este mes: <span>Bs. {{ number_format($totalRecaudadoMes, 2) }}</span>
+        Recaudado este mes: <span>{{ $monedaSimbolo }} {{ number_format($totalRecaudadoMes, 2) }}</span>
     </div>
     <div class="stat-pill">
         <i class="bi bi-box-seam text-warning"></i>
@@ -139,7 +139,7 @@
                         <i class="bi bi-calendar-day me-1"></i> {{ $ventasMes }} ventas en el mes
                     </div>
                     <div style="background:#f0fdf4; border-radius:8px; padding:6px 12px; font-size:0.75rem; font-weight:700; color:#16a34a;">
-                        <i class="bi bi-cash me-1"></i> Bs. {{ number_format($totalRecaudadoMes, 2) }}
+                        <i class="bi bi-cash me-1"></i> {{ $monedaSimbolo }} {{ number_format($totalRecaudadoMes, 2) }}
                     </div>
                 </div>
             </div>
@@ -171,10 +171,10 @@
                 </p>
                 <div class="d-flex flex-wrap gap-2 mt-3">
                     <div style="background:#fef2f2; border-radius:8px; padding:6px 12px; font-size:0.75rem; font-weight:700; color:#dc2626;">
-                        <i class="bi bi-receipt me-1"></i> Gastos mes: Bs. {{ number_format($gastosMes ?? 0, 2) }}
+                        <i class="bi bi-receipt me-1"></i> Gastos mes: {{ $monedaSimbolo }} {{ number_format($gastosMes ?? 0, 2) }}
                     </div>
                     <div style="background:#f5f3ff; border-radius:8px; padding:6px 12px; font-size:0.75rem; font-weight:700; color:#7c3aed;">
-                        <i class="bi bi-bank me-1"></i> Retiros banco: Bs. {{ number_format($retirosBancoMes ?? 0, 2) }}
+                        <i class="bi bi-bank me-1"></i> Retiros banco: {{ $monedaSimbolo }} {{ number_format($retirosBancoMes ?? 0, 2) }}
                     </div>
                 </div>
             </div>

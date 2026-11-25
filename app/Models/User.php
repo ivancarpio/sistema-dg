@@ -109,6 +109,12 @@ class User extends Authenticatable
                 'icono' => 'bi-person-badge',
                 'color' => 'info',
             ],
+            'cotizaciones' => [
+                'nombre' => 'Cotizaciones',
+                'descripcion' => 'Crear proformas a clientes o tiendas externas, PDF y envío por WhatsApp.',
+                'icono' => 'bi-file-earmark-text',
+                'color' => 'primary',
+            ],
             'usuarios' => [
                 'nombre' => 'Gestión de Usuarios',
                 'descripcion' => 'Crear personal, asignar roles y configurar permisos.',

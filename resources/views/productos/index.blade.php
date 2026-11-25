@@ -414,7 +414,7 @@
             <div class="stat-content-prod">
                 <div class="stat-lbl-prod">Valor en Tienda</div>
                 <div class="stat-val-prod stat-val-valor" style="color: #4f46e5;">
-                    <span class="stat-currency">Bs.</span>{{ number_format($valorInventario, 2) }}
+                    <span class="stat-currency">{{ $monedaSimbolo }}</span> {{ number_format($valorInventario, 2) }}
                 </div>
                 <small class="text-muted d-block text-truncate">precio de venta</small>
             </div>
@@ -778,28 +778,28 @@
                     
                     <div class="row g-3 mb-3">
                         <div class="col-md-4">
-                            <label class="form-label text-dark fw-bold">Precio Venta (Bs.) *</label>
+                            <label class="form-label text-dark fw-bold">Precio Venta ({{ $monedaSimbolo }}) *</label>
                             <div class="input-group">
-                                <span class="input-group-text bg-light fw-bold text-success">Bs.</span>
+                                <span class="input-group-text bg-light fw-bold text-success">{{ $monedaSimbolo }}</span>
                                 <input type="number" name="precio_venta" step="0.01" class="form-control fw-bold text-success fs-5" placeholder="0.00" required>
                             </div>
                             <small class="text-muted" style="font-size: 0.74rem;">Clientes ocasionales.</small>
                         </div>
                         <div class="col-md-4">
                             <label class="form-label text-dark fw-bold">
-                                Precio Cliente (Bs.)
+                                Precio Cliente ({{ $monedaSimbolo }})
                                 <span class="badge bg-light text-secondary border fw-normal" style="font-size: 0.70rem;">Opcional</span>
                             </label>
                             <div class="input-group">
-                                <span class="input-group-text bg-light fw-bold" style="color: #0284c7;">Bs.</span>
+                                <span class="input-group-text bg-light fw-bold" style="color: #0284c7;">{{ $monedaSimbolo }}</span>
                                 <input type="number" name="precio_cliente" step="0.01" class="form-control fw-bold fs-5" style="color: #0284c7;" placeholder="0.00">
                             </div>
                             <small class="text-muted" style="font-size: 0.74rem;">Ferreterías / regulares.</small>
                         </div>
                         <div class="col-md-4">
-                            <label class="form-label text-dark fw-bold">Costo Unitario (Bs.) *</label>
+                            <label class="form-label text-dark fw-bold">Costo Unitario ({{ $monedaSimbolo }}) *</label>
                             <div class="input-group">
-                                <span class="input-group-text bg-light fw-bold">Bs.</span>
+                                <span class="input-group-text bg-light fw-bold">{{ $monedaSimbolo }}</span>
                                 <input type="number" name="costo" step="0.01" class="form-control fw-bold fs-5" placeholder="0.00" value="0.00" required>
                             </div>
                             <small class="text-muted" style="font-size: 0.74rem;">Costo de adquisición.</small>
@@ -875,17 +875,17 @@
                                     <small class="text-muted" style="font-size: 0.72rem;">¿Cuántas piezas/unidades base contiene 1 empaque?</small>
                                 </div>
                                 <div class="col-md-6">
-                                    <label class="form-label text-dark fw-bold small">Precio Venta por Empaque (Bs.)</label>
+                                    <label class="form-label text-dark fw-bold small">Precio Venta por Empaque ({{ $monedaSimbolo }})</label>
                                     <div class="input-group">
-                                        <span class="input-group-text bg-light fw-bold text-success">Bs.</span>
+                                        <span class="input-group-text bg-light fw-bold text-success">{{ $monedaSimbolo }}</span>
                                         <input type="number" name="precio_venta_secundario" step="0.01" min="0" class="form-control fw-bold text-success fs-5" placeholder="0.00">
                                     </div>
                                     <small class="text-muted" style="font-size: 0.72rem;">Precio de venta al público para clientes ocasionales.</small>
                                 </div>
                                 <div class="col-md-6">
-                                    <label class="form-label text-dark fw-bold small">Precio Cliente por Empaque (Bs.)</label>
+                                    <label class="form-label text-dark fw-bold small">Precio Cliente por Empaque ({{ $monedaSimbolo }})</label>
                                     <div class="input-group">
-                                        <span class="input-group-text bg-light fw-bold" style="color: #0284c7;">Bs.</span>
+                                        <span class="input-group-text bg-light fw-bold" style="color: #0284c7;">{{ $monedaSimbolo }}</span>
                                         <input type="number" name="precio_cliente_secundario" step="0.01" min="0" class="form-control fw-bold fs-5" style="color: #0284c7;" placeholder="0.00">
                                     </div>
                                     <small class="text-muted" style="font-size: 0.72rem;">Precio preferencial para ferreterías / clientes regulares.</small>
@@ -946,28 +946,28 @@
                     </div>
                     <div class="row g-3 mb-3">
                         <div class="col-md-4">
-                            <label class="form-label text-dark fw-bold">Precio Venta (Bs.) *</label>
+                            <label class="form-label text-dark fw-bold">Precio Venta ({{ $monedaSimbolo }}) *</label>
                             <div class="input-group">
-                                <span class="input-group-text bg-light fw-bold text-success">Bs.</span>
+                                <span class="input-group-text bg-light fw-bold text-success">{{ $monedaSimbolo }}</span>
                                 <input type="number" name="precio_venta" id="editPrecioVenta" step="0.01" class="form-control fw-bold text-success fs-5" required>
                             </div>
                             <small class="text-muted" style="font-size: 0.74rem;">Clientes ocasionales.</small>
                         </div>
                         <div class="col-md-4">
                             <label class="form-label text-dark fw-bold">
-                                Precio Cliente (Bs.)
+                                Precio Cliente ({{ $monedaSimbolo }})
                                 <span class="badge bg-light text-secondary border fw-normal" style="font-size: 0.70rem;">Opcional</span>
                             </label>
                             <div class="input-group">
-                                <span class="input-group-text bg-light fw-bold" style="color: #0284c7;">Bs.</span>
+                                <span class="input-group-text bg-light fw-bold" style="color: #0284c7;">{{ $monedaSimbolo }}</span>
                                 <input type="number" name="precio_cliente" id="editPrecioCliente" step="0.01" class="form-control fw-bold fs-5" style="color: #0284c7;">
                             </div>
                             <small class="text-muted" style="font-size: 0.74rem;">Ferreterías / regulares.</small>
                         </div>
                         <div class="col-md-4">
-                            <label class="form-label text-dark fw-bold">Costo (Bs.) *</label>
+                            <label class="form-label text-dark fw-bold">Costo ({{ $monedaSimbolo }}) *</label>
                             <div class="input-group">
-                                <span class="input-group-text bg-light fw-bold">Bs.</span>
+                                <span class="input-group-text bg-light fw-bold">{{ $monedaSimbolo }}</span>
                                 <input type="number" name="costo" id="editCosto" step="0.01" class="form-control fw-bold fs-5" required>
                             </div>
                             <small class="text-muted" style="font-size: 0.74rem;">Costo de adquisición.</small>
@@ -1043,17 +1043,17 @@
                                     <small class="text-muted" style="font-size: 0.72rem;">¿Cuántas piezas/unidades base contiene 1 empaque?</small>
                                 </div>
                                 <div class="col-md-6">
-                                    <label class="form-label text-dark fw-bold small">Precio Venta por Empaque (Bs.)</label>
+                                    <label class="form-label text-dark fw-bold small">Precio Venta por Empaque ({{ $monedaSimbolo }})</label>
                                     <div class="input-group">
-                                        <span class="input-group-text bg-light fw-bold text-success">Bs.</span>
+                                        <span class="input-group-text bg-light fw-bold text-success">{{ $monedaSimbolo }}</span>
                                         <input type="number" name="precio_venta_secundario" id="editPrecioVentaSec" step="0.01" min="0" class="form-control fw-bold text-success fs-5" placeholder="0.00">
                                     </div>
                                     <small class="text-muted" style="font-size: 0.72rem;">Precio de venta al público para clientes ocasionales.</small>
                                 </div>
                                 <div class="col-md-6">
-                                    <label class="form-label text-dark fw-bold small">Precio Cliente por Empaque (Bs.)</label>
+                                    <label class="form-label text-dark fw-bold small">Precio Cliente por Empaque ({{ $monedaSimbolo }})</label>
                                     <div class="input-group">
-                                        <span class="input-group-text bg-light fw-bold" style="color: #0284c7;">Bs.</span>
+                                        <span class="input-group-text bg-light fw-bold" style="color: #0284c7;">{{ $monedaSimbolo }}</span>
                                         <input type="number" name="precio_cliente_secundario" id="editPrecioClienteSec" step="0.01" min="0" class="form-control fw-bold fs-5" style="color: #0284c7;" placeholder="0.00">
                                     </div>
                                     <small class="text-muted" style="font-size: 0.72rem;">Precio preferencial para ferreterías / clientes regulares.</small>

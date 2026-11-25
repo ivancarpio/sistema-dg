@@ -241,9 +241,9 @@
         @if($venta->metodo_pago === 'Por Pagar' && floatval($venta->saldo_pendiente ?? 0) > 0)
         <div class="credito-box">
             <strong>Control de Crédito:</strong> 
-            Cobrado/Adelanto: Bs. {{ number_format($venta->monto_pagado ?? 0, 2) }} 
+            Cobrado/Adelanto: {{ $monedaSimbolo }} {{ number_format($venta->monto_pagado ?? 0, 2) }} 
             &nbsp;|&nbsp; 
-            <strong>Saldo Pendiente: Bs. {{ number_format($venta->saldo_pendiente, 2) }}</strong>
+            <strong>Saldo Pendiente: {{ $monedaSimbolo }} {{ number_format($venta->saldo_pendiente, 2) }}</strong>
         </div>
         @endif
     </div>
@@ -276,10 +276,10 @@
                     <strong style="color: #0f172a;">{{ optional($detalle->producto)->nombre ?? 'Producto Eliminado' }}</strong>
                 </td>
                 <td class="text-right">
-                    Bs. {{ number_format($detalle->precio_unitario, 2) }}
+                    {{ $monedaSimbolo }} {{ number_format($detalle->precio_unitario, 2) }}
                 </td>
                 <td class="text-right" style="font-weight: 600;">
-                    Bs. {{ number_format($detalle->subtotal, 2) }}
+                    {{ $monedaSimbolo }} {{ number_format($detalle->subtotal, 2) }}
                 </td>
             </tr>
             @endforeach
@@ -290,7 +290,7 @@
                     TOTAL A PAGAR:
                 </td>
                 <td class="text-right total-highlight">
-                    Bs. {{ number_format($venta->total, 2) }}
+                    {{ $monedaSimbolo }} {{ number_format($venta->total, 2) }}
                 </td>
             </tr>
         </tfoot>

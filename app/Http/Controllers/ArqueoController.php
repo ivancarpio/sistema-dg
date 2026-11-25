@@ -11,6 +11,7 @@ use App\Models\Venta;
 use App\Models\User;
 use App\Models\Gasto;
 use App\Models\CategoriaGasto;
+use App\Models\Configuracion;
 use App\Exports\ArqueoExport;
 use Maatwebsite\Excel\Facades\Excel;
 use Illuminate\Support\Facades\Auth;
@@ -130,7 +131,8 @@ class ArqueoController extends Controller
             'observaciones'  => $request->observaciones ? trim($request->observaciones) : null,
         ]);
 
-        return redirect('/arqueos/sesion')->with('success', '¡Turno de caja #' . $sesion->id . ' iniciado exitosamente con Bs. ' . number_format($montoInicial, 2) . ' en gaveta!');
+        $sim = Configuracion::monedaSimbolo();
+        return redirect('/arqueos/sesion')->with('success', '¡Turno de caja #' . $sesion->id . ' iniciado exitosamente con ' . $sim . ' ' . number_format($montoInicial, 2) . ' en gaveta!');
     }
 
     /**
@@ -167,11 +169,12 @@ class ArqueoController extends Controller
 
         $sesion->save();
 
+        $sim = Configuracion::monedaSimbolo();
         $estadoDif = ($diferencia == 0)
             ? '¡Caja cuadra exactamente al centavo!'
-            : ($diferencia > 0 ? 'Sobrante en caja de +Bs. ' . number_format($diferencia, 2) : 'Faltante en caja de -Bs. ' . number_format(abs($diferencia), 2));
+            : ($diferencia > 0 ? "Sobrante en caja de +{$sim} " . number_format($diferencia, 2) : "Faltante en caja de -{$sim} " . number_format(abs($diferencia), 2));
 
-        return redirect('/arqueos/sesion')->with('success', "¡Turno de caja #{$sesion->id} cerrado con éxito! Efectivo esperado: Bs. " . number_format($esperado, 2) . " | Declarado: Bs. " . number_format($declarado, 2) . " ({$estadoDif})");
+        return redirect('/arqueos/sesion')->with('success', "¡Turno de caja #{$sesion->id} cerrado con éxito! Efectivo esperado: {$sim} " . number_format($esperado, 2) . " | Declarado: {$sim} " . number_format($declarado, 2) . " ({$estadoDif})");
     }
 
     /**
@@ -317,20 +320,23 @@ class ArqueoController extends Controller
                     ]);
 
                     $mov->update(['gasto_id' => $gasto->id]);
+                    $sim = Configuracion::monedaSimbolo();
                     if ($request->metodo_pago === 'Efectivo') {
                         $sesion->increment('total_egresos', $monto);
-                        $msg = "Gasto Operativo de Bs. " . number_format($monto, 2) . " registrado y descontado de la gaveta de efectivo.";
+                        $msg = "Gasto Operativo de {$sim} " . number_format($monto, 2) . " registrado y descontado de la gaveta de efectivo.";
                     } else {
-                        $msg = "Gasto Operativo de Bs. " . number_format($monto, 2) . " registrado vía QR / Banco.";
+                        $msg = "Gasto Operativo de {$sim} " . number_format($monto, 2) . " registrado vía QR / Banco.";
                     }
                 } elseif ($tipo === 'egreso_retiro') {
                     // Descuenta de la gaveta física pero NO es gasto operativo (no afecta Utilidad Neta)
                     if ($request->metodo_pago === 'Efectivo') {
                         $sesion->increment('total_egresos', $monto);
                     }
-                    $msg = "Retiro / Traslado de Bs. " . number_format($monto, 2) . " registrado como egreso de efectivo.";
+                    $sim = Configuracion::monedaSimbolo();
+                    $msg = "Retiro / Traslado de {$sim} " . number_format($monto, 2) . " registrado como egreso de efectivo.";
                 } else {
-                    $msg = "Ingreso extra de Bs. " . number_format($monto, 2) . " registrado en caja.";
+                    $sim = Configuracion::monedaSimbolo();
+                    $msg = "Ingreso extra de {$sim} " . number_format($monto, 2) . " registrado en caja.";
                 }
             });
 

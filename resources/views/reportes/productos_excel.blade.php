@@ -20,15 +20,15 @@
             <th style="border: 1px solid #94a3b8; text-align: center;">CATEGORÍA</th>
             <th style="border: 1px solid #94a3b8; text-align: center;">MARCA</th>
             <th style="border: 1px solid #94a3b8; text-align: center;">UNIDAD BASE</th>
-            <th style="border: 1px solid #94a3b8; text-align: right;">COSTO (Bs.)</th>
-            <th style="border: 1px solid #94a3b8; text-align: right;">PRECIO VENTA BASE (Bs.)</th>
-            <th style="border: 1px solid #94a3b8; text-align: right;">PRECIO CLIENTE BASE (Bs.)</th>
+            <th style="border: 1px solid #94a3b8; text-align: right;">COSTO ({{ $monedaSimbolo }})</th>
+            <th style="border: 1px solid #94a3b8; text-align: right;">PRECIO VENTA BASE ({{ $monedaSimbolo }})</th>
+            <th style="border: 1px solid #94a3b8; text-align: right;">PRECIO CLIENTE BASE ({{ $monedaSimbolo }})</th>
             <th style="border: 1px solid #94a3b8; text-align: center;">2DA UNIDAD / EMPAQUE</th>
             <th style="border: 1px solid #94a3b8; text-align: center;">FACTOR CONVERSIÓN</th>
-            <th style="border: 1px solid #94a3b8; text-align: right;">P. VENTA EMPAQUE (Bs.)</th>
-            <th style="border: 1px solid #94a3b8; text-align: right;">P. CLIENTE EMPAQUE (Bs.)</th>
+            <th style="border: 1px solid #94a3b8; text-align: right;">P. VENTA EMPAQUE ({{ $monedaSimbolo }})</th>
+            <th style="border: 1px solid #94a3b8; text-align: right;">P. CLIENTE EMPAQUE ({{ $monedaSimbolo }})</th>
             <th style="border: 1px solid #94a3b8; text-align: center;">STOCK EN TIENDA</th>
-            <th style="border: 1px solid #94a3b8; text-align: right;">VALOR EN TIENDA (Bs.)</th>
+            <th style="border: 1px solid #94a3b8; text-align: right;">VALOR EN TIENDA ({{ $monedaSimbolo }})</th>
             <th style="border: 1px solid #94a3b8; text-align: center;">ESTADO STOCK</th>
         </tr>
     </thead>
@@ -90,7 +90,7 @@
         </tr>
         <tr style="background-color: #f1f5f9; font-weight: bold;">
             <td colspan="6" style="border: 1px solid #cbd5e1; text-align: right; font-weight: bold;">TOTALES GENERALES ({{ count($productos) }} PRODUCTOS):</td>
-            <td style="border: 1px solid #cbd5e1; text-align: right; font-weight: bold;">Bs. {{ number_format($sumCosto, 2) }}</td>
+            <td style="border: 1px solid #cbd5e1; text-align: right; font-weight: bold;">{{ $monedaSimbolo }} {{ number_format($sumCosto, 2) }}</td>
             <td style="border: 1px solid #cbd5e1; text-align: right;">—</td>
             <td style="border: 1px solid #cbd5e1; text-align: right;">—</td>
             <td style="border: 1px solid #cbd5e1; text-align: center;">—</td>
@@ -98,7 +98,7 @@
             <td style="border: 1px solid #cbd5e1; text-align: right;">—</td>
             <td style="border: 1px solid #cbd5e1; text-align: right;">—</td>
             <td style="border: 1px solid #cbd5e1; text-align: center; font-weight: bold; font-size: 11pt;">{{ number_format($sumStock, 0) }}</td>
-            <td style="border: 1px solid #cbd5e1; text-align: right; font-weight: bold; font-size: 11pt; color: #0284c7;">Bs. {{ number_format($sumValor, 2) }}</td>
+            <td style="border: 1px solid #cbd5e1; text-align: right; font-weight: bold; font-size: 11pt; color: #0284c7;">{{ $monedaSimbolo }} {{ number_format($sumValor, 2) }}</td>
             <td style="border: 1px solid #cbd5e1; text-align: center;">Auditoría Completa</td>
         </tr>
     </tfoot>

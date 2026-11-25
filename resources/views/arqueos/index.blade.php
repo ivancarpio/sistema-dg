@@ -183,7 +183,7 @@
             <div class="col-6 col-md-3">
                 <div class="stat-card card bg-white p-3 h-100">
                     <div class="stat-label mb-1"><i class="bi bi-cash-stack me-1"></i>Total arqueado este mes</div>
-                    <div class="stat-value text-money">Bs. {{ number_format($totalArqueadoMes, 2) }}</div>
+                    <div class="stat-value text-money">{{ $monedaSimbolo }} {{ number_format($totalArqueadoMes, 2) }}</div>
                 </div>
             </div>
             {{-- Ventas sin arquear --}}
@@ -198,7 +198,7 @@
                 <div class="stat-card card bg-white p-3 h-100">
                     <div class="stat-label mb-1"><i class="bi bi-exclamation-circle me-1"></i>Monto sin arquear</div>
                     <div class="stat-value {{ $montoSinArquear > 0 ? 'text-danger' : '' }}">
-                        Bs. {{ number_format($montoSinArquear, 2) }}
+                        {{ $monedaSimbolo }} {{ number_format($montoSinArquear, 2) }}
                     </div>
                 </div>
             </div>
@@ -298,19 +298,19 @@
                         {{-- Efectivo --}}
                         <td>
                             <span class="text-success fw-bold">
-                                Bs. {{ number_format($arqueo->total_efectivo, 2) }}
+                                {{ $monedaSimbolo }} {{ number_format($arqueo->total_efectivo, 2) }}
                             </span>
                         </td>
                         {{-- QR --}}
                         <td>
                             <span class="text-primary fw-bold">
-                                Bs. {{ number_format($arqueo->total_qr, 2) }}
+                                {{ $monedaSimbolo }} {{ number_format($arqueo->total_qr, 2) }}
                             </span>
                         </td>
                         {{-- Total --}}
                         <td>
                             <span class="fw-bold text-dark fs-6">
-                                Bs. {{ number_format($arqueo->total_general, 2) }}
+                                {{ $monedaSimbolo }} {{ number_format($arqueo->total_general, 2) }}
                             </span>
                         </td>
                         {{-- Acciones --}}

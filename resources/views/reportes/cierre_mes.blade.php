@@ -380,35 +380,35 @@
             <div class="col-6 col-md">
                 <div class="p-3 rounded-3 bg-light border text-center h-100">
                     <span class="text-muted small fw-bold text-uppercase d-block" style="font-size: 0.68rem;">Ventas Facturadas</span>
-                    <strong class="text-dark fs-5 my-1 d-block">Bs. {{ number_format($ingresosVentas, 2) }}</strong>
+                    <strong class="text-dark fs-5 my-1 d-block">{{ $monedaSimbolo }} {{ number_format($ingresosVentas, 2) }}</strong>
                     <span class="text-muted small">100% ingresos</span>
                 </div>
             </div>
             <div class="col-6 col-md">
                 <div class="p-3 rounded-3 bg-light border text-center h-100">
                     <span class="text-muted small fw-bold text-uppercase d-block" style="font-size: 0.68rem;">(-) Costo Mercadería (CMV)</span>
-                    <strong class="text-secondary fs-5 my-1 d-block">Bs. {{ number_format($costoVentas, 2) }}</strong>
+                    <strong class="text-secondary fs-5 my-1 d-block">{{ $monedaSimbolo }} {{ number_format($costoVentas, 2) }}</strong>
                     <span class="text-muted small">Costo catálogo</span>
                 </div>
             </div>
             <div class="col-6 col-md">
                 <div class="p-3 rounded-3 bg-light border text-center h-100">
                     <span class="text-muted small fw-bold text-uppercase d-block" style="font-size: 0.68rem;">(=) Utilidad Bruta</span>
-                    <strong class="text-primary fs-5 my-1 d-block">Bs. {{ number_format($utilidadBruta, 2) }}</strong>
+                    <strong class="text-primary fs-5 my-1 d-block">{{ $monedaSimbolo }} {{ number_format($utilidadBruta, 2) }}</strong>
                     <span class="badge bg-info bg-opacity-10 text-info small">Margen comercial</span>
                 </div>
             </div>
             <div class="col-6 col-md">
                 <div class="p-3 rounded-3 bg-danger bg-opacity-10 border border-danger border-opacity-25 text-center h-100">
                     <span class="text-danger small fw-bold text-uppercase d-block" style="font-size: 0.68rem;">(-) Gastos Operativos</span>
-                    <strong class="text-danger fs-5 my-1 d-block">Bs. {{ number_format($gastosOperativos, 2) }}</strong>
+                    <strong class="text-danger fs-5 my-1 d-block">{{ $monedaSimbolo }} {{ number_format($gastosOperativos, 2) }}</strong>
                     <span class="badge bg-danger text-white small">Egresos negocio</span>
                 </div>
             </div>
             <div class="col-12 col-md">
                 <div class="p-3 rounded-3 {{ $utilidadNeta >= 0 ? 'bg-success bg-opacity-10 border-success' : 'bg-danger bg-opacity-10 border-danger' }} border border-opacity-25 text-center h-100">
                     <span class="{{ $utilidadNeta >= 0 ? 'text-success' : 'text-danger' }} small fw-bold text-uppercase d-block" style="font-size: 0.68rem;">(=) UTILIDAD NETA</span>
-                    <strong class="{{ $utilidadNeta >= 0 ? 'text-success' : 'text-danger' }} fs-4 my-1 d-block">Bs. {{ number_format($utilidadNeta, 2) }}</strong>
+                    <strong class="{{ $utilidadNeta >= 0 ? 'text-success' : 'text-danger' }} fs-4 my-1 d-block">{{ $monedaSimbolo }} {{ number_format($utilidadNeta, 2) }}</strong>
                     <span class="badge {{ $utilidadNeta >= 0 ? 'bg-success' : 'bg-danger' }} text-white small">Ganancia Líquida</span>
                 </div>
             </div>
@@ -805,15 +805,15 @@
                         <div class="border-top pt-2 mt-2">
                             <div class="d-flex justify-content-between mb-1 small">
                                 <span class="text-muted">Ventas Facturadas:</span>
-                                <strong class="text-dark">Bs. {{ number_format($ingresosVentas, 2) }}</strong>
+                                <strong class="text-dark">{{ $monedaSimbolo }} {{ number_format($ingresosVentas, 2) }}</strong>
                             </div>
                             <div class="d-flex justify-content-between mb-1 small">
                                 <span class="text-muted">Gastos Operativos:</span>
-                                <strong class="text-danger">Bs. {{ number_format($gastosOperativos, 2) }}</strong>
+                                <strong class="text-danger">{{ $monedaSimbolo }} {{ number_format($gastosOperativos, 2) }}</strong>
                             </div>
                             <div class="d-flex justify-content-between small">
                                 <span class="text-muted fw-bold">Utilidad Neta Oficial:</span>
-                                <strong class="{{ $utilidadNeta >= 0 ? 'text-success' : 'text-danger' }}">Bs. {{ number_format($utilidadNeta, 2) }}</strong>
+                                <strong class="{{ $utilidadNeta >= 0 ? 'text-success' : 'text-danger' }}">{{ $monedaSimbolo }} {{ number_format($utilidadNeta, 2) }}</strong>
                             </div>
                         </div>
                     </div>

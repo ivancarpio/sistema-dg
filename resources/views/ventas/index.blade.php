@@ -233,7 +233,7 @@
                 <span class="stat-lbl-venta">Facturado Válido</span>
                 <i class="bi bi-cash-stack text-success fs-4"></i>
             </div>
-            <div class="stat-val-venta text-success">Bs. {{ number_format($totalFacturado, 2) }}</div>
+            <div class="stat-val-venta text-success">{{ $monedaSimbolo }} {{ number_format($totalFacturado, 2) }}</div>
             <small class="text-muted">sin contar anuladas</small>
         </div>
     </div>
@@ -450,7 +450,7 @@
 
                             {{-- Total --}}
                             <td class="fw-bold {{ $esAnulada ? 'text-muted text-decoration-line-through' : 'text-success' }}" style="font-size: 0.95rem;">
-                                Bs. {{ number_format($venta->total, 2) }}
+                                {{ $monedaSimbolo }} {{ number_format($venta->total, 2) }}
                             </td>
 
                             {{-- Cajero --}}
@@ -632,7 +632,7 @@
                                 </span>
                             </td>
                             <td class="text-end fw-bold text-success fs-6">
-                                Bs. {{ number_format($comp->total_gastado, 2) }}
+                                {{ $monedaSimbolo }} {{ number_format($comp->total_gastado, 2) }}
                             </td>
                             <td>
                                 <div class="fw-semibold text-dark">{{ \Carbon\Carbon::parse($comp->ultima_compra)->format('d/m/Y') }}</div>
@@ -701,7 +701,7 @@
                         </div>
                         <div class="d-flex justify-content-between align-items-center">
                             <span class="small text-muted fw-bold">TOTAL VENTA:</span>
-                            <span class="fw-bold text-success fs-5">Bs. <span id="anularNotaTotal">0.00</span></span>
+                            <span class="fw-bold text-success fs-5">{{ $monedaSimbolo }} <span id="anularNotaTotal">0.00</span></span>
                         </div>
                     </div>
 
@@ -785,21 +785,21 @@
                         </div>
                         <div class="d-flex justify-content-between align-items-center mb-2">
                             <span class="small text-muted fw-bold">TOTAL VENTA:</span>
-                            <span class="fw-bold text-dark">Bs. <span id="cobroNotaTotal">0.00</span></span>
+                            <span class="fw-bold text-dark">{{ $monedaSimbolo }} <span id="cobroNotaTotal">0.00</span></span>
                         </div>
                         <div class="d-flex justify-content-between align-items-center pt-2 border-top">
                             <span class="small text-danger fw-bold text-uppercase">Saldo Pendiente:</span>
-                            <span class="fw-bold text-danger fs-4">Bs. <span id="cobroNotaSaldo">0.00</span></span>
+                            <span class="fw-bold text-danger fs-4">{{ $monedaSimbolo }} <span id="cobroNotaSaldo">0.00</span></span>
                         </div>
                     </div>
 
                     <!-- Monto a cobrar -->
                     <div class="mb-3 text-start">
                         <label class="form-label fw-bold text-dark small text-uppercase">
-                            Monto a Cobrar / Pagar (Bs.) *
+                            Monto a Cobrar / Pagar ({{ $monedaSimbolo }}) *
                         </label>
                         <div class="input-group input-group-lg">
-                            <span class="input-group-text bg-light text-success fw-bold">Bs.</span>
+                            <span class="input-group-text bg-light text-success fw-bold">{{ $monedaSimbolo }}</span>
                             <input type="number" step="0.10" min="0.50" name="monto_abono" id="inputMontoCobroNota" class="form-control fw-bold text-success fs-4" required>
                         </div>
                         <div class="form-text small">Por defecto cobra el saldo total adeudado. Puedes modificarlo si el cliente realiza un pago parcial.</div>

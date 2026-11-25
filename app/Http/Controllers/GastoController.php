@@ -9,6 +9,7 @@ use App\Models\ArqueoCaja;
 use App\Models\MovimientoCaja;
 use App\Models\CajaChicaMovimiento;
 use App\Models\CierreMes;
+use App\Models\Configuracion;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
@@ -158,7 +159,8 @@ class GastoController extends Controller
                 } elseif ($request->origen_pago === 'caja_chica') {
                     $saldoActual = CajaChicaMovimiento::saldoActual();
                     if ($saldoActual < $monto) {
-                        throw new \Exception('Saldo insuficiente en Caja Chica. Saldo disponible actual: Bs. ' . number_format($saldoActual, 2) . '. Realiza una reposición antes de registrar este gasto.');
+                        $sim = Configuracion::monedaSimbolo();
+                        throw new \Exception('Saldo insuficiente en Caja Chica. Saldo disponible actual: ' . $sim . ' ' . number_format($saldoActual, 2) . '. Realiza una reposición antes de registrar este gasto.');
                     }
 
                     // 1. Crear el Gasto unificado
@@ -205,7 +207,8 @@ class GastoController extends Controller
                 }
             });
 
-            return back()->with('success', '¡Gasto operativo de Bs. ' . number_format($monto, 2) . ' registrado con éxito!');
+            $sim = Configuracion::monedaSimbolo();
+            return back()->with('success', "¡Gasto operativo de {$sim} " . number_format($monto, 2) . ' registrado con éxito!');
         } catch (\Exception $e) {
             return back()->with('error', $e->getMessage())->withInput();
         }
@@ -311,7 +314,8 @@ class GastoController extends Controller
             'Content-Disposition' => "attachment; filename=\"{$filename}\"",
         ];
 
-        $callback = function () use ($gastos) {
+        $sim = Configuracion::monedaSimbolo();
+        $callback = function () use ($gastos, $sim) {
             $file = fopen('php://output', 'w');
             // BOM UTF-8 para apertura correcta en Microsoft Excel
             fputs($file, "\xEF\xBB\xBF");
@@ -321,7 +325,7 @@ class GastoController extends Controller
                 'Fecha y Hora',
                 'Categoría',
                 'Descripción',
-                'Monto (Bs.)',
+                "Monto ({$sim})",
                 'Origen de Pago',
                 'Turno Gaveta #',
                 'N° Comprobante',

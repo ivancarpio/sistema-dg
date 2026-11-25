@@ -215,20 +215,7 @@ class ConfiguracionController extends Controller
 
         // Configuración de País y Moneda Base
         if ($request->has('pais_operacion')) {
-            $pais = $request->input('pais_operacion');
-            Configuracion::set('pais_operacion', $pais, 'País de operación principal');
-
-            if ($pais === 'PE') {
-                Configuracion::set('moneda_principal', 'PEN', 'Código ISO moneda principal');
-                Configuracion::set('moneda_simbolo', 'S/', 'Símbolo moneda principal');
-                Configuracion::set('moneda_secundaria', 'BOB', 'Código ISO moneda secundaria');
-                Configuracion::set('moneda_secundaria_simbolo', 'Bs.', 'Símbolo moneda secundaria');
-            } else {
-                Configuracion::set('moneda_principal', 'BOB', 'Código ISO moneda principal');
-                Configuracion::set('moneda_simbolo', 'Bs.', 'Símbolo moneda principal');
-                Configuracion::set('moneda_secundaria', 'PEN', 'Código ISO moneda secundaria');
-                Configuracion::set('moneda_secundaria_simbolo', 'S/', 'Símbolo moneda secundaria');
-            }
+            $this->aplicarPaisMoneda($request->input('pais_operacion'));
         }
 
         // Datos del negocio
@@ -252,6 +239,61 @@ class ConfiguracionController extends Controller
         }
 
         return back()->with('success', 'Ajustes del sistema actualizados con éxito.');
+    }
+
+    /**
+     * Aplica de forma atómica el país y la moneda activa en todo el sistema.
+     */
+    private function aplicarPaisMoneda(string $pais): void
+    {
+        $pais = strtoupper($pais) === 'PE' ? 'PE' : 'BO';
+        Configuracion::set('pais_operacion', $pais, 'País de operación principal');
+
+        if ($pais === 'PE') {
+            Configuracion::set('moneda_principal', 'PEN', 'Código ISO moneda principal');
+            Configuracion::set('moneda_simbolo', 'S/', 'Símbolo moneda principal');
+            Configuracion::set('moneda_secundaria', 'BOB', 'Código ISO moneda secundaria');
+            Configuracion::set('moneda_secundaria_simbolo', 'Bs.', 'Símbolo moneda secundaria');
+        } else {
+            Configuracion::set('moneda_principal', 'BOB', 'Código ISO moneda principal');
+            Configuracion::set('moneda_simbolo', 'Bs.', 'Símbolo moneda principal');
+            Configuracion::set('moneda_secundaria', 'PEN', 'Código ISO moneda secundaria');
+            Configuracion::set('moneda_secundaria_simbolo', 'S/', 'Símbolo moneda secundaria');
+        }
+    }
+
+    /**
+     * Cambio instantáneo de moneda (Bs. <-> S/) desde Configuración o Dashboard.
+     */
+    public function updateMoneda(Request $request)
+    {
+        if (!auth()->check() || !auth()->user()->tienePermiso('configuracion')) {
+            if ($request->ajax() || $request->wantsJson()) {
+                return response()->json(['success' => false, 'message' => 'No tienes permiso para cambiar la moneda del sistema.'], 403);
+            }
+            return back()->with('error', 'Acceso denegado.');
+        }
+
+        $request->validate([
+            'pais_operacion' => 'required|in:BO,PE',
+        ]);
+
+        $pais = $request->input('pais_operacion');
+        $this->aplicarPaisMoneda($pais);
+
+        $simbolo = $pais === 'PE' ? 'S/' : 'Bs.';
+        $nombreMoneda = $pais === 'PE' ? 'Soles Peruanos (S/)' : 'Bolivianos (Bs.)';
+
+        if ($request->ajax() || $request->wantsJson()) {
+            return response()->json([
+                'success' => true,
+                'pais_operacion' => $pais,
+                'moneda_simbolo' => $simbolo,
+                'mensaje' => "Moneda global cambiada a {$nombreMoneda}.",
+            ]);
+        }
+
+        return back()->with('success', "Moneda del sistema actualizada a {$nombreMoneda}.");
     }
 
     public function toggleQrModal(Request $request)
@@ -387,6 +429,6 @@ class ConfiguracionController extends Controller
             \Illuminate\Support\Facades\Artisan::call('view:clear');
         } catch (\Throwable $e) {}
 
-        return back()->with('success', '¡Logo oficial actualizado con éxito! Se aplicará automáticamente en notas de venta, login, barra lateral y en todo el sistema.');
+        return back()->with('success', '¡Logo oficial actualizado con éxito! Se aplicará automáticamente en notas de venta, notas de cotización en PDF, login, barra lateral y en todo el sistema.');
     }
 }

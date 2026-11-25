@@ -83,10 +83,10 @@
                 </div>
                 <div class="small text-white-50 text-uppercase fw-bold letter-spacing-1">Efectivo Físico Esperado en Gaveta</div>
                 <div class="display-5 fw-bold text-white">
-                    Bs. {{ number_format($sesion->efectivo_esperado, 2) }}
+                    {{ $monedaSimbolo }} {{ number_format($sesion->efectivo_esperado, 2) }}
                 </div>
                 <div class="small text-white-50 mt-1">
-                    Inicial (Bs. {{ number_format($sesion->monto_inicial, 2) }}) + Cobros Efectivo (Bs. {{ number_format($sesion->total_efectivo_sistema, 2) }}) - Egresos Efectivo (Bs. {{ number_format($sesion->egresos_efectivo, 2) }})
+                    Inicial ({{ $monedaSimbolo }} {{ number_format($sesion->monto_inicial, 2) }}) + Cobros Efectivo ({{ $monedaSimbolo }} {{ number_format($sesion->total_efectivo_sistema, 2) }}) - Egresos Efectivo ({{ $monedaSimbolo }} {{ number_format($sesion->egresos_efectivo, 2) }})
                 </div>
             </div>
             <div class="d-flex flex-wrap gap-2">
@@ -112,7 +112,7 @@
                     <i class="bi bi-cash-stack text-secondary fs-5"></i>
                 </div>
                 <div class="fs-4 fw-bold text-dark">
-                    Bs. {{ number_format($sesion->monto_inicial, 2) }}
+                    {{ $monedaSimbolo }} {{ number_format($sesion->monto_inicial, 2) }}
                 </div>
                 <small class="text-muted" style="font-size:0.75rem;">Fondo de apertura</small>
             </div>
@@ -124,7 +124,7 @@
                     <i class="bi bi-cash-coin text-success fs-5"></i>
                 </div>
                 <div class="fs-4 fw-bold text-success">
-                    + Bs. {{ number_format($sesion->total_efectivo_sistema, 2) }}
+                    + {{ $monedaSimbolo }} {{ number_format($sesion->total_efectivo_sistema, 2) }}
                 </div>
                 <small class="text-muted" style="font-size:0.75rem;">Ventas y abonos directos</small>
             </div>
@@ -136,7 +136,7 @@
                     <i class="bi bi-qr-code text-primary fs-5"></i>
                 </div>
                 <div class="fs-4 fw-bold text-primary">
-                    + Bs. {{ number_format($sesion->total_qr_sistema, 2) }}
+                    + {{ $monedaSimbolo }} {{ number_format($sesion->total_qr_sistema, 2) }}
                 </div>
                 <small class="text-muted" style="font-size:0.75rem;">Verificable en extracto</small>
             </div>
@@ -148,7 +148,7 @@
                     <i class="bi bi-arrow-down-right-circle text-danger fs-5"></i>
                 </div>
                 <div class="fs-4 fw-bold text-danger">
-                    - Bs. {{ number_format($sesion->total_egresos, 2) }}
+                    - {{ $monedaSimbolo }} {{ number_format($sesion->total_egresos, 2) }}
                 </div>
                 <small class="text-muted" style="font-size:0.75rem;">Salidas reales de caja</small>
             </div>
@@ -203,7 +203,7 @@
                                         @endif
                                     </td>
                                     <td class="text-muted small">{{ $pago->observacion ?: 'Cobro de venta' }}</td>
-                                    <td class="text-end pe-3 fw-bold text-success">+ Bs. {{ number_format($pago->monto, 2) }}</td>
+                                    <td class="text-end pe-3 fw-bold text-success">+ {{ $monedaSimbolo }} {{ number_format($pago->monto, 2) }}</td>
                                 </tr>
                                 @empty
                                 <tr>
@@ -256,7 +256,7 @@
                                     <td class="small">{{ $mov->motivo }}</td>
                                     <td class="small text-muted">{{ optional($mov->usuario)->name ?? 'Usuario' }}</td>
                                     <td class="text-end pe-3 fw-bold {{ in_array($mov->tipo, ['egreso_gasto', 'egreso_retiro', 'egreso_devolucion']) ? 'text-danger' : 'text-success' }}">
-                                        {{ in_array($mov->tipo, ['egreso_gasto', 'egreso_retiro', 'egreso_devolucion']) ? '- Bs. ' : '+ Bs. ' }}{{ number_format($mov->monto, 2) }}
+                                        {{ in_array($mov->tipo, ['egreso_gasto', 'egreso_retiro', 'egreso_devolucion']) ? '- ' . $monedaSimbolo . ' ' : '+ ' . $monedaSimbolo . ' ' }}{{ number_format($mov->monto, 2) }}
                                     </td>
                                 </tr>
                                 @empty
@@ -291,9 +291,9 @@
                 <form action="/arqueos/abrir" method="POST" class="text-start">
                     @csrf
                     <div class="mb-3">
-                        <label class="form-label fw-bold text-dark small">Monto Inicial en Gaveta (Bs.) *</label>
+                        <label class="form-label fw-bold text-dark small">Monto Inicial en Gaveta ({{ $monedaSimbolo }}) *</label>
                         <div class="input-group">
-                            <span class="input-group-text bg-light fw-bold text-muted">Bs.</span>
+                            <span class="input-group-text bg-light fw-bold text-muted">{{ $monedaSimbolo }}</span>
                             <input type="number" step="0.5" min="0" name="monto_inicial" class="form-control form-control-lg fw-bold text-primary" value="0.00" placeholder="0.00" required autofocus>
                         </div>
                         <small class="text-muted" style="font-size:0.75rem;">Dinero físico en billetes y monedas con el que inicias el turno.</small>
@@ -353,7 +353,7 @@
                 <label class="form-label small fw-bold text-muted mb-1">Resultado del Cuadre</label>
                 <select name="cuadre" class="form-select form-select-sm">
                     <option value="">Todos (Exactos y Diferencias)</option>
-                    <option value="exacto" {{ request('cuadre') === 'exacto' ? 'selected' : '' }}>Exacto (Bs. 0.00)</option>
+                    <option value="exacto" {{ request('cuadre') === 'exacto' ? 'selected' : '' }}>Exacto ({{ $monedaSimbolo }} 0.00)</option>
                     <option value="sobrante" {{ request('cuadre') === 'sobrante' ? 'selected' : '' }}>Con Sobrante (+)</option>
                     <option value="faltante" {{ request('cuadre') === 'faltante' ? 'selected' : '' }}>Con Faltante (-)</option>
                 </select>
@@ -376,19 +376,19 @@
                 <div class="col-6 col-md-3">
                     <div class="p-2 rounded-3 bg-success bg-opacity-10 border border-success-subtle">
                         <div class="text-muted" style="font-size:0.68rem; font-weight:700; text-transform:uppercase;">Cobros Efectivo (Período)</div>
-                        <div class="fw-bold text-success">Bs. {{ number_format($resumenHistorial['efectivo_sistema'], 2) }}</div>
+                        <div class="fw-bold text-success">{{ $monedaSimbolo }} {{ number_format($resumenHistorial['efectivo_sistema'], 2) }}</div>
                     </div>
                 </div>
                 <div class="col-6 col-md-3">
                     <div class="p-2 rounded-3 bg-primary bg-opacity-10 border border-primary-subtle">
                         <div class="text-muted" style="font-size:0.68rem; font-weight:700; text-transform:uppercase;">Cobros QR (Período)</div>
-                        <div class="fw-bold text-primary">Bs. {{ number_format($resumenHistorial['qr_sistema'], 2) }}</div>
+                        <div class="fw-bold text-primary">{{ $monedaSimbolo }} {{ number_format($resumenHistorial['qr_sistema'], 2) }}</div>
                     </div>
                 </div>
                 <div class="col-6 col-md-3">
                     <div class="p-2 rounded-3 bg-light border">
                         <div class="text-muted" style="font-size:0.68rem; font-weight:700; text-transform:uppercase;">Total Efectivo Contado</div>
-                        <div class="fw-bold text-dark">Bs. {{ number_format($resumenHistorial['declarado_fisico'], 2) }}</div>
+                        <div class="fw-bold text-dark">{{ $monedaSimbolo }} {{ number_format($resumenHistorial['declarado_fisico'], 2) }}</div>
                     </div>
                 </div>
                 <div class="col-6 col-md-3">
@@ -397,11 +397,11 @@
                         <div class="text-muted" style="font-size:0.68rem; font-weight:700; text-transform:uppercase;">Balance Diferencias</div>
                         <div class="fw-bold {{ $netoDif == 0 ? 'text-success' : ($netoDif > 0 ? 'text-primary' : 'text-danger') }}">
                             @if($netoDif == 0)
-                                Exacto (Bs. 0.00)
+                                Exacto ({{ $monedaSimbolo }} 0.00)
                             @elseif($netoDif > 0)
-                                + Bs. {{ number_format($netoDif, 2) }} (Sobrante)
+                                + {{ $monedaSimbolo }} {{ number_format($netoDif, 2) }} (Sobrante)
                             @else
-                                - Bs. {{ number_format(abs($netoDif), 2) }} (Faltante)
+                                - {{ $monedaSimbolo }} {{ number_format(abs($netoDif), 2) }} (Faltante)
                             @endif
                         </div>
                     </div>
@@ -459,19 +459,19 @@
                                 <span class="text-muted">—</span>
                             @endif
                         </td>
-                        <td class="text-end small">Bs. {{ number_format($cierre->monto_inicial, 2) }}</td>
-                        <td class="text-end small text-success fw-bold">Bs. {{ number_format($cierre->total_efectivo_sistema, 2) }}</td>
-                        <td class="text-end small text-primary fw-bold">Bs. {{ number_format($cierre->total_qr_sistema, 2) }}</td>
-                        <td class="text-end small text-danger">Bs. {{ number_format($cierre->total_egresos, 2) }}</td>
-                        <td class="text-end small text-muted fw-semibold">Bs. {{ number_format($esperadoCierre, 2) }}</td>
-                        <td class="text-end small fw-bold text-dark">Bs. {{ number_format($cierre->monto_fisico_declarado ?? 0, 2) }}</td>
+                        <td class="text-end small">{{ $monedaSimbolo }} {{ number_format($cierre->monto_inicial, 2) }}</td>
+                        <td class="text-end small text-success fw-bold">{{ $monedaSimbolo }} {{ number_format($cierre->total_efectivo_sistema, 2) }}</td>
+                        <td class="text-end small text-primary fw-bold">{{ $monedaSimbolo }} {{ number_format($cierre->total_qr_sistema, 2) }}</td>
+                        <td class="text-end small text-danger">{{ $monedaSimbolo }} {{ number_format($cierre->total_egresos, 2) }}</td>
+                        <td class="text-end small text-muted fw-semibold">{{ $monedaSimbolo }} {{ number_format($esperadoCierre, 2) }}</td>
+                        <td class="text-end small fw-bold text-dark">{{ $monedaSimbolo }} {{ number_format($cierre->monto_fisico_declarado ?? 0, 2) }}</td>
                         <td class="text-end">
                             @if($dif == 0)
-                                <span class="badge bg-success bg-opacity-10 text-success border border-success-subtle fw-bold">Exacto (Bs. 0.00)</span>
+                                <span class="badge bg-success bg-opacity-10 text-success border border-success-subtle fw-bold">Exacto ({{ $monedaSimbolo }} 0.00)</span>
                             @elseif($dif > 0)
-                                <span class="badge bg-primary bg-opacity-10 text-primary border border-primary-subtle fw-bold">Sobrante +Bs. {{ number_format($dif, 2) }}</span>
+                                <span class="badge bg-primary bg-opacity-10 text-primary border border-primary-subtle fw-bold">Sobrante +{{ $monedaSimbolo }} {{ number_format($dif, 2) }}</span>
                             @else
-                                <span class="badge bg-danger bg-opacity-10 text-danger border border-danger-subtle fw-bold">Faltante -Bs. {{ number_format(abs($dif), 2) }}</span>
+                                <span class="badge bg-danger bg-opacity-10 text-danger border border-danger-subtle fw-bold">Faltante -{{ $monedaSimbolo }} {{ number_format(abs($dif), 2) }}</span>
                             @endif
                         </td>
                         <td class="text-center pe-3">
@@ -562,9 +562,9 @@
                     </div>
 
                     <div class="mb-3">
-                        <label class="form-label fw-bold text-dark small">Monto de la salida (Bs.) *</label>
+                        <label class="form-label fw-bold text-dark small">Monto de la salida ({{ $monedaSimbolo }}) *</label>
                         <div class="input-group">
-                            <span class="input-group-text bg-light fw-bold text-muted">Bs.</span>
+                            <span class="input-group-text bg-light fw-bold text-muted">{{ $monedaSimbolo }}</span>
                             <input type="number" step="0.5" min="0.5" name="monto" class="form-control form-control-lg fw-bold text-danger" placeholder="0.00" required>
                         </div>
                     </div>
@@ -609,9 +609,9 @@
                 <input type="hidden" name="tipo" value="ingreso_extra">
                 <div class="modal-body p-4 text-start">
                     <div class="mb-3">
-                        <label class="form-label fw-bold text-dark small">Monto que ingresa (Bs.) *</label>
+                        <label class="form-label fw-bold text-dark small">Monto que ingresa ({{ $monedaSimbolo }}) *</label>
                         <div class="input-group">
-                            <span class="input-group-text bg-light fw-bold text-muted">Bs.</span>
+                            <span class="input-group-text bg-light fw-bold text-muted">{{ $monedaSimbolo }}</span>
                             <input type="number" step="0.5" min="0.5" name="monto" class="form-control form-control-lg fw-bold text-primary" placeholder="0.00" required>
                         </div>
                     </div>
@@ -651,18 +651,18 @@
                     <div class="p-3 rounded-3 mb-3 border bg-light">
                         <div class="d-flex justify-content-between align-items-center mb-1 text-muted small">
                             <span>Efectivo según Sistema:</span>
-                            <strong class="text-dark">Bs. {{ number_format($sesion->efectivo_esperado, 2) }}</strong>
+                            <strong class="text-dark">{{ $monedaSimbolo }} {{ number_format($sesion->efectivo_esperado, 2) }}</strong>
                         </div>
                         <div class="d-flex justify-content-between align-items-center text-muted small">
                             <span>QR / Banco según Sistema:</span>
-                            <strong class="text-primary">Bs. {{ number_format($sesion->total_qr_sistema, 2) }}</strong>
+                            <strong class="text-primary">{{ $monedaSimbolo }} {{ number_format($sesion->total_qr_sistema, 2) }}</strong>
                         </div>
                     </div>
 
                     <div class="mb-3">
-                        <label class="form-label fw-bold text-dark">Efectivo Físico Contado en Gaveta (Bs.) *</label>
+                        <label class="form-label fw-bold text-dark">Efectivo Físico Contado en Gaveta ({{ $monedaSimbolo }}) *</label>
                         <div class="input-group">
-                            <span class="input-group-text bg-light fw-bold text-muted">Bs.</span>
+                            <span class="input-group-text bg-light fw-bold text-muted">{{ $monedaSimbolo }}</span>
                             <input type="number" step="0.5" min="0" name="monto_fisico_declarado" id="inputMontoDeclaradoCierre" class="form-control form-control-lg fw-bold text-primary" placeholder="0.00" required autofocus>
                         </div>
                         <small class="text-muted" style="font-size:0.75rem;">Cuenta tus billetes y monedas físicos en la gaveta y escribe el total exacto.</small>
@@ -671,7 +671,7 @@
                     <div id="cajaDiferenciaCierre" class="p-2.5 rounded-3 mb-3 border" style="display: none;">
                         <div class="d-flex justify-content-between align-items-center small">
                             <span class="fw-bold" id="lblDifCierre">Diferencia:</span>
-                            <span class="fs-5 fw-bold" id="txtDifCierre">Bs. 0.00</span>
+                            <span class="fs-5 fw-bold" id="txtDifCierre">{{ $monedaSimbolo }} 0.00</span>
                         </div>
                     </div>
 
@@ -715,6 +715,7 @@ function toggleTipoSalida(tipo) {
 }
 
 document.addEventListener('DOMContentLoaded', function() {
+    const monedaSimboloSesion = '{{ $monedaSimbolo ?? "Bs." }}';
     const esperado = {{ $sesion->efectivo_esperado }};
     const inputDecl = document.getElementById('inputMontoDeclaradoCierre');
     const boxDif = document.getElementById('cajaDiferenciaCierre');
@@ -731,19 +732,19 @@ document.addEventListener('DOMContentLoaded', function() {
                 boxDif.className = 'p-2.5 rounded-3 mb-3 border border-success bg-success bg-opacity-10';
                 lblDif.textContent = '¡Caja Cuadrada Exacta!';
                 lblDif.className = 'fw-bold text-success';
-                txtDif.textContent = 'Bs. 0.00';
+                txtDif.textContent = `${monedaSimboloSesion} 0.00`;
                 txtDif.className = 'fs-5 fw-bold text-success';
             } else if (diff > 0) {
                 boxDif.className = 'p-2.5 rounded-3 mb-3 border border-primary bg-primary bg-opacity-10';
                 lblDif.textContent = 'Sobrante en caja:';
                 lblDif.className = 'fw-bold text-primary';
-                txtDif.textContent = `+ Bs. ${diff.toFixed(2)}`;
+                txtDif.textContent = `+ ${monedaSimboloSesion} ${diff.toFixed(2)}`;
                 txtDif.className = 'fs-5 fw-bold text-primary';
             } else {
                 boxDif.className = 'p-2.5 rounded-3 mb-3 border border-danger bg-danger bg-opacity-10';
                 lblDif.textContent = 'Faltante en caja:';
                 lblDif.className = 'fw-bold text-danger';
-                txtDif.textContent = `- Bs. ${Math.abs(diff).toFixed(2)}`;
+                txtDif.textContent = `- ${monedaSimboloSesion} ${Math.abs(diff).toFixed(2)}`;
                 txtDif.className = 'fs-5 fw-bold text-danger';
             }
         });
@@ -800,28 +801,28 @@ document.addEventListener('DOMContentLoaded', function() {
                         <div class="col-6 col-lg-3">
                             <div class="p-3 rounded-3 bg-light border h-100">
                                 <div class="text-muted" style="font-size:0.68rem; font-weight:700; text-transform:uppercase;">Fondo Inicial</div>
-                                <div class="fs-5 fw-bold text-dark" id="detInicial">Bs. 0.00</div>
-                                <div class="text-muted" style="font-size:0.7rem;" id="detDesgloseMovs">Efec: Bs. 0.00 | QR: Bs. 0.00</div>
+                                <div class="fs-5 fw-bold text-dark" id="detInicial">{{ $monedaSimbolo }} 0.00</div>
+                                <div class="text-muted" style="font-size:0.7rem;" id="detDesgloseMovs">Efec: {{ $monedaSimbolo }} 0.00 | QR: {{ $monedaSimbolo }} 0.00</div>
                             </div>
                         </div>
                         <div class="col-6 col-lg-3">
                             <div class="p-3 rounded-3 bg-primary bg-opacity-10 border border-primary-subtle h-100">
                                 <div class="text-muted" style="font-size:0.68rem; font-weight:700; text-transform:uppercase;">Esperado en Gaveta</div>
-                                <div class="fs-5 fw-bold text-primary" id="detEsperado">Bs. 0.00</div>
-                                <div class="text-danger" style="font-size:0.7rem;" id="detEgresosEfec">Egresos efec: - Bs. 0.00</div>
+                                <div class="fs-5 fw-bold text-primary" id="detEsperado">{{ $monedaSimbolo }} 0.00</div>
+                                <div class="text-danger" style="font-size:0.7rem;" id="detEgresosEfec">Egresos efec: - {{ $monedaSimbolo }} 0.00</div>
                             </div>
                         </div>
                         <div class="col-6 col-lg-3">
                             <div class="p-3 rounded-3 bg-success bg-opacity-10 border border-success-subtle h-100">
                                 <div class="text-muted" style="font-size:0.68rem; font-weight:700; text-transform:uppercase;">Contado Físico</div>
-                                <div class="fs-5 fw-bold text-success" id="detContado">Bs. 0.00</div>
-                                <div class="text-muted" style="font-size:0.7rem;" id="detQrInfo">QR Banco: Bs. 0.00</div>
+                                <div class="fs-5 fw-bold text-success" id="detContado">{{ $monedaSimbolo }} 0.00</div>
+                                <div class="text-muted" style="font-size:0.7rem;" id="detQrInfo">QR Banco: {{ $monedaSimbolo }} 0.00</div>
                             </div>
                         </div>
                         <div class="col-6 col-lg-3">
                             <div id="detDiferenciaCard" class="p-3 rounded-3 border h-100">
                                 <div class="text-muted" style="font-size:0.68rem; font-weight:700; text-transform:uppercase;">Diferencia (Cuadre)</div>
-                                <div class="fs-5 fw-bold" id="detDiferencia">Bs. 0.00</div>
+                                <div class="fs-5 fw-bold" id="detDiferencia">{{ $monedaSimbolo }} 0.00</div>
                                 <div style="font-size:0.7rem;" id="detDiferenciaEstado">—</div>
                             </div>
                         </div>
@@ -887,9 +888,10 @@ document.addEventListener('DOMContentLoaded', function() {
 </div>
 
 <script>
+const simboloMonedaModal = '{{ $monedaSimbolo ?? "Bs." }}';
 function formatBs(val) {
     const num = Number(val) || 0;
-    return 'Bs. ' + num.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    return simboloMonedaModal + ' ' + num.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 }
 
 function createCell(text, className = '') {
@@ -949,7 +951,7 @@ function verDetalleTurnoCerrado(id) {
         if (dif === 0) {
             difCard.className = 'p-3 rounded-3 border border-success-subtle bg-success bg-opacity-10 h-100';
             difVal.className = 'fs-5 fw-bold text-success';
-            difVal.textContent = 'Bs. 0.00';
+            difVal.textContent = formatBs(0);
             difEst.className = 'fw-bold text-success';
             difEst.textContent = 'Cuadre exacto';
         } else if (dif > 0) {

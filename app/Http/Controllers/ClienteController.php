@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Models\Cliente;
+use App\Models\Configuracion;
 use App\Models\Venta;
 use Illuminate\Support\Facades\DB;
 
@@ -147,7 +148,8 @@ class ClienteController extends Controller
             
             // Verificar si tiene saldo pendiente (Bloqueo absoluto)
             if ($cliente->saldo_pendiente_total > 0) {
-                return back()->withErrors(['No se puede eliminar al cliente "' . $cliente->nombre . '" porque tiene un saldo pendiente de Bs. ' . number_format($cliente->saldo_pendiente_total, 2) . '. El cliente debe liquidar su deuda antes de ser eliminado del sistema.']);
+                $sim = Configuracion::monedaSimbolo();
+                return back()->withErrors(['No se puede eliminar al cliente "' . $cliente->nombre . '" porque tiene un saldo pendiente de ' . $sim . ' ' . number_format($cliente->saldo_pendiente_total, 2) . '. El cliente debe liquidar su deuda antes de ser eliminado del sistema.']);
             }
 
             // Desvincular ventas históricas sin perder los comprobantes
@@ -164,6 +166,7 @@ class ClienteController extends Controller
     // Registrar abono o pago de deuda de un cliente
     public function registrarAbono(Request $request, $id)
     {
+        $sim = Configuracion::monedaSimbolo();
         $request->validate([
             'monto_abono' => 'required|numeric|min:0.5',
             'metodo_pago' => 'required|in:Efectivo,QR',
@@ -171,7 +174,7 @@ class ClienteController extends Controller
         ], [
             'monto_abono.required' => 'Debes ingresar el monto a cobrar.',
             'monto_abono.numeric'  => 'El monto debe ser un valor numérico válido.',
-            'monto_abono.min'      => 'El monto mínimo a cobrar es Bs. 0.50.',
+            'monto_abono.min'      => "El monto mínimo a cobrar es {$sim} 0.50.",
             'metodo_pago.required' => 'Debes seleccionar el método de pago del cobro.',
         ]);
 
@@ -179,7 +182,7 @@ class ClienteController extends Controller
         $saldoPendienteTotal = floatval($cliente->saldo_pendiente_total);
 
         if ($saldoPendienteTotal <= 0) {
-            return back()->with('error', "El cliente '{$cliente->nombre}' no tiene deudas pendientes (Saldo: Bs. 0.00).");
+            return back()->with('error', "El cliente '{$cliente->nombre}' no tiene deudas pendientes (Saldo: {$sim} 0.00).");
         }
 
         $abonoTotal = floatval($request->monto_abono);
@@ -249,11 +252,11 @@ class ClienteController extends Controller
             DB::commit();
 
             $saldoRestanteCliente = max(0, round($saldoPendienteTotal - $abonoTotal, 2));
-            $msg = "¡Cobro registrado! Se cobraron Bs. " . number_format($abonoTotal, 2) . " a {$cliente->nombre} por {$request->metodo_pago}.";
+            $msg = "¡Cobro registrado! Se cobraron {$sim} " . number_format($abonoTotal, 2) . " a {$cliente->nombre} por {$request->metodo_pago}.";
             if ($saldoRestanteCliente == 0) {
                 $msg .= " ¡La deuda quedó 100% SALDADA (Al día)!";
             } else {
-                $msg .= " Saldo pendiente restante: Bs. " . number_format($saldoRestanteCliente, 2) . ".";
+                $msg .= " Saldo pendiente restante: {$sim} " . number_format($saldoRestanteCliente, 2) . ".";
             }
 
             return back()->with('success', $msg);

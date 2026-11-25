@@ -504,7 +504,7 @@
                 <div class="row g-2" id="nuevo-permisos-container">
                     @foreach($catalogoPermisos as $slug => $permiso)
                     @php
-                        $defaultCheck = in_array($slug, ['pos', 'ventas', 'clientes']);
+                        $defaultCheck = in_array($slug, ['pos', 'ventas', 'clientes', 'cotizaciones']);
                     @endphp
                     <div class="col-md-6">
                         <label class="permiso-card d-flex align-items-center w-100 m-0">

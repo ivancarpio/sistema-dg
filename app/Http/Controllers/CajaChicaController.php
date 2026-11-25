@@ -9,6 +9,7 @@ use App\Models\CategoriaGasto;
 use App\Models\ArqueoCaja;
 use App\Models\MovimientoCaja;
 use App\Models\CierreMes;
+use App\Models\Configuracion;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
@@ -76,6 +77,7 @@ class CajaChicaController extends Controller
      */
     public function storeReposicion(Request $request)
     {
+        $sim = Configuracion::monedaSimbolo();
         $request->validate([
             'monto'          => 'required|numeric|min:0.5',
             'origen_fondos'  => 'required|in:gaveta,externo',
@@ -83,7 +85,7 @@ class CajaChicaController extends Controller
             'comprobante'    => 'nullable|string|max:100',
         ], [
             'monto.required'         => 'Ingresa el monto a reponer en Caja Chica.',
-            'monto.min'              => 'El monto debe ser de al menos Bs. 0.50.',
+            'monto.min'              => "El monto debe ser de al menos {$sim} 0.50.",
             'origen_fondos.required' => 'Indica el origen del dinero para la reposición.',
         ]);
 
@@ -132,7 +134,8 @@ class CajaChicaController extends Controller
                 ]);
             });
 
-            return back()->with('success', '¡Reposición de Bs. ' . number_format($monto, 2) . ' registrada exitosamente en Caja Chica!');
+            $sim = Configuracion::monedaSimbolo();
+            return back()->with('success', "¡Reposición de {$sim} " . number_format($monto, 2) . ' registrada exitosamente en Caja Chica!');
         } catch (\Exception $e) {
             return back()->with('error', $e->getMessage())->withInput();
         }
@@ -158,8 +161,9 @@ class CajaChicaController extends Controller
         $monto = floatval($request->monto);
         $saldoActual = CajaChicaMovimiento::saldoActual();
 
+        $sim = Configuracion::monedaSimbolo();
         if ($saldoActual < $monto) {
-            return back()->with('error', 'Saldo insuficiente en Caja Chica. Saldo disponible actual: Bs. ' . number_format($saldoActual, 2) . '. Repón fondos antes de registrar este egreso.');
+            return back()->with('error', "Saldo insuficiente en Caja Chica. Saldo disponible actual: {$sim} " . number_format($saldoActual, 2) . '. Repón fondos antes de registrar este egreso.');
         }
 
         try {
@@ -192,7 +196,7 @@ class CajaChicaController extends Controller
                 ]);
             });
 
-            return back()->with('success', '¡Gasto de Bs. ' . number_format($monto, 2) . ' pagado desde Caja Chica registrado!');
+            return back()->with('success', "¡Gasto de {$sim} " . number_format($monto, 2) . ' pagado desde Caja Chica registrado!');
         } catch (\Exception $e) {
             return back()->with('error', 'Error al procesar el gasto: ' . $e->getMessage());
         }
@@ -218,8 +222,9 @@ class CajaChicaController extends Controller
         $monto = floatval($request->monto);
         $saldoPrevio = CajaChicaMovimiento::saldoActual();
 
+        $sim = Configuracion::monedaSimbolo();
         if ($request->tipo === 'ajuste_egreso' && $saldoPrevio < $monto) {
-            return back()->with('error', 'El ajuste de egreso (Bs. ' . number_format($monto, 2) . ') no puede superar el saldo actual de Caja Chica (Bs. ' . number_format($saldoPrevio, 2) . ').');
+            return back()->with('error', "El ajuste de egreso ({$sim} " . number_format($monto, 2) . ") no puede superar el saldo actual de Caja Chica ({$sim} " . number_format($saldoPrevio, 2) . ').');
         }
 
         try {
@@ -240,7 +245,7 @@ class CajaChicaController extends Controller
             });
 
             $signo = $request->tipo === 'ajuste_ingreso' ? '+' : '-';
-            return back()->with('success', "¡Ajuste de auditoría ({$signo}Bs. " . number_format($monto, 2) . ") registrado con éxito!");
+            return back()->with('success', "¡Ajuste de auditoría ({$signo}{$sim} " . number_format($monto, 2) . ") registrado con éxito!");
         } catch (\Exception $e) {
             return back()->with('error', 'Error al registrar el ajuste: ' . $e->getMessage());
         }
@@ -278,7 +283,8 @@ class CajaChicaController extends Controller
             'Content-Disposition' => "attachment; filename=\"{$filename}\"",
         ];
 
-        $callback = function () use ($movimientos) {
+        $sim = Configuracion::monedaSimbolo();
+        $callback = function () use ($movimientos, $sim) {
             $file = fopen('php://output', 'w');
             fputs($file, "\xEF\xBB\xBF");
 
@@ -286,8 +292,8 @@ class CajaChicaController extends Controller
                 'ID',
                 'Fecha y Hora',
                 'Tipo de Movimiento',
-                'Monto (Bs.)',
-                'Saldo Resultante (Bs.)',
+                "Monto ({$sim})",
+                "Saldo Resultante ({$sim})",
                 'Concepto / Justificación',
                 'N° Comprobante',
                 'Gasto Vinculado #',

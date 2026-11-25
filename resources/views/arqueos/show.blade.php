@@ -178,7 +178,7 @@
             </div>
             <div>
                 <div class="total-label">Efectivo cobrado</div>
-                <div class="total-value text-success">Bs. {{ number_format($arqueo->total_efectivo, 2) }}</div>
+                <div class="total-value text-success">{{ $monedaSimbolo }} {{ number_format($arqueo->total_efectivo, 2) }}</div>
                 <small class="text-muted">{{ $arqueo->ventas->filter(fn($v) => strtolower($v->metodo_cobro_real) === 'efectivo')->count() }} ventas · contar los billetes</small>
             </div>
         </div>
@@ -190,7 +190,7 @@
             </div>
             <div>
                 <div class="total-label">QR / Transferencia</div>
-                <div class="total-value text-primary">Bs. {{ number_format($arqueo->total_qr, 2) }}</div>
+                <div class="total-value text-primary">{{ $monedaSimbolo }} {{ number_format($arqueo->total_qr, 2) }}</div>
                 <small class="text-muted">{{ $arqueo->ventas->filter(fn($v) => strtolower($v->metodo_cobro_real) === 'qr')->count() }} ventas · verificar en banco</small>
             </div>
         </div>
@@ -202,7 +202,7 @@
             </div>
             <div>
                 <div class="total-label text-white opacity-75">Total General</div>
-                <div class="total-value text-white">Bs. {{ number_format($arqueo->total_general, 2) }}</div>
+                <div class="total-value text-white">{{ $monedaSimbolo }} {{ number_format($arqueo->total_general, 2) }}</div>
                 <small class="text-white opacity-75">{{ $arqueo->cantidad_ventas }} ventas totales</small>
             </div>
         </div>
@@ -282,7 +282,7 @@
                                         <i class="bi bi-person me-1"></i>{{ $venta->cliente ?? 'Sin nombre' }}
                                     </span>
                                 </td>
-                                <td class="fw-bold text-success">Bs. {{ number_format($venta->total, 2) }}</td>
+                                <td class="fw-bold text-success">{{ $monedaSimbolo }} {{ number_format($venta->total, 2) }}</td>
                                 <td>
                                     @php
                                         $metodoCobro = $venta->metodo_cobro_real;
@@ -291,9 +291,9 @@
                                     @endphp
                                     @if(!$estaAlDia)
                                         <span class="badge bg-warning text-dark border"><i class="bi bi-clock-history me-1"></i>Por Pagar</span>
-                                        <small class="text-danger fw-bold d-block mt-0.5" style="font-size:0.75rem;">Debe: Bs. {{ number_format($saldoPend, 2) }}</small>
+                                        <small class="text-danger fw-bold d-block mt-0.5" style="font-size:0.75rem;">Debe: {{ $monedaSimbolo }} {{ number_format($saldoPend, 2) }}</small>
                                         @if(($venta->monto_pagado ?? 0) > 0)
-                                            <small class="text-muted d-block" style="font-size:0.70rem;">Abonado: Bs. {{ number_format($venta->monto_pagado, 2) }}</small>
+                                            <small class="text-muted d-block" style="font-size:0.70rem;">Abonado: {{ $monedaSimbolo }} {{ number_format($venta->monto_pagado, 2) }}</small>
                                         @endif
                                     @else
                                         @if(strtolower($metodoCobro) === 'qr')
@@ -343,16 +343,16 @@
                                                 </span>
                                             </span>
                                             <span style="flex:1.5; text-align:right; color:#64748b;">
-                                                Bs. {{ number_format($detalle->precio_unitario, 2) }}
+                                                {{ $monedaSimbolo }} {{ number_format($detalle->precio_unitario, 2) }}
                                             </span>
                                             <span style="flex:1.5; text-align:right; font-weight:700; color:#16a34a;">
-                                                Bs. {{ number_format($detalle->subtotal, 2) }}
+                                                {{ $monedaSimbolo }} {{ number_format($detalle->subtotal, 2) }}
                                             </span>
                                         </div>
                                         @endforeach
                                         <div style="display:flex; justify-content:flex-end; margin-top:8px; padding-top:8px; border-top:2px solid #bfdbfe;">
                                             <span style="font-weight:800; color:#1e40af; font-size:0.88rem;">
-                                                Total nota: Bs. {{ number_format($venta->total, 2) }}
+                                                Total nota: {{ $monedaSimbolo }} {{ number_format($venta->total, 2) }}
                                             </span>
                                         </div>
                                     </div>
@@ -370,13 +370,13 @@
                         <tfoot>
                             <tr style="background: #f8fafc; border-top: 2px solid #e2e8f0;">
                                 <td colspan="3" class="ps-4 fw-bold text-uppercase text-muted" style="font-size:0.78rem;">Totales</td>
-                                <td class="fw-bold text-dark fs-6">Bs. {{ number_format($arqueo->total_general, 2) }}</td>
+                                <td class="fw-bold text-dark fs-6">{{ $monedaSimbolo }} {{ number_format($arqueo->total_general, 2) }}</td>
                                 <td colspan="4" class="pe-4">
                                     <span class="text-success fw-bold me-3">
-                                        <i class="bi bi-cash me-1"></i>Bs. {{ number_format($arqueo->total_efectivo, 2) }}
+                                        <i class="bi bi-cash me-1"></i>{{ $monedaSimbolo }} {{ number_format($arqueo->total_efectivo, 2) }}
                                     </span>
                                     <span class="text-primary fw-bold">
-                                        <i class="bi bi-qr-code me-1"></i>Bs. {{ number_format($arqueo->total_qr, 2) }}
+                                        <i class="bi bi-qr-code me-1"></i>{{ $monedaSimbolo }} {{ number_format($arqueo->total_qr, 2) }}
                                     </span>
                                 </td>
                             </tr>
@@ -449,7 +449,7 @@
                         <div>
                             <div class="fw-bold text-dark" style="font-size:0.9rem;">{{ $producto['nombre'] }}</div>
                             <div class="text-muted" style="font-size:0.75rem;">
-                                Bs. {{ number_format($producto['precio'], 2) }} c/u
+                                {{ $monedaSimbolo }} {{ number_format($producto['precio'], 2) }} c/u
                                 · {{ $producto['ventas'] }} venta(s)
                             </div>
                             {{-- Barra de proporción --}}
@@ -464,7 +464,7 @@
                         </span>
                     </div>
                     <div style="flex:1.5; text-align:right; font-weight:800; color:#16a34a; font-size:1rem;">
-                        Bs. {{ number_format($producto['subtotal'], 2) }}
+                        {{ $monedaSimbolo }} {{ number_format($producto['subtotal'], 2) }}
                     </div>
                 </div>
                 @empty
@@ -484,7 +484,7 @@
                         Total consolidado — {{ $totalProductosDistintos }} producto(s) distintos
                     </span>
                     <span class="text-white fw-bold fs-5">
-                        Bs. {{ number_format($arqueo->total_general, 2) }}
+                        {{ $monedaSimbolo }} {{ number_format($arqueo->total_general, 2) }}
                     </span>
                 </div>
                 @endif

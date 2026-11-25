@@ -446,7 +446,7 @@
         </div>
         <div class="d-flex align-items-center gap-2 mt-2 mt-md-0">
             <span class="badge bg-white text-dark border px-2.5 py-1.5 shadow-sm fw-bold">
-                Total Original: <span class="text-success">Bs. {{ number_format($ventaRehacer->total, 2) }}</span>
+                Total Original: <span class="text-success">{{ $monedaSimbolo }} {{ number_format($ventaRehacer->total, 2) }}</span>
             </span>
             <a href="/pos" class="btn btn-sm btn-outline-secondary fw-semibold bg-white rounded-pill px-3 shadow-sm" title="Descartar y empezar una nueva venta vacía">
                 <i class="bi bi-x-circle me-1"></i> Descartar
@@ -470,7 +470,7 @@
         @if(isset($arqueoActivo) && $arqueoActivo)
             <a href="/arqueos/sesion" class="badge bg-success bg-opacity-10 text-success border border-success-subtle px-3 py-2 rounded-3 shadow-sm d-flex align-items-center text-decoration-none" style="font-size: 0.85rem;" title="Ver turno de caja activo en vivo">
                 <i class="bi bi-record-circle-fill text-success me-1.5"></i> Caja Abierta · Turno #{{ $arqueoActivo->id }}
-                <span class="ms-1.5 text-dark fw-bold">(Gaveta: Bs. {{ number_format($arqueoActivo->efectivo_esperado, 2) }})</span>
+                <span class="ms-1.5 text-dark fw-bold">(Gaveta: {{ $monedaSimbolo }} {{ number_format($arqueoActivo->efectivo_esperado, 2) }})</span>
             </a>
         @else
             <a href="/arqueos/sesion" class="badge bg-warning bg-opacity-10 text-warning border border-warning-subtle px-3 py-2 rounded-3 shadow-sm d-flex align-items-center text-decoration-none" style="font-size: 0.85rem;" title="Abrir turno de caja">
@@ -872,7 +872,7 @@
                                                     <div class="fw-bold text-dark" style="font-size: 0.86rem;">{{ $cli->nombre }}</div>
                                                     @if(($cli->saldo_pendiente ?? 0) > 0)
                                                         <span class="badge bg-danger bg-opacity-10 text-danger border border-danger-subtle" style="font-size: 0.66rem;">
-                                                            Debe Bs. {{ number_format($cli->saldo_pendiente, 2) }}
+                                                            Debe {{ $monedaSimbolo }} {{ number_format($cli->saldo_pendiente, 2) }}
                                                         </span>
                                                     @endif
                                                 </div>
@@ -984,7 +984,7 @@
                         <div class="row g-2 align-items-center mb-2">
                             <div class="col-7">
                                 <div class="input-group input-group-sm">
-                                    <span class="input-group-text bg-white fw-bold text-muted">Adelanto Bs.</span>
+                                    <span class="input-group-text bg-white fw-bold text-muted">Adelanto {{ $monedaSimbolo }}</span>
                                     <input type="number" step="0.5" min="0" name="monto_adelanto" id="inputMontoAdelanto" class="form-control form-control-sm fw-bold text-primary" value="0.00" placeholder="0.00">
                                 </div>
                             </div>
@@ -997,7 +997,7 @@
                         </div>
                         <div class="d-flex justify-content-between align-items-center pt-1.5 border-top border-warning-subtle">
                             <span class="text-secondary small fw-bold">SALDO PENDIENTE:</span>
-                            <span class="fw-bold text-danger fs-5" id="txtSaldoPendiente">Bs. 0.00</span>
+                            <span class="fw-bold text-danger fs-5" id="txtSaldoPendiente">{{ $monedaSimbolo }} 0.00</span>
                         </div>
                     </div>
 
@@ -1068,16 +1068,16 @@
                 <div class="p-3 rounded-3 mb-3 border bg-light">
                     <div class="d-flex justify-content-between mb-1 text-muted small">
                         <span>Total Pagado Originalmente:</span>
-                        <strong class="text-dark" id="txtOrigModalDif">Bs. 0.00</strong>
+                        <strong class="text-dark" id="txtOrigModalDif">{{ $monedaSimbolo }} 0.00</strong>
                     </div>
                     <div class="d-flex justify-content-between mb-1 text-muted small">
                         <span>Nuevo Total Corregido:</span>
-                        <strong class="text-dark" id="txtNuevoModalDif">Bs. 0.00</strong>
+                        <strong class="text-dark" id="txtNuevoModalDif">{{ $monedaSimbolo }} 0.00</strong>
                     </div>
                     <hr class="my-2">
                     <div class="d-flex justify-content-between align-items-center">
                         <span class="fw-bold" id="lblResultadoDif">Diferencia:</span>
-                        <span class="fs-4 fw-bold" id="txtMontoResultadoDif">Bs. 0.00</span>
+                        <span class="fs-4 fw-bold" id="txtMontoResultadoDif">{{ $monedaSimbolo }} 0.00</span>
                     </div>
                 </div>
 
@@ -1118,7 +1118,7 @@
                 <div id="panelCasoSube" style="display: none;">
                     <p class="small text-muted mb-2 fw-semibold">
                         <i class="bi bi-info-circle text-primary me-1"></i>
-                        El nuevo pedido tiene mayor valor. ¿Cómo abonará el cliente los <span id="txtDiferenciaPagarSpan" class="fw-bold text-success">Bs. 0.00</span> restantes?
+                        El nuevo pedido tiene mayor valor. ¿Cómo abonará el cliente los <span id="txtDiferenciaPagarSpan" class="fw-bold text-success">{{ $monedaSimbolo }} 0.00</span> restantes?
                     </p>
 
                     <div class="row g-2 mb-3">
@@ -1444,8 +1444,8 @@ document.addEventListener('DOMContentLoaded', function() {
         const modalEl = document.getElementById('modalDiferenciaRehacer');
         if (!modalEl || typeof bootstrap === 'undefined') return;
 
-        document.getElementById('txtOrigModalDif').textContent = `Bs. ${origPagado.toFixed(2)}`;
-        document.getElementById('txtNuevoModalDif').textContent = `Bs. ${nuevoTotal.toFixed(2)}`;
+        document.getElementById('txtOrigModalDif').textContent = `${monedaSimbolo} ${origPagado.toFixed(2)}`;
+        document.getElementById('txtNuevoModalDif').textContent = `${monedaSimbolo} ${nuevoTotal.toFixed(2)}`;
         
         const panelBaja = document.getElementById('panelCasoBaja');
         const panelSube = document.getElementById('panelCasoSube');
@@ -1459,7 +1459,7 @@ document.addEventListener('DOMContentLoaded', function() {
             titulo.innerHTML = '<i class="bi bi-wallet2 text-success fs-5"></i> Diferencia a Favor del Cliente';
             lblRes.textContent = 'Monto a favor del cliente:';
             lblRes.className = 'fw-bold text-success';
-            txtRes.textContent = `Bs. ${sobrante.toFixed(2)}`;
+            txtRes.textContent = `${monedaSimbolo} ${sobrante.toFixed(2)}`;
             txtRes.className = 'fs-4 fw-bold text-success';
 
             panelBaja.style.display = 'block';
@@ -1469,10 +1469,10 @@ document.addEventListener('DOMContentLoaded', function() {
             titulo.innerHTML = '<i class="bi bi-cash-coin text-danger fs-5"></i> Diferencia Adicional por Cobrar';
             lblRes.textContent = 'Monto adicional a pagar:';
             lblRes.className = 'fw-bold text-danger';
-            txtRes.textContent = `+Bs. ${diff.toFixed(2)}`;
+            txtRes.textContent = `+${monedaSimbolo} ${diff.toFixed(2)}`;
             txtRes.className = 'fs-4 fw-bold text-danger';
 
-            document.getElementById('txtDiferenciaPagarSpan').textContent = `Bs. ${diff.toFixed(2)}`;
+            document.getElementById('txtDiferenciaPagarSpan').textContent = `${monedaSimbolo} ${diff.toFixed(2)}`;
             panelBaja.style.display = 'none';
             panelSube.style.display = 'block';
         }
@@ -1514,7 +1514,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
         const saldo = Math.max(0, total - adelanto);
         if (txtSaldoPendiente) {
-            txtSaldoPendiente.textContent = `Bs. ${saldo.toFixed(2)}`;
+            txtSaldoPendiente.textContent = `${monedaSimbolo} ${saldo.toFixed(2)}`;
         }
     }
 
@@ -2004,7 +2004,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
                         matchesReg.slice(0, 4).forEach(c => {
                             const badgeDeuda = c.saldo_pendiente > 0 
-                                ? `<span class="badge bg-danger bg-opacity-10 text-danger border border-danger-subtle ms-1" style="font-size:0.66rem;">Debe Bs. ${c.saldo_pendiente.toFixed(2)}</span>` 
+                                ? `<span class="badge bg-danger bg-opacity-10 text-danger border border-danger-subtle ms-1" style="font-size:0.66rem;">Debe ${monedaSimbolo} ${c.saldo_pendiente.toFixed(2)}</span>` 
                                 : '';
                             const meta = c.telefono ? `<small class="text-muted ms-1.5"><i class="bi bi-telephone text-success"></i> ${c.telefono}</small>` : '';
                             html += `
@@ -2293,7 +2293,7 @@ document.addEventListener('DOMContentLoaded', function() {
         if (hayProductos && hayCliente) {
             btnCobrar.disabled = false;
             const total = parseFloat(inputTotalVenta.value) || 0;
-            btnCobrar.innerHTML = `<i class="bi bi-check2-circle me-2"></i> COBRAR (Bs. ${total.toFixed(2)})`;
+            btnCobrar.innerHTML = `<i class="bi bi-check2-circle me-2"></i> COBRAR (${monedaSimbolo} ${total.toFixed(2)})`;
         } else {
             btnCobrar.disabled = true;
             btnCobrar.innerHTML = `<i class="bi bi-check2-circle me-2"></i> COBRAR VENTA`;
@@ -2663,13 +2663,13 @@ document.addEventListener('DOMContentLoaded', function() {
                         <div class="box-precio-pos">
                             <div class="linea-precio-venta d-flex align-items-center justify-content-end gap-1">
                                 <span class="fw-bold text-dark val-precio-venta" style="font-size: 0.94rem;">
-                                    Bs. ${pVentaBase.toFixed(2)}
+                                    ${monedaSimbolo} ${pVentaBase.toFixed(2)}
                                 </span>
                                 <span class="badge bg-light text-secondary border py-0 px-1" style="font-size: 0.64rem;">Venta</span>
                             </div>
                             <div class="linea-precio-cliente box-pcliente-wrap d-flex align-items-center justify-content-end gap-1 mt-0.5" style="color: #0284c7; ${tienePCBase ? '' : 'display:none !important;'}">
                                 <i class="bi bi-tag-fill" style="font-size: 0.65rem;"></i>
-                                <span class="fw-bold val-precio-cliente" style="font-size: 0.88rem;">Bs. ${pClienteBase.toFixed(2)}</span>
+                                <span class="fw-bold val-precio-cliente" style="font-size: 0.88rem;">${monedaSimbolo} ${pClienteBase.toFixed(2)}</span>
                                 <span class="badge py-0 px-1" style="font-size: 0.64rem; background: #e0f2fe; color: #0369a1; border: 1px solid #bae6fd;">Cliente</span>
                             </div>
                             <div class="linea-precio-cliente-mismo text-muted mt-0.5" style="font-size: 0.68rem; ${tienePCBase ? 'display:none !important;' : ''}" title="Sin precio especial: aplica el mismo precio de venta">

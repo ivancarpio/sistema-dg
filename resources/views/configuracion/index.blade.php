@@ -661,7 +661,7 @@
                                     </div>
                                     <h6 class="fw-bold text-dark mb-1">{{ $configuraciones['nombre_empresa'] ?? 'Distribuidora Guadalupe' }}</h6>
                                     <p class="text-muted small m-0 mb-3" style="font-size: 0.8rem;">
-                                        Este logo se aplica automáticamente en todas las <strong>Notas de Venta en PDF</strong>, pantalla de <strong>Login</strong>, <strong>Barra Lateral</strong> y en todo el sistema.
+                                        Este logo se aplica automáticamente en todas las <strong>Notas de Venta</strong>, <strong>Notas de Cotización en PDF</strong>, pantalla de <strong>Login</strong>, <strong>Barra Lateral</strong> y en todo el sistema.
                                     </p>
 
                                     <!-- Formulario para subir nuevo logo -->
@@ -700,24 +700,34 @@
                                     @csrf
                                     <div class="row g-3">
                                         <div class="col-12">
+                                            @php
+                                                $paisCfg = $configuraciones['pais_operacion'] ?? 'BO';
+                                            @endphp
                                             <div class="p-3 rounded-3 border bg-light d-flex flex-column flex-md-row align-items-start align-items-md-center justify-content-between gap-3">
                                                 <div>
                                                     <label class="form-label text-dark small fw-bold mb-1 d-flex align-items-center gap-1.5">
                                                         <i class="bi bi-globe-americas text-primary fs-6"></i> País de Operación y Moneda Base
                                                     </label>
                                                     <p class="text-muted small m-0" style="font-size: 0.78rem;">
-                                                        Define la moneda principal del negocio y activa la conversión en tiempo real con <strong>Ragnar Capital</strong>.
+                                                        Cambia al instante la moneda en <strong>todo el sistema</strong> (POS, productos, finanzas, reportes y PDFs) con cotización en vivo.
                                                     </p>
                                                 </div>
-                                                <div style="min-width: 260px;">
-                                                    <select name="pais_operacion" class="form-select form-select-sm fw-bold border-primary shadow-sm" id="selectPaisOperacion">
-                                                        <option value="BO" {{ ($configuraciones['pais_operacion'] ?? 'BO') == 'BO' ? 'selected' : '' }}>
-                                                            🇧🇴 Bolivia &bull; Base en Bolivianos (Bs.)
-                                                        </option>
-                                                        <option value="PE" {{ ($configuraciones['pais_operacion'] ?? 'BO') == 'PE' ? 'selected' : '' }}>
-                                                            🇵🇪 Perú &bull; Base en Soles (S/)
-                                                        </option>
-                                                    </select>
+                                                <div class="d-flex align-items-center gap-2 flex-shrink-0">
+                                                    <input type="hidden" name="pais_operacion" id="inputPaisOperacionHidden" value="{{ $paisCfg }}">
+                                                    <div class="btn-group shadow-sm bg-white p-1 rounded-3 border" role="group" aria-label="Selector de moneda global">
+                                                        <button type="button"
+                                                                id="btnMonedaBO"
+                                                                onclick="cambiarMonedaGlobalRapido('BO')"
+                                                                class="btn btn-sm fw-bold px-3 rounded-2 {{ $paisCfg === 'BO' ? 'btn-primary text-white shadow-sm' : 'btn-light text-secondary border-0' }}">
+                                                            🇧🇴 Bolivia (Bs.)
+                                                        </button>
+                                                        <button type="button"
+                                                                id="btnMonedaPE"
+                                                                onclick="cambiarMonedaGlobalRapido('PE')"
+                                                                class="btn btn-sm fw-bold px-3 rounded-2 {{ $paisCfg === 'PE' ? 'btn-primary text-white shadow-sm' : 'btn-light text-secondary border-0' }}">
+                                                            🇵🇪 Perú (S/)
+                                                        </button>
+                                                    </div>
                                                 </div>
                                             </div>
                                         </div>
@@ -1270,6 +1280,53 @@ function previewSelectedLogo(input) {
         };
         reader.readAsDataURL(input.files[0]);
     }
+}
+
+function cambiarMonedaGlobalRapido(pais) {
+    const btnBO = document.getElementById('btnMonedaBO');
+    const btnPE = document.getElementById('btnMonedaPE');
+    const hidden = document.getElementById('inputPaisOperacionHidden');
+    if (hidden) hidden.value = pais;
+
+    if (btnBO && btnPE) {
+        btnBO.disabled = true;
+        btnPE.disabled = true;
+    }
+
+    fetch('{{ route('configuracion.moneda') }}', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json',
+            'X-CSRF-TOKEN': '{{ csrf_token() }}'
+        },
+        body: JSON.stringify({ pais_operacion: pais })
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (data.success) {
+            if (btnBO && btnPE) {
+                btnBO.className = 'btn btn-sm fw-bold px-3 rounded-2 ' + (pais === 'BO' ? 'btn-primary text-white shadow-sm' : 'btn-light text-secondary border-0');
+                btnPE.className = 'btn btn-sm fw-bold px-3 rounded-2 ' + (pais === 'PE' ? 'btn-primary text-white shadow-sm' : 'btn-light text-secondary border-0');
+            }
+            if (typeof Swal !== 'undefined') {
+                Swal.fire({
+                    toast: true,
+                    position: 'top-end',
+                    icon: 'success',
+                    title: data.mensaje,
+                    showConfirmButton: false,
+                    timer: 1800
+                });
+            }
+        }
+    })
+    .finally(() => {
+        if (btnBO && btnPE) {
+            btnBO.disabled = false;
+            btnPE.disabled = false;
+        }
+    });
 }
 </script>
 @endsection

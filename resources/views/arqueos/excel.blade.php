@@ -20,17 +20,17 @@
     </tr>
     <tr>
         <td colspan="2" style="font-weight: bold;">Efectivo en Caja</td>
-        <td colspan="2" style="font-weight: bold; color: #16A34A;">Bs. {{ number_format($arqueo->total_efectivo, 2) }}</td>
+        <td colspan="2" style="font-weight: bold; color: #16A34A;">{{ $monedaSimbolo }} {{ number_format($arqueo->total_efectivo, 2) }}</td>
         <td colspan="3" style="color: #64748B;">Billetes y monedas verificados en gaveta</td>
     </tr>
     <tr>
         <td colspan="2" style="font-weight: bold;">Transferencias QR Simple</td>
-        <td colspan="2" style="font-weight: bold; color: #0284C7;">Bs. {{ number_format($arqueo->total_qr, 2) }}</td>
+        <td colspan="2" style="font-weight: bold; color: #0284C7;">{{ $monedaSimbolo }} {{ number_format($arqueo->total_qr, 2) }}</td>
         <td colspan="3" style="color: #64748B;">Comprobantes bancarios verificados</td>
     </tr>
     <tr style="background-color: #F1F5F9;">
         <td colspan="2" style="font-weight: bold; font-size: 11pt;">TOTAL GENERAL ARQUEADO</td>
-        <td colspan="2" style="font-weight: bold; font-size: 11pt; color: #0F172A;">Bs. {{ number_format($arqueo->total_general, 2) }}</td>
+        <td colspan="2" style="font-weight: bold; font-size: 11pt; color: #0F172A;">{{ $monedaSimbolo }} {{ number_format($arqueo->total_general, 2) }}</td>
         <td colspan="3" style="font-weight: bold;">Total cuadre del turno</td>
     </tr>
     @if($arqueo->observaciones)
@@ -58,7 +58,7 @@
             $saldoPend = floatval($venta->saldo_pendiente ?? 0);
             $estaAlDia = $saldoPend <= 0;
             if (!$estaAlDia) {
-                $textoMetodo = 'Por Pagar (Debe Bs. ' . number_format($saldoPend, 2) . ')';
+                $textoMetodo = 'Por Pagar (Debe ' . $monedaSimbolo . ' ' . number_format($saldoPend, 2) . ')';
             } else {
                 $textoMetodo = $metodoCobro . ($venta->metodo_pago === 'Por Pagar' ? ' (Al día)' : '');
             }
@@ -77,7 +77,7 @@
                 <td style="text-align: center;">{{ number_format($det->cantidad, 0) }}</td>
                 @if($idx === 0)
                     <td>{{ $textoMetodo }}</td>
-                    <td style="text-align: right; font-weight: bold;">Bs. {{ number_format($venta->total, 2) }}</td>
+                    <td style="text-align: right; font-weight: bold;">{{ $monedaSimbolo }} {{ number_format($venta->total, 2) }}</td>
                 @else
                     <td></td><td></td>
                 @endif
@@ -91,7 +91,7 @@
             <td>—</td>
             <td style="text-align: center;">—</td>
             <td>{{ $textoMetodo }}</td>
-            <td style="text-align: right; font-weight: bold;">Bs. {{ number_format($venta->total, 2) }}</td>
+            <td style="text-align: right; font-weight: bold;">{{ $monedaSimbolo }} {{ number_format($venta->total, 2) }}</td>
         </tr>
         @endif
     @endforeach
@@ -100,6 +100,6 @@
     <tr style="background-color: #E2E8F0; font-weight: bold;">
         <td colspan="5"><strong>TOTALES DEL ARQUEO</strong></td>
         <td><strong>{{ $arqueo->cantidad_ventas }} ventas</strong></td>
-        <td style="text-align: right;"><strong>Bs. {{ number_format($arqueo->total_general, 2) }}</strong></td>
+        <td style="text-align: right;"><strong>{{ $monedaSimbolo }} {{ number_format($arqueo->total_general, 2) }}</strong></td>
     </tr>
 </table>

@@ -355,7 +355,7 @@
             <div>
                 <div class="stat-lbl-cli">Total por Cobrar</div>
                 <div class="stat-val-cli {{ $totalDeudaPorCobrar > 0 ? 'text-danger' : 'text-secondary' }}" style="font-size: 1.4rem;">
-                    Bs. {{ number_format($totalDeudaPorCobrar, 2) }}
+                    {{ $monedaSimbolo }} {{ number_format($totalDeudaPorCobrar, 2) }}
                 </div>
                 <small class="text-muted">en créditos</small>
             </div>
@@ -370,7 +370,7 @@
             <div>
                 <div class="stat-lbl-cli">Total Facturado</div>
                 <div class="stat-val-cli text-success" style="font-size: 1.4rem;">
-                    Bs. {{ number_format($totalCompradoHistorico, 2) }}
+                    {{ $monedaSimbolo }} {{ number_format($totalCompradoHistorico, 2) }}
                 </div>
                 <small class="text-muted">compras acumuladas</small>
             </div>
@@ -449,10 +449,12 @@
                         @if($cli->telefono)
                             @php
                                 $limpioTel = preg_replace('/[^0-9]/', '', $cli->telefono);
+                                $prefijoWa = ($paisOperacion ?? 'BO') === 'PE' ? '51' : '591';
+                                $waTel = strlen($limpioTel) > 9 ? $limpioTel : $prefijoWa . $limpioTel;
                             @endphp
                             <div class="d-flex align-items-center gap-2">
                                 <span class="fw-bold text-dark fs-6">{{ $cli->telefono }}</span>
-                                <a href="https://wa.me/591{{ $limpioTel }}" target="_blank" class="btn btn-sm btn-outline-success py-0 px-2 rounded-pill" title="Escribir por WhatsApp">
+                                <a href="https://wa.me/{{ $waTel }}" target="_blank" class="btn btn-sm btn-outline-success py-0 px-2 rounded-pill" title="Escribir por WhatsApp">
                                     <i class="bi bi-whatsapp"></i> Chat
                                 </a>
                             </div>
@@ -478,7 +480,7 @@
                     <!-- Total Compras -->
                     <td class="text-end">
                         <div class="fw-bold text-dark fs-6">
-                            Bs. {{ number_format($cli->total_comprado, 2) }}
+                            {{ $monedaSimbolo }} {{ number_format($cli->total_comprado, 2) }}
                         </div>
                         <small class="text-muted">{{ $cli->cantidad_compras }} venta(s)</small>
                     </td>
@@ -487,7 +489,7 @@
                     <td class="text-center">
                         @if($tieneDeuda)
                             <span class="badge bg-danger-subtle text-danger border border-danger-subtle px-3 py-2 fw-bold" style="font-size: 0.82rem;">
-                                <i class="bi bi-exclamation-triangle-fill me-1"></i>Debe: Bs. {{ number_format($deuda, 2) }}
+                                <i class="bi bi-exclamation-triangle-fill me-1"></i>Debe: {{ $monedaSimbolo }} {{ number_format($deuda, 2) }}
                             </span>
                         @else
                             <span class="badge bg-success-subtle text-success border border-success-subtle px-3 py-2 fw-bold" style="font-size: 0.82rem;">
@@ -506,7 +508,7 @@
                                     <span>Cobró: <strong class="text-primary">{{ Str::words($ultimoCobroCli->usuario->name ?? 'Sistema', 2, '') }}</strong></span>
                                 </span>
                                 <span class="text-muted mt-0.5" style="font-size: 0.68rem;">
-                                    {{ \Carbon\Carbon::parse($ultimoCobroCli->fecha)->format('d/m/Y H:i') }} &bull; <strong class="text-success">Bs. {{ number_format($ultimoCobroCli->monto, 2) }}</strong>
+                                    {{ \Carbon\Carbon::parse($ultimoCobroCli->fecha)->format('d/m/Y H:i') }} &bull; <strong class="text-success">{{ $monedaSimbolo }} {{ number_format($ultimoCobroCli->monto, 2) }}</strong>
                                 </span>
                             </div>
                         @endif
@@ -514,7 +516,7 @@
                         @if(($cli->saldo_favor ?? 0) > 0)
                             <div class="mt-1">
                                 <span class="badge bg-primary bg-opacity-10 text-primary border border-primary-subtle px-2 py-1 fw-bold" style="font-size: 0.74rem;">
-                                    <i class="bi bi-wallet2 me-1"></i>A Favor: Bs. {{ number_format($cli->saldo_favor, 2) }}
+                                    <i class="bi bi-wallet2 me-1"></i>A Favor: {{ $monedaSimbolo }} {{ number_format($cli->saldo_favor, 2) }}
                                 </span>
                             </div>
                         @endif
@@ -524,7 +526,7 @@
                     <td class="text-center pe-4">
                         <div class="d-flex justify-content-center align-items-center gap-2">
                             @if($tieneDeuda)
-                            <button type="button" class="btn btn-sm btn-success fw-bold px-2 py-1 rounded-pill shadow-sm" data-bs-toggle="modal" data-bs-target="#modalAbonarCliente{{ $cli->id }}" title="Cobrar saldo pendiente de Bs. {{ number_format($deuda, 2) }}">
+                            <button type="button" class="btn btn-sm btn-success fw-bold px-2 py-1 rounded-pill shadow-sm" data-bs-toggle="modal" data-bs-target="#modalAbonarCliente{{ $cli->id }}" title="Cobrar saldo pendiente de {{ $monedaSimbolo }} {{ number_format($deuda, 2) }}">
                                 <i class="bi bi-cash-stack me-1"></i> Cobrar
                             </button>
                             @endif
@@ -541,7 +543,7 @@
                             </button>
 
                             @if($tieneDeuda)
-                            <button type="button" class="btn-action-icon text-muted border-0 bg-transparent p-0" style="cursor: not-allowed; opacity: 0.35;" title="Bloqueado: No se puede eliminar porque tiene deuda de Bs. {{ number_format($deuda, 2) }}">
+                            <button type="button" class="btn-action-icon text-muted border-0 bg-transparent p-0" style="cursor: not-allowed; opacity: 0.35;" title="Bloqueado: No se puede eliminar porque tiene deuda de {{ $monedaSimbolo }} {{ number_format($deuda, 2) }}">
                                 <i class="bi bi-lock-fill text-danger fs-5"></i>
                             </button>
                             @else
@@ -689,7 +691,7 @@
                     <!-- Resumen de Deuda -->
                     <div class="p-3 bg-light rounded-3 border mb-3 text-center">
                         <span class="text-muted small fw-bold text-uppercase d-block mb-1">Deuda Total Pendiente</span>
-                        <h2 class="fw-bold text-danger m-0">Bs. {{ number_format($cli->saldo_pendiente_total, 2) }}</h2>
+                        <h2 class="fw-bold text-danger m-0">{{ $monedaSimbolo }} {{ number_format($cli->saldo_pendiente_total, 2) }}</h2>
                     </div>
 
                     <!-- Si tiene varias notas pendientes -->
@@ -702,7 +704,7 @@
                         <select name="id_venta" class="form-select form-select-sm fw-bold">
                             <option value="todas">Todas las notas (Deuda más antigua primero)</option>
                             @foreach($ventasConDeuda as $vd)
-                                <option value="{{ $vd->id }}">Nota {{ $vd->numero_nota ?? ('SYS-'.$vd->id) }} (Debe: Bs. {{ number_format($vd->saldo_pendiente, 2) }})</option>
+                                <option value="{{ $vd->id }}">Nota {{ $vd->numero_nota ?? ('SYS-'.$vd->id) }} (Debe: {{ $monedaSimbolo }} {{ number_format($vd->saldo_pendiente, 2) }})</option>
                             @endforeach
                         </select>
                     </div>
@@ -710,9 +712,9 @@
 
                     <!-- Monto a Cobrar -->
                     <div class="mb-3">
-                        <label class="form-label text-dark fw-bold">Monto que paga el cliente (Bs.) *</label>
+                        <label class="form-label text-dark fw-bold">Monto que paga el cliente ({{ $monedaSimbolo }}) *</label>
                         <div class="input-group input-group-lg">
-                            <span class="input-group-text bg-light fw-bold text-success">Bs.</span>
+                            <span class="input-group-text bg-light fw-bold text-success">{{ $monedaSimbolo }}</span>
                             <input type="number" step="0.10" min="0.50" max="{{ $cli->saldo_pendiente_total }}" name="monto_abono" class="form-control fw-bold text-success fs-4" value="{{ number_format($cli->saldo_pendiente_total, 2, '.', '') }}" required>
                         </div>
                         <small class="text-muted">Por defecto se liquida el saldo total. Puedes ingresar un monto menor si es abono parcial.</small>
@@ -801,7 +803,7 @@
                         <div class="col-6 col-md-4">
                             <div class="p-2.5 rounded-3 bg-light border text-center">
                                 <small class="text-muted d-block" style="font-size:0.74rem;">Total Cobrado en Abonos</small>
-                                <span class="fw-bold text-success fs-5">Bs. {{ number_format($cli->pagos->sum('monto'), 2) }}</span>
+                                <span class="fw-bold text-success fs-5">{{ $monedaSimbolo }} {{ number_format($cli->pagos->sum('monto'), 2) }}</span>
                             </div>
                         </div>
                         <div class="col-6 col-md-4">
@@ -814,7 +816,7 @@
                             <div class="p-2.5 rounded-3 bg-light border text-center">
                                 <small class="text-muted d-block" style="font-size:0.74rem;">Estado Actual</small>
                                 <span class="fw-bold {{ $cli->saldo_pendiente_total > 0 ? 'text-danger' : 'text-success' }} fs-5">
-                                    {{ $cli->saldo_pendiente_total > 0 ? 'Debe: Bs. ' . number_format($cli->saldo_pendiente_total, 2) : '✔ Al Día (Bs. 0.00)' }}
+                                    {{ $cli->saldo_pendiente_total > 0 ? 'Debe: ' . $monedaSimbolo . ' ' . number_format($cli->saldo_pendiente_total, 2) : '✔ Al Día (' . $monedaSimbolo . ' 0.00)' }}
                                 </span>
                             </div>
                         </div>
@@ -844,7 +846,7 @@
                                         </span>
                                     </td>
                                     <td class="text-end fw-bold text-success fs-6" style="white-space: nowrap;">
-                                        Bs. {{ number_format($pago->monto, 2) }}
+                                        {{ $monedaSimbolo }} {{ number_format($pago->monto, 2) }}
                                     </td>
                                     <td>
                                         @if($pago->metodo_pago === 'QR')
@@ -915,21 +917,21 @@
                     <div class="col-6 col-md-3">
                         <div class="card border-0 shadow-sm p-3 rounded-3 bg-white h-100">
                             <div class="text-muted small fw-bold text-uppercase" style="font-size:0.70rem;">Total Cobrado</div>
-                            <div class="fw-bold fs-5 text-dark" id="logCobrosTotal">Bs. {{ number_format($ultimosCobrosGlobales->sum('monto'), 2) }}</div>
+                            <div class="fw-bold fs-5 text-dark" id="logCobrosTotal">{{ $monedaSimbolo }} {{ number_format($ultimosCobrosGlobales->sum('monto'), 2) }}</div>
                             <small class="text-muted" id="logCobrosCantidad">{{ $ultimosCobrosGlobales->count() }} cobros</small>
                         </div>
                     </div>
                     <div class="col-6 col-md-3">
                         <div class="card border-0 shadow-sm p-3 rounded-3 bg-white h-100 border-start border-success border-4">
                             <div class="text-success small fw-bold text-uppercase" style="font-size:0.70rem;"><i class="bi bi-cash me-1"></i>En Efectivo</div>
-                            <div class="fw-bold fs-5 text-success" id="logCobrosEfectivo">Bs. {{ number_format($ultimosCobrosGlobales->where('metodo_pago', 'Efectivo')->sum('monto'), 2) }}</div>
+                            <div class="fw-bold fs-5 text-success" id="logCobrosEfectivo">{{ $monedaSimbolo }} {{ number_format($ultimosCobrosGlobales->where('metodo_pago', 'Efectivo')->sum('monto'), 2) }}</div>
                             <small class="text-muted" id="logCobrosCantEfectivo">{{ $ultimosCobrosGlobales->where('metodo_pago', 'Efectivo')->count() }} pagos</small>
                         </div>
                     </div>
                     <div class="col-6 col-md-3">
                         <div class="card border-0 shadow-sm p-3 rounded-3 bg-white h-100 border-start border-primary border-4">
                             <div class="text-primary small fw-bold text-uppercase" style="font-size:0.70rem;"><i class="bi bi-qr-code me-1"></i>Por QR</div>
-                            <div class="fw-bold fs-5 text-primary" id="logCobrosQr">Bs. {{ number_format($ultimosCobrosGlobales->where('metodo_pago', 'QR')->sum('monto'), 2) }}</div>
+                            <div class="fw-bold fs-5 text-primary" id="logCobrosQr">{{ $monedaSimbolo }} {{ number_format($ultimosCobrosGlobales->where('metodo_pago', 'QR')->sum('monto'), 2) }}</div>
                             <small class="text-muted" id="logCobrosCantQr">{{ $ultimosCobrosGlobales->where('metodo_pago', 'QR')->count() }} pagos</small>
                         </div>
                     </div>
@@ -1035,7 +1037,7 @@
                                     </span>
                                 </td>
                                 <td class="text-end fw-bold text-success fs-6" style="white-space: nowrap;">
-                                    Bs. {{ number_format($cg->monto, 2) }}
+                                    {{ $monedaSimbolo }} {{ number_format($cg->monto, 2) }}
                                 </td>
                                 <td class="text-center">
                                     @if(strtolower($cg->metodo_pago) === 'qr')
@@ -1229,9 +1231,10 @@ function filtrarTablaCobros() {
         }
     });
 
-    document.getElementById('logCobrosTotal').textContent = 'Bs. ' + sumaTotal.toLocaleString('es-BO', {minimumFractionDigits: 2, maximumFractionDigits: 2});
-    document.getElementById('logCobrosEfectivo').textContent = 'Bs. ' + sumaEf.toLocaleString('es-BO', {minimumFractionDigits: 2, maximumFractionDigits: 2});
-    document.getElementById('logCobrosQr').textContent = 'Bs. ' + sumaQr.toLocaleString('es-BO', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+    const simMonCli = '{{ $monedaSimbolo ?? "Bs." }} ';
+    document.getElementById('logCobrosTotal').textContent = simMonCli + sumaTotal.toLocaleString('es-BO', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+    document.getElementById('logCobrosEfectivo').textContent = simMonCli + sumaEf.toLocaleString('es-BO', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+    document.getElementById('logCobrosQr').textContent = simMonCli + sumaQr.toLocaleString('es-BO', {minimumFractionDigits: 2, maximumFractionDigits: 2});
     document.getElementById('logCobrosCantidad').textContent = vis + ' cobros';
     document.getElementById('logCobrosCantEfectivo').textContent = visEf + ' pagos';
     document.getElementById('logCobrosCantQr').textContent = visQr + ' pagos';

@@ -205,7 +205,7 @@
             </div>
             <div>
                 <div class="metric-label-prod">Valor en Tienda</div>
-                <div class="metric-value-prod" style="color: #4f46e5;">Bs. {{ number_format($totalValor, 2) }}</div>
+                <div class="metric-value-prod" style="color: #4f46e5;">{{ $monedaSimbolo }} {{ number_format($totalValor, 2) }}</div>
                 <div class="metric-sub-prod">según precio venta</div>
             </div>
         </div>
@@ -406,18 +406,18 @@
                         @endif
                     </td>
                     <td class="text-end" data-sort-value="{{ $costo }}">
-                        <span class="text-muted small">Bs. {{ number_format($costo, 2) }}</span>
+                        <span class="text-muted small">{{ $monedaSimbolo }} {{ number_format($costo, 2) }}</span>
                     </td>
                     <td class="text-end" data-sort-value="{{ $pv }}">
                         <div>
-                            <span class="fw-bold text-dark">Bs. {{ number_format($pv, 2) }}</span>
+                            <span class="fw-bold text-dark">{{ $monedaSimbolo }} {{ number_format($pv, 2) }}</span>
                             @if($p->tieneUnidadSecundaria())
                                 <small class="text-muted d-block" style="font-size: 0.68rem;">/ {{ optional($p->unidad)->nombre ?? 'Unid' }}</small>
                             @endif
                         </div>
                         @if($p->tieneUnidadSecundaria() && $p->precio_venta_secundario > 0)
                             <div class="mt-1 pt-1 border-top border-light">
-                                <span class="fw-bold text-success" style="font-size: 0.85rem;">Bs. {{ number_format($p->precio_venta_secundario, 2) }}</span>
+                                <span class="fw-bold text-success" style="font-size: 0.85rem;">{{ $monedaSimbolo }} {{ number_format($p->precio_venta_secundario, 2) }}</span>
                                 <small class="text-muted d-block" style="font-size: 0.68rem;">/ {{ optional($p->unidadSecundaria)->nombre }}</small>
                             </div>
                         @endif
@@ -425,7 +425,7 @@
                     <td class="text-end" data-sort-value="{{ $pc ?? $pv }}">
                         @if($pc !== null && $pc > 0)
                             <div>
-                                <span class="fw-bold text-primary">Bs. {{ number_format($pc, 2) }}</span>
+                                <span class="fw-bold text-primary">{{ $monedaSimbolo }} {{ number_format($pc, 2) }}</span>
                                 <small class="d-block text-muted" style="font-size: 0.65rem;">/ {{ optional($p->unidad)->nombre ?? 'Unid' }}</small>
                             </div>
                         @else
@@ -434,7 +434,7 @@
 
                         @if($p->tieneUnidadSecundaria() && $p->precio_cliente_secundario > 0)
                             <div class="mt-1 pt-1 border-top border-light">
-                                <span class="fw-bold text-primary" style="font-size: 0.85rem;">Bs. {{ number_format($p->precio_cliente_secundario, 2) }}</span>
+                                <span class="fw-bold text-primary" style="font-size: 0.85rem;">{{ $monedaSimbolo }} {{ number_format($p->precio_cliente_secundario, 2) }}</span>
                                 <small class="d-block text-muted" style="font-size: 0.65rem;">/ {{ optional($p->unidadSecundaria)->nombre }}</small>
                             </div>
                         @endif
@@ -445,7 +445,7 @@
                         </span>
                     </td>
                     <td class="text-end pe-3" data-sort-value="{{ $val }}">
-                        <span class="fw-bold" style="color: #0284c7;">Bs. {{ number_format($val, 2) }}</span>
+                        <span class="fw-bold" style="color: #0284c7;">{{ $monedaSimbolo }} {{ number_format($val, 2) }}</span>
                     </td>
                 </tr>
                 @empty
@@ -461,11 +461,11 @@
             <tfoot class="bg-light fw-bold border-top">
                 <tr>
                     <td colspan="6" class="ps-3 text-end text-dark">TOTALES GENERALES:</td>
-                    <td class="text-end text-muted small">Bs. {{ number_format($totalCosto, 2) }}</td>
+                    <td class="text-end text-muted small">{{ $monedaSimbolo }} {{ number_format($totalCosto, 2) }}</td>
                     <td class="text-end">—</td>
                     <td class="text-end">—</td>
                     <td class="text-center text-success fs-6 fw-bold">{{ number_format($totalStock, 0) }} UND.</td>
-                    <td class="text-end pe-3 fs-6 fw-bold text-primary">Bs. {{ number_format($totalValor, 2) }}</td>
+                    <td class="text-end pe-3 fs-6 fw-bold text-primary">{{ $monedaSimbolo }} {{ number_format($totalValor, 2) }}</td>
                 </tr>
             </tfoot>
             @endif

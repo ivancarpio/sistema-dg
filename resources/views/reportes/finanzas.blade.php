@@ -144,13 +144,13 @@
             <div class="d-flex justify-content-between align-items-start gap-2">
                 <div>
                     <div class="fin-kpi-label">1. Dinero Cobrado</div>
-                    <div class="fin-kpi-value">Bs. {{ number_format($ingresosCobrados, 2) }}</div>
+                    <div class="fin-kpi-value">{{ $monedaSimbolo }} {{ number_format($ingresosCobrados, 2) }}</div>
                 </div>
                 <div class="fin-kpi-icon"><i class="bi bi-wallet2"></i></div>
             </div>
             <div class="fin-kpi-sub text-muted">
-                Efec: <strong>Bs. {{ number_format($ingresosEfectivo, 2) }}</strong> &bull;
-                QR: <strong>Bs. {{ number_format($ingresosQr, 2) }}</strong>
+                Efec: <strong>{{ $monedaSimbolo }} {{ number_format($ingresosEfectivo, 2) }}</strong> &bull;
+                QR: <strong>{{ $monedaSimbolo }} {{ number_format($ingresosQr, 2) }}</strong>
             </div>
         </div>
     </div>
@@ -160,14 +160,14 @@
             <div class="d-flex justify-content-between align-items-start gap-2">
                 <div>
                     <div class="fin-kpi-label">2. (–) Gastos Operativos</div>
-                    <div class="fin-kpi-value">Bs. {{ number_format($totalGastos, 2) }}</div>
+                    <div class="fin-kpi-value">{{ $monedaSimbolo }} {{ number_format($totalGastos, 2) }}</div>
                 </div>
                 <div class="fin-kpi-icon"><i class="bi bi-receipt-cutoff"></i></div>
             </div>
             <div class="fin-kpi-sub text-muted">
-                <strong>{{ $conteoGastos }}</strong> gasto(s) &bull; Gaveta: <strong>Bs. {{ number_format($gastosDesdeGaveta, 2) }}</strong>
+                <strong>{{ $conteoGastos }}</strong> gasto(s) &bull; Gaveta: <strong>{{ $monedaSimbolo }} {{ number_format($gastosDesdeGaveta, 2) }}</strong>
                 @if($gastosOtrasFuentes > 0)
-                    | Otros: <strong>Bs. {{ number_format($gastosOtrasFuentes, 2) }}</strong>
+                    | Otros: <strong>{{ $monedaSimbolo }} {{ number_format($gastosOtrasFuentes, 2) }}</strong>
                 @endif
             </div>
         </div>
@@ -178,7 +178,7 @@
             <div class="d-flex justify-content-between align-items-start gap-2">
                 <div>
                     <div class="fin-kpi-label">3. (=) Flujo Neto (Cobros – Gastos)</div>
-                    <div class="fin-kpi-value">Bs. {{ number_format($flujoNetoOperativo, 2) }}</div>
+                    <div class="fin-kpi-value">{{ $monedaSimbolo }} {{ number_format($flujoNetoOperativo, 2) }}</div>
                 </div>
                 <div class="fin-kpi-icon"><i class="bi bi-graph-up-arrow"></i></div>
             </div>
@@ -193,14 +193,14 @@
             <div class="d-flex justify-content-between align-items-start gap-2">
                 <div>
                     <div class="fin-kpi-label">4. Retiros de Gaveta a Banco</div>
-                    <div class="fin-kpi-value">Bs. {{ number_format($totalRetirosBanco, 2) }}</div>
+                    <div class="fin-kpi-value">{{ $monedaSimbolo }} {{ number_format($totalRetirosBanco, 2) }}</div>
                 </div>
                 <div class="fin-kpi-icon"><i class="bi bi-bank2"></i></div>
             </div>
             <div class="fin-kpi-sub text-muted">
                 <strong>{{ $conteoRetirosBanco }}</strong> retiro(s)
                 @if($conteoRetirosBanco > 0)
-                    &bull; Promedio: <strong>Bs. {{ number_format($promedioRetiroBanco, 2) }}</strong>
+                    &bull; Promedio: <strong>{{ $monedaSimbolo }} {{ number_format($promedioRetiroBanco, 2) }}</strong>
                 @else
                     &bull; Plata sacada de gaveta al banco
                 @endif
@@ -249,7 +249,7 @@
                                     </span>
                                 </div>
                                 <div class="text-end">
-                                    <span class="fw-bold text-danger small">Bs. {{ number_format($cat->total_monto, 2) }}</span>
+                                    <span class="fw-bold text-danger small">{{ $monedaSimbolo }} {{ number_format($cat->total_monto, 2) }}</span>
                                     <span class="badge rounded-pill ms-1 fw-bold" style="background-color: {{ $color }}18; color: {{ $color }}; font-size: 0.72rem;">
                                         {{ $pct }}%
                                     </span>
@@ -292,32 +292,32 @@
                         <div class="col-6">
                             <div class="p-2.5 rounded-3 border bg-light h-100">
                                 <div class="small text-muted fw-semibold"><i class="bi bi-cash-stack text-warning me-1"></i> Gastos de Gaveta</div>
-                                <div class="fw-bold text-dark fs-6 mt-0.5">Bs. {{ number_format($gastosDesdeGaveta, 2) }}</div>
+                                <div class="fw-bold text-dark fs-6 mt-0.5">{{ $monedaSimbolo }} {{ number_format($gastosDesdeGaveta, 2) }}</div>
                             </div>
                         </div>
                         <div class="col-6">
                             <div class="p-2.5 rounded-3 border bg-light h-100">
                                 <div class="small text-muted fw-semibold"><i class="bi bi-bank text-primary me-1"></i> Retiros a Banco</div>
-                                <div class="fw-bold text-primary fs-6 mt-0.5">Bs. {{ number_format($totalRetirosBanco, 2) }}</div>
+                                <div class="fw-bold text-primary fs-6 mt-0.5">{{ $monedaSimbolo }} {{ number_format($totalRetirosBanco, 2) }}</div>
                             </div>
                         </div>
                         <div class="col-6">
                             <div class="p-2.5 rounded-3 border bg-light h-100">
                                 <div class="small text-muted fw-semibold"><i class="bi bi-qr-code text-info me-1"></i> Pagos Banco / QR</div>
-                                <div class="fw-bold text-dark fs-6 mt-0.5">Bs. {{ number_format($gastosDesdeBancoQr, 2) }}</div>
+                                <div class="fw-bold text-dark fs-6 mt-0.5">{{ $monedaSimbolo }} {{ number_format($gastosDesdeBancoQr, 2) }}</div>
                             </div>
                         </div>
                         <div class="col-6">
                             <div class="p-2.5 rounded-3 border bg-light h-100">
-                                <div class="small text-muted fw-semibold"><i class="bi bi-piggy-bank text-success me-1"></i> Caja Chica (Saldo: Bs. {{ number_format($saldoCajaChicaActual, 2) }})</div>
-                                <div class="fw-bold text-dark fs-6 mt-0.5">Bs. {{ number_format($gastosDesdeCajaChica, 2) }}</div>
+                                <div class="small text-muted fw-semibold"><i class="bi bi-piggy-bank text-success me-1"></i> Caja Chica (Saldo: {{ $monedaSimbolo }} {{ number_format($saldoCajaChicaActual, 2) }})</div>
+                                <div class="fw-bold text-dark fs-6 mt-0.5">{{ $monedaSimbolo }} {{ number_format($gastosDesdeCajaChica, 2) }}</div>
                             </div>
                         </div>
                     </div>
                     @if($totalTrasladosCajaChica > 0)
                         <div class="mt-2 small text-muted">
                             <i class="bi bi-info-circle text-primary me-1"></i>
-                            Además se trasladaron <strong>Bs. {{ number_format($totalTrasladosCajaChica, 2) }}</strong> desde la gaveta para reponer Caja Chica.
+                            Además se trasladaron <strong>{{ $monedaSimbolo }} {{ number_format($totalTrasladosCajaChica, 2) }}</strong> desde la gaveta para reponer Caja Chica.
                         </div>
                     @endif
                 </div>
@@ -339,7 +339,7 @@
                                     &bull; {{ $gTop->origen_pago === 'gaveta' ? 'Gaveta #' . $gTop->turno_caja_id : ($gTop->origen_pago === 'caja_chica' ? 'Caja Chica' : 'Banco/QR') }}
                                 </div>
                             </div>
-                            <span class="fw-bold text-danger small flex-shrink-0">Bs. {{ number_format($gTop->monto, 2) }}</span>
+                            <span class="fw-bold text-danger small flex-shrink-0">{{ $monedaSimbolo }} {{ number_format($gTop->monto, 2) }}</span>
                         </div>
                     @empty
                         <div class="text-center py-3 text-muted small">
@@ -355,7 +355,7 @@
                             Mayor depósito/retiro al banco: <strong class="text-dark">{{ $mayorRetiroBanco->motivo }}</strong>
                         </span>
                         <span class="badge bg-primary bg-opacity-10 text-primary border border-primary-subtle fw-bold px-2.5 py-1">
-                            Bs. {{ number_format($mayorRetiroBanco->monto, 2) }} ({{ $mayorRetiroBanco->fecha ? $mayorRetiroBanco->fecha->format('d/m/Y H:i') : '—' }})
+                            {{ $monedaSimbolo }} {{ number_format($mayorRetiroBanco->monto, 2) }} ({{ $mayorRetiroBanco->fecha ? $mayorRetiroBanco->fecha->format('d/m/Y H:i') : '—' }})
                         </span>
                     </div>
                 @endif
@@ -413,7 +413,7 @@
                             <td><span class="badge bg-primary bg-opacity-10 text-primary border border-primary-subtle">{{ $ret->metodo_pago }}</span></td>
                             <td class="fw-semibold text-dark small">{{ $ret->motivo }}</td>
                             <td class="small text-muted">{{ optional($ret->usuario)->name ?? 'Usuario' }}</td>
-                            <td class="text-end pe-4 fw-bold text-primary">Bs. {{ number_format($ret->monto, 2) }}</td>
+                            <td class="text-end pe-4 fw-bold text-primary">{{ $monedaSimbolo }} {{ number_format($ret->monto, 2) }}</td>
                         </tr>
                         @empty
                         <tr>
@@ -429,7 +429,7 @@
                     <tfoot class="table-light">
                         <tr>
                             <td colspan="5" class="ps-4 fw-bold text-end text-dark">TOTAL RETIRADO DE GAVETA PARA BANCO / GERENCIA:</td>
-                            <td class="text-end pe-4 fw-bold text-primary fs-6">Bs. {{ number_format($totalRetirosBanco, 2) }}</td>
+                            <td class="text-end pe-4 fw-bold text-primary fs-6">{{ $monedaSimbolo }} {{ number_format($totalRetirosBanco, 2) }}</td>
                         </tr>
                     </tfoot>
                     @endif
@@ -479,7 +479,7 @@
                             </td>
                             <td class="small text-muted">{{ $g->nro_comprobante ?: 'Sin doc.' }}</td>
                             <td class="small text-muted">{{ optional($g->usuario)->name ?? 'Sistema' }}</td>
-                            <td class="text-end pe-4 fw-bold text-danger">- Bs. {{ number_format($g->monto, 2) }}</td>
+                            <td class="text-end pe-4 fw-bold text-danger">- {{ $monedaSimbolo }} {{ number_format($g->monto, 2) }}</td>
                         </tr>
                         @empty
                         <tr>
@@ -523,19 +523,19 @@
                             <td class="small fw-semibold">{{ optional($t->usuarioCierre)->name ?? (optional($t->usuario)->name ?? 'Cajero') }}</td>
                             <td class="small text-muted">{{ $t->fecha_apertura ? $t->fecha_apertura->format('d/m/Y H:i') : '—' }}</td>
                             <td class="small text-muted">{{ $t->fecha_cierre ? $t->fecha_cierre->format('d/m/Y H:i') : 'En curso' }}</td>
-                            <td class="text-end small text-success fw-bold">Bs. {{ number_format($t->total_efectivo_sistema, 2) }}</td>
-                            <td class="text-end small text-primary fw-bold">Bs. {{ number_format($t->total_qr_sistema, 2) }}</td>
-                            <td class="text-end small text-danger">Bs. {{ number_format($t->total_egresos, 2) }}</td>
-                            <td class="text-end small fw-bold">{{ $t->monto_fisico_declarado !== null ? 'Bs. ' . number_format($t->monto_fisico_declarado, 2) : '—' }}</td>
+                            <td class="text-end small text-success fw-bold">{{ $monedaSimbolo }} {{ number_format($t->total_efectivo_sistema, 2) }}</td>
+                            <td class="text-end small text-primary fw-bold">{{ $monedaSimbolo }} {{ number_format($t->total_qr_sistema, 2) }}</td>
+                            <td class="text-end small text-danger">{{ $monedaSimbolo }} {{ number_format($t->total_egresos, 2) }}</td>
+                            <td class="text-end small fw-bold">{{ $t->monto_fisico_declarado !== null ? $monedaSimbolo . ' ' . number_format($t->monto_fisico_declarado, 2) : '—' }}</td>
                             <td class="text-end pe-4">
                                 @if($t->estado === 'cerrado')
                                     @php $d = floatval($t->diferencia ?? 0); @endphp
                                     @if($d == 0)
                                         <span class="badge bg-success bg-opacity-10 text-success border border-success-subtle">Exacto</span>
                                     @elseif($d > 0)
-                                        <span class="badge bg-primary bg-opacity-10 text-primary border border-primary-subtle">+ Bs. {{ number_format($d, 2) }}</span>
+                                        <span class="badge bg-primary bg-opacity-10 text-primary border border-primary-subtle">+ {{ $monedaSimbolo }} {{ number_format($d, 2) }}</span>
                                     @else
-                                        <span class="badge bg-danger bg-opacity-10 text-danger border border-danger-subtle">- Bs. {{ number_format(abs($d), 2) }}</span>
+                                        <span class="badge bg-danger bg-opacity-10 text-danger border border-danger-subtle">- {{ $monedaSimbolo }} {{ number_format(abs($d), 2) }}</span>
                                     @endif
                                 @else
                                     <span class="text-muted small">—</span>
@@ -607,7 +607,7 @@ document.addEventListener('DOMContentLoaded', function() {
                             label: function(ctx) {
                                 const val = Number(ctx.raw || 0);
                                 const pct = total > 0 ? ((val / total) * 100).toFixed(1) : '0.0';
-                                return ` ${ctx.label}: Bs. ${val.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} (${pct}%)`;
+                                return ` ${ctx.label}: {{ $monedaSimbolo }} ${val.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} (${pct}%)`;
                             }
                         }
                     }

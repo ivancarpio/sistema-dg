@@ -44,7 +44,7 @@
         <tr>
             <th>Categoría</th>
             <th>Registros</th>
-            <th>Total Gastado (Bs.)</th>
+            <th>Total Gastado ({{ $monedaSimbolo }})</th>
             <th>% del Total</th>
             <th colspan="2"></th>
         </tr>
@@ -68,7 +68,7 @@
             <th>Método</th>
             <th>Motivo / Destino</th>
             <th>Cajero</th>
-            <th>Monto (Bs.)</th>
+            <th>Monto ({{ $monedaSimbolo }})</th>
         </tr>
         @forelse($retirosBanco as $ret)
             <tr>
@@ -93,7 +93,7 @@
             <th>Descripción</th>
             <th>Origen Fondos</th>
             <th>Usuario</th>
-            <th>Monto (Bs.)</th>
+            <th>Monto ({{ $monedaSimbolo }})</th>
         </tr>
         @forelse($gastos as $g)
             <tr>

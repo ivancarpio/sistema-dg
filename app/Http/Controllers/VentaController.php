@@ -215,6 +215,7 @@ class VentaController extends Controller
     // 4. Registrar abono o cobro de saldo pendiente para una nota
     public function registrarAbono(Request $request, $id)
     {
+        $sim = Configuracion::monedaSimbolo();
         $request->validate([
             'monto_abono' => 'required|numeric|min:0.5',
             'metodo_pago' => 'required|in:Efectivo,QR',
@@ -222,7 +223,7 @@ class VentaController extends Controller
         ], [
             'monto_abono.required' => 'Debes ingresar el monto a cobrar.',
             'monto_abono.numeric'  => 'El monto debe ser un valor numérico válido.',
-            'monto_abono.min'      => 'El monto mínimo a cobrar es Bs. 0.50.',
+            'monto_abono.min'      => 'El monto mínimo a cobrar es ' . $sim . ' 0.50.',
             'metodo_pago.required' => 'Debes seleccionar el método de pago del cobro.',
         ]);
 
@@ -234,7 +235,7 @@ class VentaController extends Controller
 
         $saldoActual = floatval($venta->saldo_pendiente ?? 0);
         if ($saldoActual <= 0) {
-            return back()->with('error', 'Esta venta ya se encuentra liquidada al 100%. Saldo pendiente: Bs. 0.00.');
+            return back()->with('error', 'Esta venta ya se encuentra liquidada al 100%. Saldo pendiente: ' . $sim . ' 0.00.');
         }
 
         $abono = floatval($request->monto_abono);
@@ -276,11 +277,11 @@ class VentaController extends Controller
 
             DB::commit();
 
-            $mensaje = "¡Cobro registrado exitosamente! Se cobraron Bs. " . number_format($abono, 2) . " mediante " . $request->metodo_pago . ".";
+            $mensaje = "¡Cobro registrado exitosamente! Se cobraron {$sim} " . number_format($abono, 2) . " mediante " . $request->metodo_pago . ".";
             if ($nuevoSaldo == 0) {
                 $mensaje .= " La nota " . ($venta->numero_nota ?? ('SYS-'.$venta->id)) . " quedó 100% LIQUIDADA.";
             } else {
-                $mensaje .= " Saldo restante: Bs. " . number_format($nuevoSaldo, 2) . ".";
+                $mensaje .= " Saldo restante: {$sim} " . number_format($nuevoSaldo, 2) . ".";
             }
 
             return back()->with('success', $mensaje);

@@ -870,6 +870,23 @@
                 </li>
                 @endif
 
+                @if(auth()->check() && auth()->user()->tienePermiso('cotizaciones'))
+                <li class="nav-item">
+                    <a class="nav-link {{ request()->is('cotizaciones*') ? 'active' : '' }}" href="/cotizaciones" title="Cotizaciones">
+                        <div class="nav-icon-box">
+                            <i class="bi bi-file-earmark-text-fill"></i>
+                        </div>
+                        <div class="nav-text-container">
+                            <div class="nav-title">Cotizaciones</div>
+                            <div class="nav-subtitle">Clientes y tiendas</div>
+                        </div>
+                        @if(request()->is('cotizaciones*'))
+                            <span class="active-indicator-dot"></span>
+                        @endif
+                    </a>
+                </li>
+                @endif
+
                 @if(auth()->check() && auth()->user()->tienePermiso('arqueos'))
                 @php
                     $isFinanzasActive = request()->is('arqueos*') || request()->is('finanzas*');

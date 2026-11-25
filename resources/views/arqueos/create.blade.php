@@ -203,16 +203,16 @@
                                         </span>
                                     </td>
                                     <td class="fw-bold text-success">
-                                        Bs. {{ number_format($venta->total, 2) }}
+                                        {{ $monedaSimbolo }} {{ number_format($venta->total, 2) }}
                                     </td>
                                     <td>
                                         @if(!$estaAlDia)
                                             <span class="badge bg-warning text-dark border">
                                                 <i class="bi bi-clock-history me-1"></i>Por Pagar
                                             </span>
-                                            <small class="text-danger fw-bold d-block mt-0.5" style="font-size:0.75rem;">Debe: Bs. {{ number_format($saldoPend, 2) }}</small>
+                                            <small class="text-danger fw-bold d-block mt-0.5" style="font-size:0.75rem;">Debe: {{ $monedaSimbolo }} {{ number_format($saldoPend, 2) }}</small>
                                             @if(($venta->monto_pagado ?? 0) > 0)
-                                                <small class="text-muted d-block" style="font-size:0.70rem;">Abonado: Bs. {{ number_format($venta->monto_pagado, 2) }}</small>
+                                                <small class="text-muted d-block" style="font-size:0.70rem;">Abonado: {{ $monedaSimbolo }} {{ number_format($venta->monto_pagado, 2) }}</small>
                                             @endif
                                         @else
                                             @if(strtolower($metodoCobro) === 'qr')
@@ -282,7 +282,7 @@
                                 <i class="bi bi-cash-stack me-2 text-success"></i>Efectivo
                             </span>
                             <span class="resumen-value text-success" id="resumenEfectivo">
-                                Bs. 0,00
+                                {{ $monedaSimbolo }} 0,00
                             </span>
                         </div>
                         <div class="resumen-row">
@@ -290,7 +290,7 @@
                                 <i class="bi bi-qr-code me-2 text-primary"></i>QR
                             </span>
                             <span class="resumen-value text-primary" id="resumenQr">
-                                Bs. 0,00
+                                {{ $monedaSimbolo }} 0,00
                             </span>
                         </div>
                         <div class="resumen-row" style="border-top: 2px solid #e2e8f0; margin-top: 5px; padding-top: 15px;">
@@ -298,7 +298,7 @@
                                 <i class="bi bi-wallet2 me-2"></i>Total General
                             </span>
                             <span class="resumen-value text-dark fs-5" id="resumenTotal">
-                                Bs. 0,00
+                                {{ $monedaSimbolo }} 0,00
                             </span>
                         </div>
                         <div class="resumen-row">
@@ -349,7 +349,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
     // ---- Formato de moneda ----
     function formatMonto(n) {
-        return 'Bs. ' + n.toLocaleString('es-BO', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        return '{{ $monedaSimbolo }} ' + n.toLocaleString('es-BO', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
     }
 
     // ---- Actualizar resumen lateral ----

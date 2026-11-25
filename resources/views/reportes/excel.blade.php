@@ -50,7 +50,7 @@
                     @php
                         $saldoPend = floatval($venta->saldo_pendiente ?? 0);
                         $metodoTexto = $saldoPend > 0 
-                            ? 'Crédito Pendiente (Debe Bs. ' . number_format($saldoPend, 2) . ')'
+                            ? 'Crédito Pendiente (Debe ' . $monedaSimbolo . ' ' . number_format($saldoPend, 2) . ')'
                             : ($venta->metodo_pago === 'Por Pagar' ? 'Crédito Liquidado' : $venta->metodo_pago);
                     @endphp
                     <td>{{ $metodoTexto }}</td>
@@ -78,7 +78,7 @@
             @php
                 $saldoPend = floatval($venta->saldo_pendiente ?? 0);
                 $metodoTexto = $saldoPend > 0 
-                    ? 'Crédito Pendiente (Debe Bs. ' . number_format($saldoPend, 2) . ')'
+                    ? 'Crédito Pendiente (Debe ' . $monedaSimbolo . ' ' . number_format($saldoPend, 2) . ')'
                     : ($venta->metodo_pago === 'Por Pagar' ? 'Crédito Liquidado' : $venta->metodo_pago);
             @endphp
             <td>{{ $metodoTexto }}</td>
@@ -99,13 +99,13 @@
         <td colspan="7"><strong>TOTALES</strong></td>
         <td>
             <strong>
-                Efectivo: Bs. {{ number_format($totEfectivo, 2) }} | QR: Bs. {{ number_format($totQr, 2) }}
+                Efectivo: {{ $monedaSimbolo }} {{ number_format($totEfectivo, 2) }} | QR: {{ $monedaSimbolo }} {{ number_format($totQr, 2) }}
                 @if($totPendiente > 0)
-                    | Por Cobrar: Bs. {{ number_format($totPendiente, 2) }}
+                    | Por Cobrar: {{ $monedaSimbolo }} {{ number_format($totPendiente, 2) }}
                 @endif
             </strong>
         </td>
-        <td><strong>Bs. {{ number_format($totGeneral, 2) }}</strong></td>
+        <td><strong>{{ $monedaSimbolo }} {{ number_format($totGeneral, 2) }}</strong></td>
         <td colspan="2"></td>
     </tr>
 </table>

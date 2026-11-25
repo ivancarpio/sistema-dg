@@ -56,7 +56,7 @@
                     <span class="text-muted small fw-semibold text-uppercase">Total Gastos</span>
                     <span class="badge bg-danger bg-opacity-10 text-danger rounded-pill px-2 py-1 small">{{ $conteoGastos }} reg.</span>
                 </div>
-                <h3 class="fw-bold text-danger mb-1 fs-4 fs-md-3">Bs. {{ number_format($totalGastos, 2) }}</h3>
+                <h3 class="fw-bold text-danger mb-1 fs-4 fs-md-3">{{ $monedaSimbolo }} {{ number_format($totalGastos, 2) }}</h3>
                 <span class="text-muted small">Egresos operativos del período</span>
             </div>
         </div>
@@ -68,7 +68,7 @@
                     <span class="text-muted small fw-semibold text-uppercase">Desde Gaveta</span>
                     <i class="bi bi-cash-stack text-warning fs-5"></i>
                 </div>
-                <h3 class="fw-bold text-dark mb-1 fs-4 fs-md-3">Bs. {{ number_format($gastosGaveta, 2) }}</h3>
+                <h3 class="fw-bold text-dark mb-1 fs-4 fs-md-3">{{ $monedaSimbolo }} {{ number_format($gastosGaveta, 2) }}</h3>
                 <span class="text-muted small">Descontados de turnos diarios</span>
             </div>
         </div>
@@ -80,10 +80,10 @@
                     <span class="text-muted small fw-semibold text-uppercase">Desde Caja Chica</span>
                     <i class="bi bi-piggy-bank text-success fs-5"></i>
                 </div>
-                <h3 class="fw-bold text-dark mb-1 fs-4 fs-md-3">Bs. {{ number_format($gastosCajaChica, 2) }}</h3>
+                <h3 class="fw-bold text-dark mb-1 fs-4 fs-md-3">{{ $monedaSimbolo }} {{ number_format($gastosCajaChica, 2) }}</h3>
                 <div class="d-flex align-items-center gap-1 small text-muted">
                     <span>Fondo actual:</span>
-                    <strong class="{{ $saldoCajaChica <= 50 ? 'text-danger' : 'text-success' }}">Bs. {{ number_format($saldoCajaChica, 2) }}</strong>
+                    <strong class="{{ $saldoCajaChica <= 50 ? 'text-danger' : 'text-success' }}">{{ $monedaSimbolo }} {{ number_format($saldoCajaChica, 2) }}</strong>
                 </div>
             </div>
         </div>
@@ -95,7 +95,7 @@
                     <span class="text-muted small fw-semibold text-uppercase">Banco / Otros</span>
                     <i class="bi bi-bank text-info fs-5"></i>
                 </div>
-                <h3 class="fw-bold text-dark mb-1 fs-4 fs-md-3">Bs. {{ number_format($gastosBancoQr, 2) }}</h3>
+                <h3 class="fw-bold text-dark mb-1 fs-4 fs-md-3">{{ $monedaSimbolo }} {{ number_format($gastosBancoQr, 2) }}</h3>
                 <span class="text-muted small">Cuentas bancarias o aportes</span>
             </div>
         </div>
@@ -226,13 +226,13 @@
                                 @endif
                             </td>
                             <td class="text-end fw-bold text-danger fs-6">
-                                -Bs. {{ number_format($g->monto, 2) }}
+                                -{{ $monedaSimbolo }} {{ number_format($g->monto, 2) }}
                             </td>
                             <td class="small text-muted">
                                 {{ $g->usuario ? $g->usuario->name : 'Sistema' }}
                             </td>
                             <td class="pe-3 pe-md-4 text-center">
-                                <form action="{{ route('finanzas.gastos.destroy', $g->id) }}" method="POST" onsubmit="return confirm('¿Estás seguro de eliminar este gasto de Bs. {{ number_format($g->monto, 2) }}? Si provino de gaveta abierta o caja chica, se revertirá el saldo correspondiente.')" class="d-inline">
+                                <form action="{{ route('finanzas.gastos.destroy', $g->id) }}" method="POST" onsubmit="return confirm('¿Estás seguro de eliminar este gasto de {{ $monedaSimbolo }} {{ number_format($g->monto, 2) }}? Si provino de gaveta abierta o caja chica, se revertirá el saldo correspondiente.')" class="d-inline">
                                     @csrf
                                     @method('DELETE')
                                     <button type="submit" class="btn btn-outline-danger btn-sm rounded-3 p-1 px-2" title="Eliminar / Revertir Gasto">
@@ -294,9 +294,9 @@
 
                         <!-- Monto -->
                         <div class="col-12 col-sm-6">
-                            <label class="form-label small fw-semibold text-dark mb-1">Monto (Bs.) <span class="text-danger">*</span></label>
+                            <label class="form-label small fw-semibold text-dark mb-1">Monto ({{ $monedaSimbolo }}) <span class="text-danger">*</span></label>
                             <div class="input-group">
-                                <span class="input-group-text bg-light border-end-0 fw-bold">Bs.</span>
+                                <span class="input-group-text bg-light border-end-0 fw-bold">{{ $monedaSimbolo }}</span>
                                 <input type="number" step="0.01" min="0.01" name="monto" class="form-control rounded-end-3" placeholder="0.00" required>
                             </div>
                         </div>
@@ -328,7 +328,7 @@
                                     Gaveta (Turno en Vivo) {{ $turnoActivo ? '— Turno #' . $turnoActivo->id . ' Abierto' : '(Sin turno abierto)' }}
                                 </option>
                                 <option value="caja_chica">
-                                    Caja Chica (Fondo disponible: Bs. {{ number_format($saldoCajaChica, 2) }})
+                                    Caja Chica (Fondo disponible: {{ $monedaSimbolo }} {{ number_format($saldoCajaChica, 2) }})
                                 </option>
                                 <option value="banco_qr">
                                     Banco / Transferencia / QR (No afecta físico)
@@ -342,7 +342,7 @@
                                 <i class="bi bi-info-circle me-1"></i>Se registrará un egreso en la gaveta activa #{{ $turnoActivo?->id }} y se descontará del saldo esperado.
                             </div>
                             <div id="helpCajaChica" class="form-text small text-success d-none">
-                                <i class="bi bi-piggy-bank me-1"></i>Se descontará directamente del saldo de Caja Chica (Saldo actual: Bs. {{ number_format($saldoCajaChica, 2) }}).
+                                <i class="bi bi-piggy-bank me-1"></i>Se descontará directamente del saldo de Caja Chica (Saldo actual: {{ $monedaSimbolo }} {{ number_format($saldoCajaChica, 2) }}).
                             </div>
                         </div>
 

@@ -91,13 +91,17 @@
     <div class="d-flex align-items-center gap-2">
         @if($cliente->saldo_pendiente_total > 0)
         <button type="button" class="btn btn-success fw-bold px-3 py-2 shadow-sm" style="border-radius: 10px;" data-bs-toggle="modal" data-bs-target="#modalAbonarGeneral">
-            <i class="bi bi-cash-stack me-1"></i> Cobrar Deuda (Bs. {{ number_format($cliente->saldo_pendiente_total, 2) }})
+            <i class="bi bi-cash-stack me-1"></i> Cobrar Deuda ({{ $monedaSimbolo }} {{ number_format($cliente->saldo_pendiente_total, 2) }})
         </button>
         @endif
 
         @if($cliente->telefono)
-            @php $limpioTel = preg_replace('/[^0-9]/', '', $cliente->telefono); @endphp
-            <a href="https://wa.me/591{{ $limpioTel }}" target="_blank" class="btn btn-outline-success fw-bold px-3 py-2" style="border-radius: 10px;">
+            @php
+                $limpioTel = preg_replace('/[^0-9]/', '', $cliente->telefono);
+                $prefijoWa = ($paisOperacion ?? 'BO') === 'PE' ? '51' : '591';
+                $waTel = strlen($limpioTel) > 9 ? $limpioTel : $prefijoWa . $limpioTel;
+            @endphp
+            <a href="https://wa.me/{{ $waTel }}" target="_blank" class="btn btn-outline-success fw-bold px-3 py-2" style="border-radius: 10px;">
                 <i class="bi bi-whatsapp me-1"></i> WhatsApp
             </a>
         @endif
@@ -141,7 +145,7 @@
                 <div class="col-sm-6">
                     <div class="p-3 rounded-3 bg-light text-center border h-100 d-flex flex-column justify-content-center">
                         <div class="text-muted small fw-bold text-uppercase">Total Compras</div>
-                        <div class="fs-4 fw-bold text-dark mt-1">Bs. {{ number_format($cliente->total_comprado, 2) }}</div>
+                        <div class="fs-4 fw-bold text-dark mt-1">{{ $monedaSimbolo }} {{ number_format($cliente->total_comprado, 2) }}</div>
                         <small class="text-muted">{{ $cliente->cantidad_compras }} venta(s) registradas</small>
                     </div>
                 </div>
@@ -152,7 +156,7 @@
                                 {{ $cliente->saldo_pendiente_total > 0 ? 'Saldo Pendiente por Cobrar' : 'Estado de Cuenta' }}
                             </div>
                             <div class="fs-4 fw-bold mt-1 {{ $cliente->saldo_pendiente_total > 0 ? 'text-danger' : 'text-success' }}">
-                                {{ $cliente->saldo_pendiente_total > 0 ? 'Bs. ' . number_format($cliente->saldo_pendiente_total, 2) : 'Al Día (Bs. 0.00)' }}
+                                {{ $cliente->saldo_pendiente_total > 0 ? $monedaSimbolo . ' ' . number_format($cliente->saldo_pendiente_total, 2) : 'Al Día (' . $monedaSimbolo . ' 0.00)' }}
                             </div>
                             <small class="text-muted d-block mt-1">
                                 {{ $cliente->saldo_pendiente_total > 0 ? 'Tiene cuentas por pagar pendientes' : 'Sin deudas pendientes en el sistema' }}
@@ -239,10 +243,10 @@
                                     <span class="badge bg-danger-subtle text-danger">{{ $v->estado }}</span>
                                 @endif
                             </td>
-                            <td class="text-end fw-bold text-dark">Bs. {{ number_format($v->total, 2) }}</td>
-                            <td class="text-end fw-bold text-success">Bs. {{ number_format($v->monto_pagado ?? $v->total, 2) }}</td>
+                            <td class="text-end fw-bold text-dark">{{ $monedaSimbolo }} {{ number_format($v->total, 2) }}</td>
+                            <td class="text-end fw-bold text-success">{{ $monedaSimbolo }} {{ number_format($v->monto_pagado ?? $v->total, 2) }}</td>
                             <td class="text-end fw-bold {{ $esPendiente ? 'text-danger' : 'text-muted' }}">
-                                {{ $pendienteNota > 0 ? 'Bs. ' . number_format($pendienteNota, 2) : 'Bs. 0.00' }}
+                                {{ $pendienteNota > 0 ? $monedaSimbolo . ' ' . number_format($pendienteNota, 2) : $monedaSimbolo . ' 0.00' }}
                             </td>
                             <td class="text-center pe-4">
                                 @if($esPendiente)
@@ -300,7 +304,7 @@
                                     <span class="text-muted">—</span>
                                 @endif
                             </td>
-                            <td class="text-end fw-bold text-success fs-6">Bs. {{ number_format($p->monto, 2) }}</td>
+                            <td class="text-end fw-bold text-success fs-6">{{ $monedaSimbolo }} {{ number_format($p->monto, 2) }}</td>
                             <td>
                                 @if($p->metodo_pago === 'Efectivo')
                                     <span class="badge-efectivo"><i class="bi bi-cash me-1"></i>Efectivo</span>
@@ -349,14 +353,14 @@
             <div class="modal-body p-4">
                 <div class="p-3 rounded-3 bg-danger bg-opacity-10 border border-danger-subtle mb-3 text-center">
                     <div class="small fw-bold text-danger text-uppercase">Deuda Total Pendiente</div>
-                    <div class="fs-2 fw-bold text-danger">Bs. {{ number_format($cliente->saldo_pendiente_total, 2) }}</div>
+                    <div class="fs-2 fw-bold text-danger">{{ $monedaSimbolo }} {{ number_format($cliente->saldo_pendiente_total, 2) }}</div>
                     <small class="text-muted">El pago se abonará automáticamente liquidando las notas pendientes más antiguas.</small>
                 </div>
 
                 <div class="mb-3">
-                    <label class="form-label fw-bold small text-muted">MONTO A COBRAR (BS.) *</label>
+                    <label class="form-label fw-bold small text-muted">MONTO A COBRAR ({{ strtoupper($monedaSimbolo) }}) *</label>
                     <div class="input-group">
-                        <span class="input-group-text fw-bold bg-light">Bs.</span>
+                        <span class="input-group-text fw-bold bg-light">{{ $monedaSimbolo }}</span>
                         <input type="number" step="0.5" min="0.5" max="{{ $cliente->saldo_pendiente_total }}" name="monto_abono" class="form-control form-control-lg fw-bold text-primary" value="{{ $cliente->saldo_pendiente_total }}" required>
                         <button type="button" class="btn btn-outline-secondary" onclick="this.form.monto_abono.value='{{ $cliente->saldo_pendiente_total }}'">
                             Total
@@ -422,22 +426,22 @@
                 <div class="d-flex justify-content-between p-3 rounded-3 bg-light border mb-3">
                     <div>
                         <div class="small text-muted">Total de la Nota</div>
-                        <div class="fw-bold text-dark">Bs. {{ number_format($v->total, 2) }}</div>
+                        <div class="fw-bold text-dark">{{ $monedaSimbolo }} {{ number_format($v->total, 2) }}</div>
                     </div>
                     <div>
                         <div class="small text-muted">Ya Pagado</div>
-                        <div class="fw-bold text-success">Bs. {{ number_format($v->monto_pagado ?? 0, 2) }}</div>
+                        <div class="fw-bold text-success">{{ $monedaSimbolo }} {{ number_format($v->monto_pagado ?? 0, 2) }}</div>
                     </div>
                     <div class="text-end">
                         <div class="small text-muted">Saldo Pendiente</div>
-                        <div class="fw-bold text-danger fs-5">Bs. {{ number_format($v->saldo_pendiente, 2) }}</div>
+                        <div class="fw-bold text-danger fs-5">{{ $monedaSimbolo }} {{ number_format($v->saldo_pendiente, 2) }}</div>
                     </div>
                 </div>
 
                 <div class="mb-3">
-                    <label class="form-label fw-bold small text-muted">MONTO A COBRAR (BS.) *</label>
+                    <label class="form-label fw-bold small text-muted">MONTO A COBRAR ({{ strtoupper($monedaSimbolo) }}) *</label>
                     <div class="input-group">
-                        <span class="input-group-text fw-bold bg-light">Bs.</span>
+                        <span class="input-group-text fw-bold bg-light">{{ $monedaSimbolo }}</span>
                         <input type="number" step="0.5" min="0.5" max="{{ $v->saldo_pendiente }}" name="monto_abono" class="form-control form-control-lg fw-bold text-primary" value="{{ $v->saldo_pendiente }}" required>
                         <button type="button" class="btn btn-outline-secondary" onclick="this.form.monto_abono.value='{{ $v->saldo_pendiente }}'">
                             Total
